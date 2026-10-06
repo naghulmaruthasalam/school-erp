@@ -65,7 +65,7 @@ async def run_assistant(
     chat = model.start_chat(history=history)
     conversation.messages.append(ConversationMessage(role="user", content=message))
 
-    response = chat.send_message(message, tools=tools)
+    response = await chat.send_message_async(message, tools=tools)
 
     for _ in range(MAX_TOOL_ITERATIONS):
         candidate = response.candidates[0]
@@ -106,7 +106,7 @@ async def run_assistant(
                 )
             )
 
-        response = chat.send_message(response_parts)
+        response = await chat.send_message_async(response_parts)
     else:
         logger.warning("AI assistant hit max tool iterations for user %s", current.id)
 
@@ -123,8 +123,7 @@ async def generate_homework(
     topic: str,
     difficulty: str = "medium",
 ) -> str:
-    """Generate homework content using Gemini AI."""
-    from app.ai.gemini_client import get_model
+    """Generate homework content with Gemini, or a template when no API key is configured."""
 
     prompt = f"""Generate a homework assignment for:
 - Subject: {subject}
@@ -142,5 +141,5 @@ Please provide:
 Format the response in a clear, structured way that teachers can use directly."""
 
     model = get_model(system_instruction="You are an expert teacher assistant that creates engaging, age-appropriate homework assignments.")
-    response = model.generate_content(prompt)
+    response = await model.generate_content_async(prompt)
     return response.text

@@ -9,7 +9,12 @@ from app.main import app as fastapi_app
 from app.models.attendance import StudentAttendance
 from app.models.guardian import Guardian
 from app.models.student import Student
-from tests.conftest import make_current_user, override_current_user
+from tests.conftest import make_current_user, override_current_user, seed_teacher_access
+
+
+@pytest.fixture(autouse=True)
+async def _teachers(_init_test_db):
+    await seed_teacher_access()
 
 # The attendance router isn't wired into app/api/v1/router.py yet (that file
 # is owned by the integration step across all parallel modules). Register it
@@ -21,7 +26,7 @@ if not any(r.path.startswith(f"{_settings.api_v1_prefix}/attendance") for r in f
 
 SCHOOL_A = "000000000000000000000a01"
 SCHOOL_B = "000000000000000000000b01"
-SECTION_A = "000000000000000000000sec1"
+SECTION_A = "000000000000000000000c01"
 
 
 async def _make_student(school_id: str, section_id: str, admission_no: str) -> Student:
@@ -42,7 +47,7 @@ async def _make_student(school_id: str, section_id: str, admission_no: str) -> S
 @pytest.mark.asyncio
 async def test_bulk_mark_then_remark_is_upsert_not_duplicate(client):
     student = await _make_student(SCHOOL_A, SECTION_A, "A001")
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
 
     today = dt.date.today().isoformat()
@@ -73,7 +78,7 @@ async def test_bulk_mark_then_remark_is_upsert_not_duplicate(client):
 async def test_student_sees_only_own_attendance(client):
     student1 = await _make_student(SCHOOL_A, SECTION_A, "A002")
     student2 = await _make_student(SCHOOL_A, SECTION_A, "A003")
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
 
     today = dt.date.today().isoformat()
@@ -105,7 +110,7 @@ async def test_parent_sees_only_children_attendance(client):
     guardian = Guardian(school_id=SCHOOL_A, full_name="Parent One", phone="1234567890", student_ids=[str(child1.id)])
     await guardian.insert()
 
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
     today = dt.date.today().isoformat()
     await client.post(
@@ -138,7 +143,7 @@ async def test_tenant_isolation_across_schools(client):
     student_a = await _make_student(SCHOOL_A, SECTION_A, "A006")
     student_b = await _make_student(SCHOOL_B, SECTION_A, "B001")
 
-    teacher_a = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher_a = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher_a)
 
     today = dt.date.today().isoformat()
@@ -162,7 +167,7 @@ async def test_tenant_isolation_across_schools(client):
             "records": [{"student_id": str(student_a.id), "status": "PRESENT"}],
         },
     )
-    teacher_b = make_current_user(Role.TEACHER, SCHOOL_B, teacher_id="teacher-2", user_id="000000000000000000000002")
+    teacher_b = make_current_user(Role.TEACHER, SCHOOL_B, teacher_id="000000000000000000000f02", user_id="000000000000000000000002")
     override_current_user(teacher_b)
     r2 = await client.get("/api/v1/attendance/students")
     assert r2.status_code == 200
@@ -172,7 +177,7 @@ async def test_tenant_isolation_across_schools(client):
 @pytest.mark.asyncio
 async def test_student_attendance_summary_percentage(client):
     student = await _make_student(SCHOOL_A, SECTION_A, "A007")
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
 
     base = dt.date.today()

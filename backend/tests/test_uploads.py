@@ -41,7 +41,7 @@ def _files(filename: str = "photo.jpg", content: bytes = b"hello world", content
 
 @pytest.mark.asyncio
 async def test_staff_can_upload_and_fetch_document(client, _patch_s3):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-1"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000001"))
 
     r = await client.post(
         "/api/v1/uploads",
@@ -69,7 +69,7 @@ async def test_staff_can_upload_and_fetch_document(client, _patch_s3):
 async def test_student_can_upload_and_fetch_own_document_but_not_others(client, _patch_s3):
     override_current_user(
         make_current_user(
-            Role.STUDENT, school_id="school-2", student_id="student-A", user_id="000000000000000000000021"
+            Role.STUDENT, school_id="5c0000000000000000000002", student_id="student-A", user_id="000000000000000000000021"
         )
     )
 
@@ -96,7 +96,7 @@ async def test_student_can_upload_and_fetch_own_document_but_not_others(client, 
     # Another student cannot fetch student-A's document
     override_current_user(
         make_current_user(
-            Role.STUDENT, school_id="school-2", student_id="student-B", user_id="000000000000000000000022"
+            Role.STUDENT, school_id="5c0000000000000000000002", student_id="student-B", user_id="000000000000000000000022"
         )
     )
     r_denied = await client.get(f"/api/v1/uploads/{doc_id}")
@@ -106,7 +106,7 @@ async def test_student_can_upload_and_fetch_own_document_but_not_others(client, 
 @pytest.mark.asyncio
 async def test_parent_can_access_childs_document_via_guardian_link(client, _patch_s3):
     guardian = Guardian(
-        school_id="school-3",
+        school_id="5c0000000000000000000003",
         full_name="Parent One",
         phone="9000000009",
         student_ids=["student-C"],
@@ -114,7 +114,7 @@ async def test_parent_can_access_childs_document_via_guardian_link(client, _patc
     await guardian.insert()
 
     override_current_user(
-        make_current_user(Role.PARENT, school_id="school-3", guardian_id=str(guardian.id))
+        make_current_user(Role.PARENT, school_id="5c0000000000000000000003", guardian_id=str(guardian.id))
     )
 
     r = await client.post(
@@ -139,7 +139,7 @@ async def test_parent_can_access_childs_document_via_guardian_link(client, _patc
 
 @pytest.mark.asyncio
 async def test_file_too_large_rejected(client, _patch_s3):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-4"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000004"))
 
     big_content = b"x" * (10 * 1024 * 1024 + 1)
     r = await client.post(
@@ -152,18 +152,18 @@ async def test_file_too_large_rejected(client, _patch_s3):
 
 @pytest.mark.asyncio
 async def test_tenant_isolation_on_document_fetch(client, _patch_s3):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-5"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000005"))
     r = await client.post("/api/v1/uploads", data={"module": "OTHER"}, files=_files())
     doc_id = r.json()["id"]
 
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-other"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000099"))
     r_get = await client.get(f"/api/v1/uploads/{doc_id}")
     assert r_get.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_delete_by_staff_and_uploader(client, _patch_s3):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-6", user_id="000000000000000000000010"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000006", user_id="000000000000000000000010"))
     r = await client.post("/api/v1/uploads", data={"module": "OTHER"}, files=_files())
     doc_id = r.json()["id"]
 
@@ -179,7 +179,7 @@ async def test_delete_by_staff_and_uploader(client, _patch_s3):
 async def test_delete_forbidden_for_unrelated_student(client, _patch_s3):
     override_current_user(
         make_current_user(
-            Role.STUDENT, school_id="school-7", student_id="student-D", user_id="000000000000000000000011"
+            Role.STUDENT, school_id="5c0000000000000000000007", student_id="student-D", user_id="000000000000000000000011"
         )
     )
     r = await client.post(
@@ -191,8 +191,68 @@ async def test_delete_forbidden_for_unrelated_student(client, _patch_s3):
 
     override_current_user(
         make_current_user(
-            Role.STUDENT, school_id="school-7", student_id="student-E", user_id="000000000000000000000012"
+            Role.STUDENT, school_id="5c0000000000000000000007", student_id="student-E", user_id="000000000000000000000012"
         )
     )
     r_delete = await client.delete(f"/api/v1/uploads/{doc_id}")
     assert r_delete.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_document_manager_upload_list_and_category_filter(client, _patch_s3):
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000001"))
+
+    r1 = await client.post(
+        "/api/v1/uploads/documents",
+        data={"category": "Circular"},
+        files=_files("circular.pdf", b"%PDF-1", "application/pdf"),
+    )
+    assert r1.status_code == 201
+    assert r1.json()["category"] == "Circular"
+
+    await client.post(
+        "/api/v1/uploads/documents",
+        data={"category": "Policy"},
+        files=_files("policy.pdf", b"%PDF-2", "application/pdf"),
+    )
+
+    # Static path must not be swallowed by /uploads/{document_id}
+    everything = await client.get("/api/v1/uploads/documents")
+    assert everything.status_code == 200
+    assert everything.json()["total"] == 2
+
+    only_circulars = await client.get("/api/v1/uploads/documents", params={"category": "Circular"})
+    assert only_circulars.json()["total"] == 1
+    assert only_circulars.json()["items"][0]["original_filename"] == "circular.pdf"
+    assert only_circulars.json()["items"][0]["uploaded_by_name"]
+
+
+@pytest.mark.asyncio
+async def test_local_storage_links_are_signed_absolute_and_expire(client, monkeypatch, tmp_path):
+    from app.core import s3
+
+    monkeypatch.setattr(s3, "_use_local_storage", True)
+    monkeypatch.setattr(s3, "LOCAL_UPLOADS_DIR", tmp_path)
+    monkeypatch.setattr("app.api.v1.uploads.LOCAL_UPLOADS_DIR", tmp_path)
+
+    s3.upload_bytes("school/other/2026/10/abc.txt", b"hello", "text/plain")
+    url = s3.generate_presigned_get_url("school/other/2026/10/abc.txt")
+    assert url.startswith(_settings.backend_base_url.rstrip("/") + _settings.api_v1_prefix + "/uploads/local/")
+
+    path_and_query = url.removeprefix(_settings.backend_base_url.rstrip("/"))
+    ok = await client.get(path_and_query)
+    assert ok.status_code == 200 and ok.content == b"hello"
+
+    tampered = await client.get(path_and_query.replace("sig=", "sig=0"))
+    assert tampered.status_code == 403
+
+    expired_url = s3.generate_presigned_get_url("school/other/2026/10/abc.txt", expires_in=-10)
+    expired = await client.get(expired_url.removeprefix(_settings.backend_base_url.rstrip("/")))
+    assert expired.status_code == 403
+
+    # a validly-signed link still can't escape the uploads directory
+    import time
+
+    exp = int(time.time()) + 60
+    traversal = await client.get(f"/api/v1/uploads/local/%2e%2e?expires={exp}&sig={s3._local_signature('..', exp)}")
+    assert traversal.status_code == 404

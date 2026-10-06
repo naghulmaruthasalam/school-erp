@@ -34,6 +34,7 @@ def get_all_models() -> list:
     from app.models.library import Book, BookIssue
     from app.models.transport import Route, StudentTransport, Vehicle
     from app.models.student import Student
+    from app.models.syllabus import Syllabus
     from app.models.teacher import Teacher
 
     return [
@@ -76,6 +77,7 @@ def get_all_models() -> list:
         Payment,
         DocumentModel,
         AIConversation,
+        Syllabus,
     ]
 
 

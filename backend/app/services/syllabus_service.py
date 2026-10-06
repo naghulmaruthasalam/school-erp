@@ -1,13 +1,19 @@
 from app.core.deps import CurrentUser
-from app.core.enums import Role
+from beanie import PydanticObjectId
+from beanie.operators import In
+from fastapi import UploadFile
+
+from app.core.enums import DocumentModule, Role, SyllabusStatus
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.models.base import utcnow
+from app.models.document import Document
 from app.models.guardian import Guardian
 from app.models.student import Student
 from app.models.syllabus import Chapter, Syllabus
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.syllabus import (
     ChapterOut,
+    SyllabusDocumentOut,
     SyllabusCreateRequest,
     SyllabusOut,
     SyllabusUpdateRequest,
@@ -16,7 +22,15 @@ from app.schemas.syllabus import (
 _STAFF_WRITE_ROLES = (Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL)
 
 
-def to_syllabus_out(doc: Syllabus) -> SyllabusOut:
+def to_syllabus_out(doc: Syllabus, documents: dict[str, Document] | None = None) -> SyllabusOut:
+    documents = documents or {}
+    attached = [
+        SyllabusDocumentOut(
+            id=str(d.id), filename=d.original_filename, content_type=d.content_type, size_bytes=d.size_bytes
+        )
+        for d in (documents.get(i) for i in doc.document_ids)
+        if d is not None
+    ]
     return SyllabusOut(
         id=str(doc.id),
         school_id=doc.school_id,
@@ -25,12 +39,31 @@ def to_syllabus_out(doc: Syllabus) -> SyllabusOut:
         subject_id=doc.subject_id,
         title=doc.title,
         description=doc.description,
-        chapters=[ChapterOut(name=c.name, description=c.description, order=c.order) for c in doc.chapters],
+        status=doc.status,
+        chapters=[
+            ChapterOut(id=f"{doc.id}-{i}", syllabus_id=str(doc.id), name=c.name, description=c.description, order=c.order)
+            for i, c in enumerate(doc.chapters)
+        ],
+        chapters_count=len(doc.chapters),
         document_ids=doc.document_ids,
+        documents=attached,
         created_by=doc.created_by,
         created_at=doc.created_at,
         updated_at=doc.updated_at,
     )
+
+
+async def _outs(docs: list[Syllabus]) -> list[SyllabusOut]:
+    """Serialise syllabus documents together with their attached files (one lookup for the whole list)."""
+    ids: list[PydanticObjectId] = []
+    for d in docs:
+        for i in d.document_ids:
+            try:
+                ids.append(PydanticObjectId(i))
+            except Exception:
+                continue
+    found = {str(x.id): x for x in await Document.find(In(Document.id, ids)).to_list()} if ids else {}
+    return [to_syllabus_out(d, found) for d in docs]
 
 
 async def _guardian_student_ids(current: CurrentUser) -> list[str]:
@@ -63,11 +96,12 @@ async def create_syllabus(current: CurrentUser, payload: SyllabusCreateRequest) 
         title=payload.title,
         description=payload.description,
         chapters=[Chapter(name=c.name, description=c.description, order=c.order) for c in payload.chapters],
+        status=payload.status,
         document_ids=payload.document_ids,
         created_by=str(current.user.id),
     )
     await syllabus.insert()
-    return to_syllabus_out(syllabus)
+    return (await _outs([syllabus]))[0]
 
 
 async def list_syllabus(
@@ -76,8 +110,13 @@ async def list_syllabus(
     subject_id: str | None,
     academic_year_id: str | None,
     params: PageParams,
+    status: SyllabusStatus | None = None,
 ) -> PageResponse[SyllabusOut]:
     filters = [Syllabus.school_id == current.school_id]
+    if current.role in (Role.STUDENT, Role.PARENT):
+        filters.append(Syllabus.status == SyllabusStatus.PUBLISHED)  # drafts are staff-only
+    elif status:
+        filters.append(Syllabus.status == status)
 
     if current.role == Role.STUDENT:
         student = await _own_student(current)
@@ -108,9 +147,7 @@ async def list_syllabus(
 
     total = await Syllabus.find(*filters).count()
     records = await Syllabus.find(*filters).sort(-Syllabus.created_at).skip(params.skip).limit(params.page_size).to_list()
-    return PageResponse(
-        items=[to_syllabus_out(r) for r in records], total=total, page=params.page, page_size=params.page_size
-    )
+    return PageResponse(items=await _outs(records), total=total, page=params.page, page_size=params.page_size)
 
 
 async def _get_syllabus_or_404(current: CurrentUser, syllabus_id: str) -> Syllabus:
@@ -121,6 +158,8 @@ async def _get_syllabus_or_404(current: CurrentUser, syllabus_id: str) -> Syllab
 
 
 async def _check_syllabus_read_access(current: CurrentUser, syllabus: Syllabus) -> None:
+    if current.role in (Role.STUDENT, Role.PARENT) and syllabus.status != SyllabusStatus.PUBLISHED:
+        raise NotFoundError("Syllabus not found")
     if current.role == Role.STUDENT:
         student = await _own_student(current)
         if student.class_id != syllabus.class_id:
@@ -135,7 +174,7 @@ async def _check_syllabus_read_access(current: CurrentUser, syllabus: Syllabus) 
 async def get_syllabus(current: CurrentUser, syllabus_id: str) -> SyllabusOut:
     syllabus = await _get_syllabus_or_404(current, syllabus_id)
     await _check_syllabus_read_access(current, syllabus)
-    return to_syllabus_out(syllabus)
+    return (await _outs([syllabus]))[0]
 
 
 async def update_syllabus(current: CurrentUser, syllabus_id: str, payload: SyllabusUpdateRequest) -> SyllabusOut:
@@ -147,11 +186,13 @@ async def update_syllabus(current: CurrentUser, syllabus_id: str, payload: Sylla
     for field, value in data.items():
         if field == "chapters" and value is not None:
             syllabus.chapters = [Chapter(name=c["name"], description=c.get("description"), order=c["order"]) for c in value]
+        elif field in ("title", "status") and value is None:
+            continue
         else:
             setattr(syllabus, field, value)
     syllabus.updated_at = utcnow()
     await syllabus.save()
-    return to_syllabus_out(syllabus)
+    return (await _outs([syllabus]))[0]
 
 
 async def delete_syllabus(current: CurrentUser, syllabus_id: str) -> None:
@@ -159,3 +200,21 @@ async def delete_syllabus(current: CurrentUser, syllabus_id: str) -> None:
         raise PermissionDeniedError("Only teachers or school admins/principals can delete syllabus")
     syllabus = await _get_syllabus_or_404(current, syllabus_id)
     await syllabus.delete()
+
+
+async def attach_document(current: CurrentUser, syllabus_id: str, file: UploadFile) -> SyllabusDocumentOut:
+    """Upload a file and attach it to a syllabus."""
+    from app.services import upload_service
+
+    if current.role not in _STAFF_WRITE_ROLES:
+        raise PermissionDeniedError("Only teachers or school admins/principals can upload syllabus documents")
+    syllabus = await _get_syllabus_or_404(current, syllabus_id)
+    doc = await upload_service.upload_document(
+        current, file, DocumentModule.SYLLABUS_DOCUMENT, "syllabus", str(syllabus.id)
+    )
+    syllabus.document_ids.append(doc.id)
+    syllabus.updated_at = utcnow()
+    await syllabus.save()
+    return SyllabusDocumentOut(
+        id=doc.id, filename=doc.original_filename, content_type=doc.content_type, size_bytes=doc.size_bytes
+    )

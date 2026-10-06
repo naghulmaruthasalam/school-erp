@@ -20,6 +20,7 @@ async def test_login_success(client):
     await tenant.insert()
     user = User(
         school_id=str(tenant.id),
+        username="admin@example.com",
         email="admin@example.com",
         hashed_password=hash_password("secret123"),
         role=Role.SCHOOL_ADMIN,
@@ -29,7 +30,7 @@ async def test_login_success(client):
 
     r = await client.post(
         "/api/v1/auth/login",
-        json={"email": "admin@example.com", "password": "secret123", "school_code": "TS001"},
+        json={"username": "admin@example.com", "password": "secret123", "school_code": "TS001"},
     )
     assert r.status_code == 200
     body = r.json()
@@ -42,6 +43,7 @@ async def test_login_wrong_password(client):
     await tenant.insert()
     user = User(
         school_id=str(tenant.id),
+        username="admin2@example.com",
         email="admin2@example.com",
         hashed_password=hash_password("secret123"),
         role=Role.SCHOOL_ADMIN,
@@ -51,14 +53,14 @@ async def test_login_wrong_password(client):
 
     r = await client.post(
         "/api/v1/auth/login",
-        json={"email": "admin2@example.com", "password": "wrong", "school_code": "TS002"},
+        json={"username": "admin2@example.com", "password": "wrong", "school_code": "TS002"},
     )
     assert r.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_me_with_overridden_auth(client):
-    current = make_current_user(Role.STUDENT, school_id="school-1", student_id="student-1")
+    current = make_current_user(Role.STUDENT, school_id="5c0000000000000000000001", student_id="student-1")
     override_current_user(current)
 
     r = await client.get("/api/v1/auth/me")

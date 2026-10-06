@@ -71,7 +71,7 @@ async def list_books(
     search: str | None = Query(None),
     category: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     current: CurrentUser = Depends(get_current_user),
 ) -> PageResponse[dict[str, Any]]:
     return await library_service.list_books(
@@ -129,7 +129,7 @@ async def list_issues(
     borrower_id: str | None = Query(None),
     pending_only: bool = Query(False),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     current: CurrentUser = Depends(get_current_user),
 ) -> PageResponse[dict[str, Any]]:
     return await library_service.list_issues(

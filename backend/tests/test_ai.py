@@ -6,6 +6,7 @@ from app.core.enums import Role
 from app.core.security import hash_password
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.api.v1.ai import settings as ai_settings
 from tests.conftest import make_current_user, override_current_user
 
 
@@ -45,6 +46,7 @@ async def test_student_assistant_returns_model_text(client, monkeypatch):
     fake_model = MagicMock()
     fake_model.start_chat = MagicMock(return_value=_fake_chat_session("You have no pending homework."))
     monkeypatch.setattr("app.ai.assistant.get_model", lambda **kwargs: fake_model)
+    monkeypatch.setattr(ai_settings, "gemini_api_key", "test-key")
 
     r = await client.post("/api/v1/ai/student", json={"message": "What homework do I have?"})
     assert r.status_code == 200
@@ -55,7 +57,7 @@ async def test_student_assistant_returns_model_text(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ai_endpoint_rejects_wrong_role(client):
-    current = make_current_user(Role.TEACHER, school_id="school-1", teacher_id="teacher-1")
+    current = make_current_user(Role.TEACHER, school_id="5c0000000000000000000001", teacher_id="teacher-1")
     override_current_user(current)
 
     r = await client.post("/api/v1/ai/student", json={"message": "hi"})
@@ -102,6 +104,7 @@ async def test_assistant_executes_tool_call_and_persists_conversation(client, mo
     fake_model = MagicMock()
     fake_model.start_chat = MagicMock(return_value=session)
     monkeypatch.setattr("app.ai.assistant.get_model", lambda **kwargs: fake_model)
+    monkeypatch.setattr(ai_settings, "gemini_api_key", "test-key")
 
     r = await client.post("/api/v1/ai/student", json={"message": "What homework do I have pending?"})
     assert r.status_code == 200
@@ -113,3 +116,54 @@ async def test_assistant_executes_tool_call_and_persists_conversation(client, mo
     conv = await AIConversation.get(r.json()["conversation_id"])
     roles = [m.role for m in conv.messages]
     assert roles == ["user", "tool", "model"]
+
+
+@pytest.mark.asyncio
+async def test_chat_falls_back_to_builtin_assistant_without_gemini_key(client, monkeypatch):
+    tenant = Tenant(name="Test School", code="AI003")
+    await tenant.insert()
+    user = User(
+        school_id=str(tenant.id),
+        email="student3@example.com",
+        hashed_password=hash_password("secret123"),
+        role=Role.STUDENT,
+        full_name="Stu Dent Three",
+        student_id="000000000000000000000097",
+    )
+    await user.insert()
+    override_current_user(
+        make_current_user(Role.STUDENT, school_id=str(tenant.id), student_id="000000000000000000000097", user_id=str(user.id))
+    )
+    monkeypatch.setattr(ai_settings, "gemini_api_key", None)
+
+    r = await client.post("/api/v1/ai/student", json={"message": "hello"})
+    assert r.status_code == 200
+    assert r.json()["response"]
+    assert r.json()["conversation_id"]
+
+
+@pytest.mark.asyncio
+async def test_chat_falls_back_when_gemini_fails(client, monkeypatch):
+    override_current_user(make_current_user(Role.TEACHER, school_id="5c0000000000000000000001", teacher_id="000000000000000000000f01"))
+    monkeypatch.setattr(ai_settings, "gemini_api_key", "test-key")
+
+    def _boom(**kwargs):
+        raise RuntimeError("quota exceeded")
+
+    monkeypatch.setattr("app.ai.assistant.get_model", _boom)
+    r = await client.post("/api/v1/ai/teacher", json={"message": "hello"})
+    assert r.status_code == 200
+    assert r.json()["response"]
+
+
+@pytest.mark.asyncio
+async def test_generate_homework_without_key_is_a_clear_503(client, monkeypatch):
+    override_current_user(make_current_user(Role.TEACHER, school_id="5c0000000000000000000001", teacher_id="000000000000000000000f01"))
+    monkeypatch.setattr(ai_settings, "gemini_api_key", None)
+
+    r = await client.post(
+        "/api/v1/ai/generate-homework",
+        json={"subject": "Science", "grade": "Class 6", "topic": "Photosynthesis", "difficulty": "easy"},
+    )
+    assert r.status_code == 503
+    assert "GEMINI_API_KEY" in r.json()["detail"]

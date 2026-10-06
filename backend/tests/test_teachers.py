@@ -28,15 +28,15 @@ def _teacher_payload(employee_no: str = "EMP001", email: str = "teacher1@greenhi
 
 @pytest.mark.asyncio
 async def test_admin_can_create_teacher_and_provisions_login(client):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-1"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000001"))
 
     r = await client.post("/api/v1/teachers", json=_teacher_payload())
     assert r.status_code == 201
     body = r.json()
-    assert body["employee_no"] == "EMP001"
+    assert body["employee_no"].endswith("-EMP-001")  # numbers are generated: {SCHOOL INITIALS}-EMP-{SEQ}
     assert body["full_name"] == "Jane Doe"
 
-    user = await User.find_one(User.school_id == "school-1", User.email == "teacher1@greenhill.example")
+    user = await User.find_one(User.school_id == "5c0000000000000000000001", User.email == "teacher1@greenhill.example")
     assert user is not None
     assert user.role == Role.TEACHER
     assert user.teacher_id == body["id"]
@@ -44,19 +44,32 @@ async def test_admin_can_create_teacher_and_provisions_login(client):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_employee_no_conflict(client):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-2"))
+async def test_create_teacher_persists_photo_and_documents(client):
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000001"))
 
-    r1 = await client.post("/api/v1/teachers", json=_teacher_payload("DUP01", "a@greenhill.example"))
-    assert r1.status_code == 201
+    payload = {**_teacher_payload(email="photo@greenhill.example"), "photo_document_id": "doc-photo", "document_ids": ["d1", "d2"]}
+    r = await client.post("/api/v1/teachers", json=payload)
+    assert r.status_code == 201
+    assert r.json()["photo_document_id"] == "doc-photo"
+    assert r.json()["document_ids"] == ["d1", "d2"]
+    teacher = await Teacher.get(r.json()["id"])
+    assert teacher.photo_document_id == "doc-photo" and teacher.document_ids == ["d1", "d2"]
 
-    r2 = await client.post("/api/v1/teachers", json=_teacher_payload("DUP01", "b@greenhill.example"))
-    assert r2.status_code == 409
+
+@pytest.mark.asyncio
+async def test_employee_numbers_are_sequential_per_school(client):
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000002"))
+
+    r1 = await client.post("/api/v1/teachers", json=_teacher_payload("IGNORED", "a@greenhill.example"))
+    r2 = await client.post("/api/v1/teachers", json=_teacher_payload("IGNORED", "b@greenhill.example"))
+    assert r1.status_code == 201 and r2.status_code == 201
+    assert r1.json()["employee_no"].endswith("-EMP-001")
+    assert r2.json()["employee_no"].endswith("-EMP-002")
 
 
 @pytest.mark.asyncio
 async def test_non_admin_cannot_create_teacher(client):
-    override_current_user(make_current_user(Role.TEACHER, school_id="school-3"))
+    override_current_user(make_current_user(Role.TEACHER, school_id="5c0000000000000000000003"))
 
     r = await client.post("/api/v1/teachers", json=_teacher_payload())
     assert r.status_code == 403
@@ -64,7 +77,7 @@ async def test_non_admin_cannot_create_teacher(client):
 
 @pytest.mark.asyncio
 async def test_list_and_get_and_update_teacher(client):
-    override_current_user(make_current_user(Role.PRINCIPAL, school_id="school-4"))
+    override_current_user(make_current_user(Role.PRINCIPAL, school_id="5c0000000000000000000004"))
 
     created = await client.post("/api/v1/teachers", json=_teacher_payload("LST01", "lst@greenhill.example"))
     teacher_id = created.json()["id"]
@@ -79,7 +92,7 @@ async def test_list_and_get_and_update_teacher(client):
 
     r_get = await client.get(f"/api/v1/teachers/{teacher_id}")
     assert r_get.status_code == 200
-    assert r_get.json()["employee_no"] == "LST01"
+    assert r_get.json()["employee_no"].endswith("-EMP-001")
 
     r_patch = await client.patch(f"/api/v1/teachers/{teacher_id}", json={"status": "ON_LEAVE"})
     assert r_patch.status_code == 200
@@ -89,7 +102,7 @@ async def test_list_and_get_and_update_teacher(client):
 @pytest.mark.asyncio
 async def test_teacher_can_update_own_profile_but_not_others(client):
     teacher_a = Teacher(
-        school_id="school-5",
+        school_id="5c0000000000000000000005",
         employee_no="TA01",
         first_name="Alice",
         last_name="A",
@@ -99,7 +112,7 @@ async def test_teacher_can_update_own_profile_but_not_others(client):
     )
     await teacher_a.insert()
     teacher_b = Teacher(
-        school_id="school-5",
+        school_id="5c0000000000000000000005",
         employee_no="TB01",
         first_name="Bob",
         last_name="B",
@@ -109,7 +122,7 @@ async def test_teacher_can_update_own_profile_but_not_others(client):
     )
     await teacher_b.insert()
 
-    current_a = make_current_user(Role.TEACHER, school_id="school-5", teacher_id=str(teacher_a.id))
+    current_a = make_current_user(Role.TEACHER, school_id="5c0000000000000000000005", teacher_id=str(teacher_a.id))
     override_current_user(current_a)
 
     r_me = await client.get("/api/v1/teachers/me")
@@ -135,7 +148,7 @@ async def test_teacher_can_update_own_profile_but_not_others(client):
 @pytest.mark.asyncio
 async def test_tenant_isolation_on_get(client):
     teacher = Teacher(
-        school_id="school-6",
+        school_id="5c0000000000000000000006",
         employee_no="ISO01",
         first_name="Iso",
         last_name="Lated",
@@ -145,14 +158,14 @@ async def test_tenant_isolation_on_get(client):
     )
     await teacher.insert()
 
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-other"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000099"))
     r = await client.get(f"/api/v1/teachers/{teacher.id}")
     assert r.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_delete_teacher_deactivates_user(client):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-7"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000007"))
 
     created = await client.post("/api/v1/teachers", json=_teacher_payload("DEL01", "del@greenhill.example"))
     teacher_id = created.json()["id"]
@@ -163,6 +176,6 @@ async def test_delete_teacher_deactivates_user(client):
     r_get = await client.get(f"/api/v1/teachers/{teacher_id}")
     assert r_get.status_code == 404
 
-    user = await User.find_one(User.school_id == "school-7", User.email == "del@greenhill.example")
+    user = await User.find_one(User.school_id == "5c0000000000000000000007", User.email == "del@greenhill.example")
     assert user is not None
     assert user.is_active is False

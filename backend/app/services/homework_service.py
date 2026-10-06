@@ -5,7 +5,7 @@ from beanie.operators import In
 from app.core.deps import CurrentUser
 from app.core.enums import HomeworkSubmissionStatus, Role, StudentStatus
 from app.core.exceptions import NotFoundError, PermissionDeniedError, ValidationAppError
-from app.models.academic import Section
+from app.models.academic import ClassSubjectTeacher, Section, TimetableSlot
 from app.models.base import utcnow
 from app.models.guardian import Guardian
 from app.models.homework import Homework, HomeworkSubmission
@@ -96,6 +96,22 @@ async def _own_student(current: CurrentUser) -> Student:
 # ---------------------------------------------------------------------------
 
 
+async def _resolve_section_subject_teacher(school_id: str, section_id: str, subject_id: str) -> str | None:
+    assignment = await ClassSubjectTeacher.find_one(
+        ClassSubjectTeacher.school_id == school_id,
+        ClassSubjectTeacher.section_id == section_id,
+        ClassSubjectTeacher.subject_id == subject_id,
+    )
+    if assignment is not None:
+        return assignment.teacher_id
+    slot = await TimetableSlot.find_one(
+        TimetableSlot.school_id == school_id,
+        TimetableSlot.section_id == section_id,
+        TimetableSlot.subject_id == subject_id,
+    )
+    return slot.teacher_id if slot is not None else None
+
+
 async def create_homework(current: CurrentUser, payload: HomeworkCreateRequest) -> HomeworkOut:
     if current.role not in _STAFF_WRITE_ROLES:
         raise PermissionDeniedError("Only teachers or school admins/principals can create homework")
@@ -108,7 +124,12 @@ async def create_homework(current: CurrentUser, payload: HomeworkCreateRequest) 
             raise PermissionDeniedError("No teacher profile linked to this account")
         teacher_id = current.user.teacher_id
     if not teacher_id:
-        raise ValidationAppError("teacher_id is required")
+        # Admins/principals may omit the teacher: fall back to whoever teaches this subject in the section.
+        teacher_id = await _resolve_section_subject_teacher(current.school_id, payload.section_id, payload.subject_id)
+    if not teacher_id:
+        raise ValidationAppError(
+            "No teacher is assigned to this subject in the section; select a teacher (teacher_id)"
+        )
 
     homework = Homework(
         school_id=current.school_id,

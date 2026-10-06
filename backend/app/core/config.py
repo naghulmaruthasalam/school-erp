@@ -32,6 +32,17 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model_name: str = "gemini-2.0-flash"
 
+    # How long a locally-served file link (used when S3 isn't configured) stays valid.
+    local_file_url_expire_seconds: int = 3600
+
+    # Outbound email (password-reset OTPs). Leave smtp_host empty to only log messages.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_use_tls: bool = True
+    smtp_from: str = "Cogniitec School ERP <no-reply@cogniitec.com>"
+
     # PayU (India) payment gateway.
     # Checkout (classic hosted-checkout hash flow) + Refund v1 (postservice.php,
     # command=cancel_refund_transaction) both authenticate with key+salt.
@@ -48,6 +59,7 @@ class Settings(BaseSettings):
     payu_client_secret: str | None = None
     payu_oauth_token_url: str = "https://uat-accounts.payu.in/oauth/token"
 
+    super_admin_username: str = "superadmin"
     super_admin_email: str = "superadmin@cogniitec.com"
     super_admin_password: str = "change-me"
 

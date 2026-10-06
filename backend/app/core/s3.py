@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,7 +51,7 @@ def build_object_key(school_id: str, module: DocumentModule, original_filename: 
 def upload_bytes(key: str, data: bytes, content_type: str) -> None:
     if _use_local_storage:
         _ensure_local_dir()
-        file_path = LOCAL_UPLOADS_DIR / key.replace("/", "_")
+        file_path = LOCAL_UPLOADS_DIR / local_file_name(key)
         file_path.write_bytes(data)
         return
     client = get_s3_client()
@@ -62,7 +65,7 @@ def upload_bytes(key: str, data: bytes, content_type: str) -> None:
 
 def delete_object(key: str) -> None:
     if _use_local_storage:
-        file_path = LOCAL_UPLOADS_DIR / key.replace("/", "_")
+        file_path = LOCAL_UPLOADS_DIR / local_file_name(key)
         if file_path.exists():
             file_path.unlink()
         return
@@ -70,9 +73,27 @@ def delete_object(key: str) -> None:
     client.delete_object(Bucket=settings.s3_bucket_name, Key=key)
 
 
+def local_file_name(key: str) -> str:
+    return key.replace("/", "_")
+
+
+def _local_signature(name: str, expires: int) -> str:
+    return hmac.new(settings.jwt_secret_key.encode(), f"{name}:{expires}".encode(), hashlib.sha256).hexdigest()
+
+
+def verify_local_signature(name: str, expires: int, signature: str) -> bool:
+    """Checks a locally-served file link (the stand-in for an S3 presigned URL)."""
+    if expires < int(time.time()):
+        return False
+    return hmac.compare_digest(_local_signature(name, expires), signature)
+
+
 def generate_presigned_get_url(key: str, expires_in: int | None = None) -> str:
     if _use_local_storage:
-        return f"/api/v1/uploads/local/{key.replace('/', '_')}"
+        name = local_file_name(key)
+        expires = int(time.time()) + (expires_in or settings.local_file_url_expire_seconds)
+        base = settings.backend_base_url.rstrip("/") + settings.api_v1_prefix
+        return f"{base}/uploads/local/{name}?expires={expires}&sig={_local_signature(name, expires)}"
     client = get_s3_client()
     return client.generate_presigned_url(
         "get_object",

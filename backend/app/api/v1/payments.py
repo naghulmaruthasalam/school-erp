@@ -1,16 +1,27 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import RedirectResponse
 
 from app.core.deps import CurrentUser, require_tenant_user
+from app.schemas.common import PageParams, PageResponse
 from app.schemas.payment import (
     PayUInitiateRequest,
     PayUInitiateResponse,
     PayURefundRequest,
     PayURefundResponse,
 )
-from app.services import payment_service
+from app.services import fee_service, payment_service
 
 router = APIRouter(prefix="/payments", tags=["payments"])
+
+
+@router.get("", response_model=PageResponse[dict])
+async def list_payments(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=500),
+    current: CurrentUser = Depends(require_tenant_user),
+) -> PageResponse[dict]:
+    """School payments list for the admin fee screens."""
+    return await fee_service.list_payments(current, PageParams(page=page, page_size=page_size))
 
 
 @router.post("/payu/initiate", response_model=PayUInitiateResponse, status_code=201)

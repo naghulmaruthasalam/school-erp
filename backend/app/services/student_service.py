@@ -7,6 +7,7 @@ from app.core.exceptions import NotFoundError, PermissionDeniedError, Validation
 from app.models.academic import ClassSubjectTeacher, Section
 from app.models.guardian import Guardian
 from app.models.student import Student
+from app.models.teacher import Teacher
 from app.models.tenant import Tenant
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.student import StudentCreateRequest, StudentOut, StudentStatusUpdateRequest, StudentUpdateRequest
@@ -66,6 +67,26 @@ async def _teacher_allowed_section_ids(current: CurrentUser) -> set[str]:
         Section.class_teacher_id == teacher_id,
     ).to_list()
     section_ids.update(str(s.id) for s in class_teacher_sections)
+
+    # Sections the teacher is timetabled in, and every section of the classes
+    # assigned to them (the same rule attendance and homework use).
+    from app.models.academic import TimetableSlot
+
+    slots = await TimetableSlot.find(
+        TimetableSlot.school_id == current.school_id,
+        TimetableSlot.teacher_id == teacher_id,
+    ).to_list()
+    section_ids.update(slot.section_id for slot in slots)
+
+    from bson import ObjectId
+
+    teacher = await Teacher.get(teacher_id) if ObjectId.is_valid(teacher_id) else None
+    if teacher is not None and teacher.assigned_class_ids:
+        assigned = await Section.find(
+            Section.school_id == current.school_id,
+            In(Section.class_id, list(teacher.assigned_class_ids)),
+        ).to_list()
+        section_ids.update(str(s.id) for s in assigned)
 
     return section_ids
 

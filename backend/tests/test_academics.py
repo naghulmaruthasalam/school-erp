@@ -115,3 +115,23 @@ async def test_setting_new_current_academic_year_unsets_previous(client):
 
     r_get1 = await client.get(f"/api/v1/academics/years/{year1['id']}")
     assert r_get1.json()["is_current"] is False
+
+
+@pytest.mark.asyncio
+async def test_duplicate_year_class_and_section_names_conflict(client):
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id=SCHOOL_A))
+
+    year_body = {"name": "2030-2031", "start_date": "2030-06-01", "end_date": "2031-04-30"}
+    year = (await client.post("/api/v1/academics/years", json=year_body)).json()
+    assert (await client.post("/api/v1/academics/years", json=year_body)).status_code == 409
+
+    cls_body = {"academic_year_id": year["id"], "name": "Class 3", "order": 3}
+    cls = (await client.post("/api/v1/academics/classes", json=cls_body)).json()
+    assert (await client.post("/api/v1/academics/classes", json=cls_body)).status_code == 409
+
+    sec_body = {"class_id": cls["id"], "name": "A"}
+    assert (await client.post("/api/v1/academics/sections", json=sec_body)).status_code == 201
+    assert (await client.post("/api/v1/academics/sections", json=sec_body)).status_code == 409
+    # Same names are fine in another school
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id=SCHOOL_B))
+    assert (await client.post("/api/v1/academics/years", json=year_body)).status_code == 201

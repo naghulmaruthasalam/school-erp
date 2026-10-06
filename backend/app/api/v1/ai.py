@@ -27,20 +27,34 @@ class HomeworkGenerateResponse(BaseModel):
 
 
 async def _chat(current: CurrentUser, payload: AiChatRequest) -> AiChatResponse:
-    """Process chat using local chatbot service (works with school data)."""
+    """Answer with Gemini (function calling over the role's tools) when GEMINI_API_KEY is set;
+    otherwise, or if Gemini fails, answer with the built-in assistant that reads school data."""
+    if settings.gemini_api_key:
+        try:
+            from app.ai.assistant import run_assistant
+            from app.ai.tools import get_tools_for_role
+
+            tools, dispatch = get_tools_for_role(current.role)
+            text, conversation_id = await run_assistant(
+                current, payload.message, tools, dispatch, payload.conversation_id
+            )
+            return AiChatResponse(response=text, conversation_id=conversation_id)
+        except Exception:
+            logger.exception("Gemini assistant failed; falling back to the built-in assistant")
+
     try:
-        # Use local chatbot that queries school database
         response_text = await process_chat(current, payload.message)
-        return AiChatResponse(
-            response=response_text,
-            conversation_id=payload.conversation_id or str(uuid.uuid4()),
-        )
-    except Exception as exc:
+    except Exception:
         logger.exception("Chatbot error")
-        return AiChatResponse(
-            response="Sorry, I encountered an error. Please try again later.\n\nFor technical issues or further clarification:\n📞 Phone: +91 98765 43210\n📧 Email: support@cogniitec.com",
-            conversation_id=payload.conversation_id or str(uuid.uuid4()),
+        response_text = (
+            "Sorry, I encountered an error. Please try again later.\n\n"
+            "For technical issues or further clarification:\n"
+            "📞 Phone: +91 98765 43210\n📧 Email: support@cogniitec.com"
         )
+    return AiChatResponse(
+        response=response_text,
+        conversation_id=payload.conversation_id or str(uuid.uuid4()),
+    )
 
 
 @router.post("/student", response_model=AiChatResponse)
@@ -85,6 +99,11 @@ async def generate_homework_content(
     current: CurrentUser = Depends(require_roles(Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL)),
 ) -> HomeworkGenerateResponse:
     """Generate homework using AI based on subject, grade, topic."""
+    if not settings.gemini_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="The AI homework generator is not configured. Set GEMINI_API_KEY on the server.",
+        )
     try:
         from app.ai.assistant import generate_homework
         content = await generate_homework(

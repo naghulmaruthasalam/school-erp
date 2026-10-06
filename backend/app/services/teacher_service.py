@@ -93,6 +93,8 @@ async def create_teacher(school_id: str, payload: TeacherCreateRequest, actor_us
         assigned_class_ids=payload.assigned_class_ids,
         joining_date=payload.joining_date,
         status=payload.status,
+        photo_document_id=payload.photo_document_id,
+        document_ids=payload.document_ids,
     )
     await teacher.insert()
 

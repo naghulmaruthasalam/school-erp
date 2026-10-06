@@ -101,6 +101,9 @@ class InvoiceOut(BaseModel):
     total_amount: float
     amount_paid: float
     outstanding_amount: float
+    paid_amount: float = 0  # alias of amount_paid, kept for older screens
+    invoice_number: str = ""
+    student_name: str | None = None
     due_date: date
     status: InvoiceStatus
     created_at: datetime

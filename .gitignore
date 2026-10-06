@@ -1,28 +1,42 @@
+# --- Secrets and local configuration (never commit) ---
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*credentials*.json
+.aws/
+.claude/settings.local.json
+
+# --- Local data ---
+uploads/
+**/uploads/
+*.sqlite3
+*.db
+
+# --- Dependencies and build output ---
 node_modules/
+**/node_modules/
 venv/
 .venv/
-__pycache__/
-*.pyc
-.env
-*.sqlite3
-*.db
-dist/
-build/
-.idea/
-.vscode/
 .venv*/
 **/.venv*/
-venv/
 env/
-**/node_modules/
+__pycache__/
 **/__pycache__/
 *.pyc
-.env
-**/.env
-*.sqlite3
-*.db
+.pytest_cache/
 dist/
 build/
+coverage/
 
-# Local Claude Code settings
-.claude/settings.local.json
+# --- Editors / OS ---
+.idea/
+.vscode/
+.DS_Store

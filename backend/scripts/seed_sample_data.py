@@ -56,14 +56,11 @@ CREDENTIALS = {
 
 
 async def init_db():
-    client = AsyncIOMotorClient(settings.mongodb_uri)
-    await init_beanie(
-        database=client[settings.mongodb_db_name],
-        document_models=[
-            User, Tenant, Student, Teacher, Guardian,
-            AcademicYear, Class, Section, Subject
-        ]
-    )
+    from app.core.database import get_all_models
+    from app.core.tenant_db import get_client
+
+    client = get_client()
+    await init_beanie(database=client[settings.mongodb_db_name], document_models=get_all_models())
     return client
 
 
@@ -93,7 +90,12 @@ async def create_super_admin():
     # Check by email since that's the unique constraint
     existing = await User.find_one(User.email == "superadmin@cogniitec.com")
     if existing:
-        print(f"Super Admin already exists: {creds['username']}")
+        # The API creates a super admin on startup; give it the documented demo login.
+        existing.username = creds["username"]
+        existing.hashed_password = hash_password(creds["password"])
+        existing.must_change_password = False
+        await existing.save()
+        print(f"Super Admin ready: {creds['username']} / {creds['password']}")
         return
 
     user = User(
@@ -340,6 +342,27 @@ async def create_student_and_parent(school_id: str, year_id: str, class_id: str,
     print(f"Created Parent: {parent_creds['username']} / {parent_creds['password']}")
 
 
+async def seed_all() -> None:
+    """Create the sample school, accounts and academic data (idempotent).
+
+    Assumes Beanie is already initialised, so it can also run inside the API
+    process (SEED_DEMO_DATA=true).
+    """
+    school_id = await create_school()
+
+    await create_super_admin()
+    await create_school_admin(school_id)
+    await create_principal(school_id)
+
+    year_id, class_id, section_id, subject_ids = await create_academic_structure(school_id)
+    await create_teacher(school_id, class_id, subject_ids)
+    await create_student_and_parent(school_id, year_id, class_id, section_id)
+
+    from scripts.seed_demo_content import seed_demo_content
+
+    await seed_demo_content(school_id)
+
+
 async def main():
     print("\n" + "="*60)
     print("COGNIITEC SCHOOL ERP - SAMPLE DATA SEEDER")
@@ -348,27 +371,12 @@ async def main():
     client = await init_db()
 
     try:
-        # Create school
-        school_id = await create_school()
-
-        # Create users
-        await create_super_admin()
-        await create_school_admin(school_id)
-        await create_principal(school_id)
-
-        # Create academic structure
-        year_id, class_id, section_id, subject_ids = await create_academic_structure(school_id)
-
-        # Create teacher
-        await create_teacher(school_id, class_id, subject_ids)
-
-        # Create student and parent
-        await create_student_and_parent(school_id, year_id, class_id, section_id)
+        await seed_all()
 
         print("\n" + "="*60)
         print("SAMPLE CREDENTIALS")
         print("="*60)
-        print(f"\nSchool: {SCHOOL_NAME}\n")
+        print(f"\nSchool: {SCHOOL_NAME} (school code: DEMO)\n")
         print(f"{'Role':<15} {'Username':<20} {'Password':<15}")
         print("-"*50)
         print(f"{'Super Admin':<15} {'superadmin':<20} {'Super@123':<15}")

@@ -1,13 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi.responses import RedirectResponse
 
 from app.core.deps import CurrentUser, require_tenant_user
+from app.core.enums import SyllabusStatus
 from app.schemas.common import PageParams, PageResponse
+from app.schemas.document import PresignedUrlOut
 from app.schemas.syllabus import (
     SyllabusCreateRequest,
+    SyllabusDocumentOut,
     SyllabusOut,
     SyllabusUpdateRequest,
 )
-from app.services import syllabus_service
+from app.services import syllabus_service, upload_service
 
 router = APIRouter(prefix="/syllabus", tags=["syllabus"])
 
@@ -25,10 +29,35 @@ async def list_syllabus(
     class_id: str | None = None,
     subject_id: str | None = None,
     academic_year_id: str | None = None,
+    status: SyllabusStatus | None = None,
     params: PageParams = Depends(),
     current: CurrentUser = Depends(require_tenant_user),
 ) -> PageResponse[SyllabusOut]:
-    return await syllabus_service.list_syllabus(current, class_id, subject_id, academic_year_id, params)
+    return await syllabus_service.list_syllabus(current, class_id, subject_id, academic_year_id, params, status)
+
+
+# Fixed paths first, so "documents" is never read as a syllabus id.
+
+
+@router.get("/documents/{document_id}/url", response_model=PresignedUrlOut)
+async def syllabus_document_url(
+    document_id: str, current: CurrentUser = Depends(require_tenant_user)
+) -> PresignedUrlOut:
+    return PresignedUrlOut(url=await upload_service.get_document_url(current, document_id))
+
+
+@router.get("/documents/{document_id}/download")
+async def download_syllabus_document(document_id: str, current: CurrentUser = Depends(require_tenant_user)):
+    return RedirectResponse(url=await upload_service.get_document_url(current, document_id))
+
+
+@router.post("/{syllabus_id}/documents", response_model=SyllabusDocumentOut, status_code=201)
+async def upload_syllabus_document(
+    syllabus_id: str,
+    file: UploadFile = File(...),
+    current: CurrentUser = Depends(require_tenant_user),
+) -> SyllabusDocumentOut:
+    return await syllabus_service.attach_document(current, syllabus_id, file)
 
 
 @router.get("/{syllabus_id}", response_model=SyllabusOut)

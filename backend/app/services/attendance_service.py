@@ -406,3 +406,47 @@ async def staff_attendance_summary(
             )
         )
     return sorted(summaries, key=lambda s: s.teacher_id)
+
+
+async def attendance_stats(
+    current: CurrentUser,
+    day: date | None = None,
+    class_id: str | None = None,
+    section_id: str | None = None,
+) -> dict:
+    """Headline numbers for one day: enrolled students, present/late/absent and the attendance rate."""
+    day = day or date.today()
+
+    student_filters = [Student.school_id == current.school_id, Student.status == "ACTIVE"]
+    section_ids: list[str] | None = None
+    if section_id:
+        student_filters.append(Student.section_id == section_id)
+        section_ids = [section_id]
+    elif class_id:
+        student_filters.append(Student.class_id == class_id)
+        section_ids = [str(s.id) for s in await Section.find(Section.school_id == current.school_id, Section.class_id == class_id).to_list()]
+    total_students = await Student.find(*student_filters).count()
+
+    record_filters = [StudentAttendance.school_id == current.school_id, StudentAttendance.date == day]
+    if section_ids is not None:
+        record_filters.append(In(StudentAttendance.section_id, section_ids))
+    records = await StudentAttendance.find(*record_filters).to_list()
+
+    counts = {s.value: 0 for s in AttendanceStatus}
+    for r in records:
+        counts[r.status.value] += 1
+    present = counts[AttendanceStatus.PRESENT.value]
+    late = counts[AttendanceStatus.LATE.value]
+    absent = counts[AttendanceStatus.ABSENT.value]
+    marked = len(records)
+    rate = round((present + late + 0.5 * counts[AttendanceStatus.HALF_DAY.value]) / marked * 100, 1) if marked else 0.0
+    return {
+        "date": day.isoformat(),
+        "total_students": total_students,
+        "marked": marked,
+        "present_today": present,
+        "late_today": late,
+        "absent_today": absent,
+        "attendance_rate": rate,
+        "attendance_percentage": rate,
+    }

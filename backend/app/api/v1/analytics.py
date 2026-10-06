@@ -40,6 +40,21 @@ async def get_attendance_daily(
     return await analytics_service.attendance_present_absent_trend(current, days)
 
 
+@router.get("/recent-activity")
+async def get_recent_activity(
+    limit: int = 8,
+    current: CurrentUser = Depends(require_roles(Role.SCHOOL_ADMIN, Role.PRINCIPAL)),
+) -> list[dict[str, Any]]:
+    return await analytics_service.recent_activity(current, limit)
+
+
+@router.get("/fee-by-class")
+async def get_fee_by_class(
+    current: CurrentUser = Depends(require_roles(Role.SCHOOL_ADMIN, Role.PRINCIPAL)),
+) -> list[dict[str, Any]]:
+    return await analytics_service.fee_by_class(current)
+
+
 @router.get("/pending-fees")
 async def get_pending_fees(
     current: CurrentUser = Depends(require_roles(Role.SCHOOL_ADMIN, Role.PRINCIPAL)),

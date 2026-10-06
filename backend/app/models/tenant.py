@@ -19,6 +19,9 @@ class Tenant(Document):
     postal_code: str | None = None
     phone: str | None = None
     email: str | None = None
+    website: str | None = None
+    currency: str = "INR"
+    timezone: str = "Asia/Kolkata"
     logo_document_id: str | None = None
     academic_year_start_month: int = Field(default=6, ge=1, le=12)
     is_active: bool = True

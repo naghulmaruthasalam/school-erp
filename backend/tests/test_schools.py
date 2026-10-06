@@ -27,6 +27,8 @@ def _school_payload(code: str = "GHS001") -> dict:
         "admin_full_name": "Alice Admin",
         "admin_email": "alice@greenhill.example",
         "admin_phone": "8888888888",
+        "admin_password": "Admin@12345",
+        "admin_confirm_password": "Admin@12345",
     }
 
 
@@ -44,19 +46,20 @@ async def test_super_admin_can_create_school_and_provisions_admin(client):
     assert admin_user is not None
     assert admin_user.role == Role.SCHOOL_ADMIN
     assert admin_user.school_id == body["school"]["id"]
-    assert admin_user.must_change_password is True
+    assert admin_user.must_change_password is False  # the admin chose their own password
+    assert admin_user.username == "alice@greenhill.example"
 
 
 @pytest.mark.asyncio
 async def test_non_super_admin_forbidden(client):
-    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="school-1"))
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id="5c0000000000000000000001"))
 
     r = await client.post("/api/v1/schools", json=_school_payload())
     assert r.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_duplicate_school_code_conflict(client):
+async def test_duplicate_school_code_gets_a_fresh_code(client):
     override_current_user(make_current_user(Role.SUPER_ADMIN, school_id=None))
 
     r1 = await client.post("/api/v1/schools", json=_school_payload("DUP001"))
@@ -66,7 +69,8 @@ async def test_duplicate_school_code_conflict(client):
         "/api/v1/schools",
         json=_school_payload("DUP001") | {"admin_email": "someoneelse@greenhill.example"},
     )
-    assert r2.status_code == 409
+    assert r2.status_code == 201
+    assert r2.json()["school"]["code"] != "DUP001"
 
 
 @pytest.mark.asyncio
@@ -105,7 +109,8 @@ async def test_public_registration_requires_no_auth_and_provisions_admin(client)
 
 
 @pytest.mark.asyncio
-async def test_public_registration_rejects_duplicate_code(client):
-    await client.post("/api/v1/schools/register", json=_school_payload("REG002"))
-    r = await client.post("/api/v1/schools/register", json=_school_payload("REG002"))
-    assert r.status_code == 409
+async def test_public_registration_never_reuses_a_school_code(client):
+    r1 = await client.post("/api/v1/schools/register", json=_school_payload("REG002"))
+    r2 = await client.post("/api/v1/schools/register", json=_school_payload("REG002"))
+    assert r1.status_code == 201 and r2.status_code == 201
+    assert r1.json()["school"]["code"] != r2.json()["school"]["code"]

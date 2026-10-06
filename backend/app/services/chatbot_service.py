@@ -1,409 +1,475 @@
-"""Local chatbot service that works with school data without external AI APIs."""
+"""Built-in assistant.
+
+Answers from live school data without any external AI service. It is the fallback used when
+GEMINI_API_KEY isn't configured (or Gemini is unavailable), so the chat widget always works.
+
+Each answer is produced by the same permission-checked tools the Gemini assistant uses
+(app/ai/tools.py) or by the same services behind the REST API, so a user can only ever hear
+about data they are allowed to see.
+"""
+
+import logging
 import re
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Awaitable, Callable
 
+from app.ai.tools import get_tools_for_role
 from app.core.deps import CurrentUser
 from app.core.enums import Role
-from app.models.academic import AcademicYear, Class, Section, Subject, TimetableSlot
-from app.models.attendance import StudentAttendance
-from app.models.fee import Invoice
-from app.models.homework import Homework
+from app.core.exceptions import NotFoundError, PermissionDeniedError
+from app.models.academic import Class, Section, Subject
 from app.models.notification import Notification
-from app.models.student import Student
-from app.models.teacher import Teacher
-from app.models.leave import LeaveRequest
+from app.schemas.common import PageParams
+from app.services import attendance_service, fee_service
+
+logger = logging.getLogger(__name__)
 
 SUPPORT_PHONE = "+91 98765 43210"
 SUPPORT_EMAIL = "support@cogniitec.com"
-SUPPORT_MESSAGE = f"\n\nFor technical issues or further clarification, please contact:\n📞 Phone: {SUPPORT_PHONE}\n📧 Email: {SUPPORT_EMAIL}"
+SUPPORT_MESSAGE = (
+    "\n\nFor technical issues or further clarification, please contact:"
+    f"\n📞 Phone: {SUPPORT_PHONE}\n📧 Email: {SUPPORT_EMAIL}"
+)
+
+DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
-async def get_school_stats(school_id: str) -> dict[str, Any]:
-    """Get basic school statistics."""
-    total_students = await Student.find(Student.school_id == school_id).count()
-    total_teachers = await Teacher.find(Teacher.school_id == school_id).count()
-    total_classes = await Class.find(Class.school_id == school_id).count()
-    return {
-        "total_students": total_students,
-        "total_teachers": total_teachers,
-        "total_classes": total_classes,
-    }
+# ---------------------------------------------------------------------------
+# Intent matching
+# ---------------------------------------------------------------------------
 
-
-async def get_student_info(current: CurrentUser) -> dict[str, Any] | None:
-    """Get current student's information."""
-    if current.role != Role.STUDENT:
-        return None
-    student = await Student.find_one(Student.user_id == str(current.user.id))
-    if not student:
-        return None
-    return {
-        "name": current.user.full_name,
-        "admission_no": student.admission_no,
-        "class_id": student.class_id,
-        "section_id": student.section_id,
-    }
-
-
-async def get_student_attendance(current: CurrentUser, days: int = 30) -> dict[str, Any]:
-    """Get student's attendance summary."""
-    student = await Student.find_one(Student.user_id == str(current.user.id))
-    if not student:
-        return {"error": "Student not found"}
-
-    records = await StudentAttendance.find(
-        StudentAttendance.student_id == str(student.id),
-        StudentAttendance.school_id == current.school_id,
-    ).to_list()
-
-    total = len(records)
-    present = sum(1 for r in records if r.status.value == "PRESENT")
-    absent = sum(1 for r in records if r.status.value == "ABSENT")
-
-    return {
-        "total_days": total,
-        "present": present,
-        "absent": absent,
-        "percentage": round((present / total * 100), 1) if total > 0 else 0,
-    }
-
-
-async def get_student_fees(current: CurrentUser) -> dict[str, Any]:
-    """Get student's fee status."""
-    student = await Student.find_one(Student.user_id == str(current.user.id))
-    if not student:
-        return {"error": "Student not found"}
-
-    invoices = await Invoice.find(
-        Invoice.student_id == str(student.id),
-        Invoice.school_id == current.school_id,
-    ).to_list()
-
-    total_due = sum(i.total_amount for i in invoices)
-    total_paid = sum(i.paid_amount for i in invoices)
-    pending = total_due - total_paid
-
-    return {
-        "total_due": total_due,
-        "total_paid": total_paid,
-        "pending": pending,
-        "invoices_count": len(invoices),
-    }
-
-
-async def get_pending_homework(current: CurrentUser) -> list[dict]:
-    """Get pending homework for student."""
-    student = await Student.find_one(Student.user_id == str(current.user.id))
-    if not student:
-        return []
-
-    homework = await Homework.find(
-        Homework.section_id == student.section_id,
-        Homework.school_id == current.school_id,
-        Homework.due_date >= date.today(),
-    ).to_list()
-
-    return [
-        {"title": h.title, "subject_id": h.subject_id, "due_date": h.due_date.isoformat()}
-        for h in homework[:5]
-    ]
-
-
-async def get_recent_notifications(school_id: str, limit: int = 3) -> list[dict]:
-    """Get recent notifications."""
-    notifications = await Notification.find(
-        Notification.school_id == school_id,
-        Notification.is_published == True,
-    ).sort(-Notification.created_at).limit(limit).to_list()
-
-    return [
-        {"title": n.title, "type": n.notification_type.value, "date": n.created_at.isoformat() if n.created_at else ""}
-        for n in notifications
-    ]
-
-
-async def get_teacher_classes(current: CurrentUser) -> dict[str, Any]:
-    """Get teacher's assigned classes."""
-    teacher = await Teacher.find_one(Teacher.user_id == str(current.user.id))
-    if not teacher:
-        return {"error": "Teacher not found"}
-
-    slots = await TimetableSlot.find(
-        TimetableSlot.teacher_id == str(teacher.id),
-        TimetableSlot.school_id == current.school_id,
-    ).to_list()
-
-    return {
-        "total_periods": len(slots),
-        "unique_sections": len(set(s.section_id for s in slots)),
-    }
-
-
-async def get_leave_status(current: CurrentUser) -> dict[str, Any]:
-    """Get leave request status."""
-    user_id = str(current.user.id)
-
-    leaves = await LeaveRequest.find(
-        LeaveRequest.user_id == user_id,
-        LeaveRequest.school_id == current.school_id,
-    ).to_list()
-
-    pending = sum(1 for l in leaves if l.status.value == "PENDING")
-    approved = sum(1 for l in leaves if l.status.value == "APPROVED")
-
-    return {
-        "total": len(leaves),
-        "pending": pending,
-        "approved": approved,
-    }
+# Order matters: the first matching intent wins, so specific nouns come before generic ones.
+_INTENTS: list[tuple[str, str]] = [
+    ("greeting", r"\b(hi|hello|hey|namaste|good (morning|afternoon|evening))\b"),
+    ("thanks", r"\b(thanks?|thank you)\b"),
+    ("help", r"\b(help|support|what can you do|contact)\b"),
+    ("homework", r"\b(homework|assignments?|pending work)\b"),
+    ("attendance", r"\b(attendance|present|absent|absentees?)\b"),
+    ("fees", r"\b(fees?|payments?|invoices?|dues?|outstanding|collected|collection)\b"),
+    ("exams", r"\b(exams?|tests?|results?|marks|grades?)\b"),
+    ("timetable", r"\b(timetable|schedule|periods?|classes|class today|my class)\b"),
+    ("events", r"\b(events?|holidays?|calendar)\b"),
+    ("notifications", r"\b(notifications?|announcements?|notices?|circulars?)\b"),
+    ("leave", r"\b(leave|day off)\b"),
+    ("admissions", r"\b(admissions?|applications?)\b"),
+    ("platform", r"\b(schools|platform|all users|audit)\b"),
+    ("school_info", r"\b(school|students?|teachers?|staff|summary|overview|statistics|stats|how many)\b"),
+]
 
 
 def match_intent(message: str) -> str:
-    """Simple intent matching based on keywords."""
     msg = message.lower()
-
-    # Greetings
-    if any(w in msg for w in ["hi", "hello", "hey", "good morning", "good afternoon"]):
-        return "greeting"
-
-    # Platform/Schools management (Super Admin)
-    if any(w in msg for w in ["schools", "all schools", "manage schools", "create school", "add school"]):
-        return "schools_management"
-
-    # Platform users (Super Admin)
-    if any(w in msg for w in ["all users", "platform users", "user directory", "users list"]):
-        return "platform_users"
-
-    # Audit logs (Super Admin)
-    if any(w in msg for w in ["audit", "audit log", "activity log", "logs", "track activity"]):
-        return "audit_logs"
-
-    # Platform analytics (Super Admin)
-    if any(w in msg for w in ["platform stats", "platform analytics", "overview", "dashboard stats"]):
-        return "platform_analytics"
-
-    # Attendance
-    if any(w in msg for w in ["attendance", "present", "absent", "attendance percentage"]):
-        return "attendance"
-
-    # Fees
-    if any(w in msg for w in ["fee", "fees", "payment", "due", "pending fee", "pay"]):
-        return "fees"
-
-    # Homework
-    if any(w in msg for w in ["homework", "assignment", "pending work", "due work"]):
-        return "homework"
-
-    # Timetable/Schedule
-    if any(w in msg for w in ["timetable", "schedule", "class timing", "period"]):
-        return "timetable"
-
-    # Leave
-    if any(w in msg for w in ["leave", "leave status", "leave request", "day off"]):
-        return "leave"
-
-    # Notifications/Announcements
-    if any(w in msg for w in ["notification", "announcement", "notice", "circular"]):
-        return "notifications"
-
-    # School info
-    if any(w in msg for w in ["school", "students count", "teachers count", "statistics"]):
-        return "school_info"
-
-    # Help
-    if any(w in msg for w in ["help", "support", "contact", "issue", "problem"]):
-        return "help"
-
-    # Thank you
-    if any(w in msg for w in ["thank", "thanks", "thank you"]):
-        return "thanks"
-
+    for intent, pattern in _INTENTS:
+        if re.search(pattern, msg):
+            return intent
     return "unknown"
 
 
-def get_greeting_for_role(name: str, role: Role) -> str:
-    """Get role-appropriate greeting message."""
-    if role == Role.SUPER_ADMIN:
-        return f"""Hello {name}! 👋 Welcome to Cogniitec Platform Assistant.
+# ---------------------------------------------------------------------------
+# Small helpers
+# ---------------------------------------------------------------------------
 
-As a **Super Admin**, you can manage:
-• 🏫 Schools - Create, view, and manage schools
-• 👥 Users - View platform-wide user directory
-• 📊 Analytics - Platform statistics and insights
-• 📋 Audit Logs - Track platform activities
-• ⚙️ Settings - Platform configuration
 
-How can I assist you today?"""
-    elif role == Role.SCHOOL_ADMIN:
-        return f"""Hello {name}! 👋 Welcome to Cogniitec School Assistant.
+async def _subject_names(school_id: str) -> dict[str, str]:
+    return {str(s.id): s.name for s in await Subject.find(Subject.school_id == school_id).to_list()}
 
-As a **School Admin**, you can manage:
-• 👨‍🎓 Students & Teachers - Staff management
-• 📚 Academics - Classes, subjects, timetables
-• 💰 Fees - Fee structures and collections
-• 📊 Attendance - Track attendance records
-• 📢 Notifications - Announcements and circulars
 
-How can I help you today?"""
-    elif role == Role.PRINCIPAL:
-        return f"""Hello {name}! 👋 Welcome to Cogniitec School Assistant.
+async def _section_labels(school_id: str) -> dict[str, str]:
+    classes = {str(c.id): c.name for c in await Class.find(Class.school_id == school_id).to_list()}
+    return {
+        str(s.id): f"{classes.get(s.class_id, '')} {s.name}".strip()
+        for s in await Section.find(Section.school_id == school_id).to_list()
+    }
 
-As a **Principal**, you can:
-• 📊 View Analytics - School performance metrics
-• 👥 Staff Overview - Teacher and staff management
-• 📋 Approvals - Leave requests and admissions
-• 📢 Announcements - School-wide communications
 
-How can I assist you today?"""
-    elif role == Role.TEACHER:
-        return f"""Hello {name}! 👋 Welcome to Cogniitec School Assistant.
+async def _tool(current: CurrentUser, name: str, **args: Any) -> Any:
+    _, dispatch = get_tools_for_role(current.role)
+    fn = dispatch.get(name)
+    if fn is None:
+        raise PermissionDeniedError(f"This assistant can't run '{name}' for your role.")
+    return await fn(current, args)
 
-As a **Teacher**, you can:
-• 📊 Attendance - Mark and view attendance
-• 📚 Homework - Assign and track homework
-• 📝 Exams - Manage marks and grades
-• 📅 Timetable - View your schedule
-• 📋 Leave - Submit leave requests
 
-What would you like to know?"""
-    elif role == Role.STUDENT:
-        return f"""Hello {name}! 👋 Welcome to Cogniitec School Assistant.
+def _wants_week(message: str) -> bool:
+    return bool(re.search(r"\b(week|weekly|timetable|schedule|all days)\b", message.lower())) and "today" not in message.lower()
 
-You can ask me about:
-• 📊 Attendance - Check your attendance
-• 💰 Fees - View fee status
-• 📚 Homework - Pending assignments
-• 📢 Notifications - School announcements
-• 📅 Timetable - Your class schedule
 
-How can I help you today?"""
-    elif role == Role.PARENT:
-        return f"""Hello {name}! 👋 Welcome to Cogniitec School Assistant.
+def _money(value: float) -> str:
+    """Rupees with Indian digit grouping (12,34,567)."""
+    n = int(round(value))
+    sign = "-" if n < 0 else ""
+    digits = str(abs(n))
+    head, tail = digits[:-3], digits[-3:]
+    groups = []
+    while len(head) > 2:
+        groups.insert(0, head[-2:])
+        head = head[:-2]
+    if head:
+        groups.insert(0, head)
+    return f"{sign}₹" + ",".join([*groups, tail] if groups else [tail])
 
-You can check your child's:
-• 📊 Attendance - Attendance records
-• 💰 Fees - Fee payment status
-• 📚 Homework - Pending assignments
-• 📢 Notifications - School updates
-• 📋 Leave - Leave request status
 
-What would you like to know?"""
+def _fmt_date(value: str | date | None) -> str:
+    if not value:
+        return "-"
+    if isinstance(value, str):
+        value = date.fromisoformat(value[:10])
+    return value.strftime("%d %b %Y")
+
+
+def _hhmm(value: str) -> str:
+    return value[:5]
+
+
+# ---------------------------------------------------------------------------
+# Answer builders (return text)
+# ---------------------------------------------------------------------------
+
+
+def _attendance_text(summary: list[dict], who: str = "Your") -> str:
+    if not summary:
+        return f"📊 No attendance has been marked yet for {who.lower() if who != 'Your' else 'you'} in the last 30 days."
+    item = summary[0]
+    counts = item.get("counts", {})
+    return (
+        f"📊 **{who} attendance (last 30 days)**\n\n"
+        f"• Days recorded: {item['total_days']}\n"
+        f"• Present: {counts.get('PRESENT', 0)}  • Late: {counts.get('LATE', 0)}  • Absent: {counts.get('ABSENT', 0)}\n"
+        f"• Attendance: **{item['percentage_present']}%**"
+    )
+
+
+def _homework_text(items: list[dict], subjects: dict[str, str], who: str = "You have") -> str:
+    if not items:
+        return "📚 **Homework**\n\n✅ Nothing pending. You're all caught up!"
+    items = sorted(items, key=lambda h: h.get("due_date", ""))
+    lines = [f"• {h['title']} ({subjects.get(h.get('subject_id'), 'General')}) - due {_fmt_date(h['due_date'])}" for h in items[:8]]
+    return f"📚 **Pending homework ({len(items)})**\n\n" + "\n".join(lines)
+
+
+async def _fees_text_for_invoices(items: list[Any], who: str = "Your") -> str:
+    if not items:
+        return "💰 **Fees**\n\nNo invoices have been raised yet."
+    total = sum(i.total_amount for i in items)
+    paid = sum(i.amount_paid for i in items)
+    pending = total - paid
+    open_ones = sorted((i for i in items if i.total_amount > i.amount_paid), key=lambda i: i.due_date)
+    text = f"💰 **{who} fees**\n\n• Total billed: {_money(total)}\n• Paid: {_money(paid)}\n• Outstanding: **{_money(pending)}**"
+    if open_ones:
+        nxt = open_ones[0]
+        text += f"\n\nNext due: {_money(nxt.total_amount - nxt.amount_paid)} on {_fmt_date(nxt.due_date)}. You can pay from the Fees page."
     else:
-        return f"""Hello {name}! 👋 Welcome to Cogniitec School Assistant.
+        text += "\n\n✅ All fees are cleared."
+    return text
 
-How can I help you today?"""
+
+def _timetable_text(slots: list[dict], subjects: dict[str, str], sections: dict[str, str], today_only: bool, with_section: bool) -> str:
+    dow = date.today().weekday()
+    chosen = [s for s in slots if (s["day_of_week"] == dow) or not today_only]
+    if not chosen:
+        return "📅 No classes are scheduled today." if today_only else "📅 No timetable has been set up yet."
+    chosen.sort(key=lambda s: (s["day_of_week"], s["period_number"]))
+    lines = []
+    for s in chosen:
+        label = f"{DAY_NAMES[s['day_of_week']][:3]} " if not today_only else ""
+        where = f" - {sections.get(s['section_id'], '')}" if with_section else ""
+        lines.append(f"• {label}P{s['period_number']} {_hhmm(s['start_time'])}-{_hhmm(s['end_time'])}  {subjects.get(s['subject_id'], 'Class')}{where}")
+    title = "Today's classes" if today_only else "Weekly timetable"
+    return f"📅 **{title}**\n\n" + "\n".join(lines[:20])
+
+
+def _exams_text(exams: list[dict]) -> str:
+    if not exams:
+        return "📝 No exams have been scheduled yet."
+    today = date.today().isoformat()
+    upcoming = sorted((e for e in exams if e["end_date"] >= today), key=lambda e: e["start_date"])
+    past = sorted((e for e in exams if e["end_date"] < today), key=lambda e: e["start_date"], reverse=True)
+    lines = []
+    if upcoming:
+        lines.append("**Upcoming**")
+        lines += [f"• {e['name']}: {_fmt_date(e['start_date'])} - {_fmt_date(e['end_date'])}" for e in upcoming[:5]]
+    if past:
+        lines.append("\n**Recent**" if upcoming else "**Recent**")
+        lines += [f"• {e['name']} ({_fmt_date(e['end_date'])})" for e in past[:3]]
+    return "📝 **Exams**\n\n" + "\n".join(lines)
+
+
+def _events_text(events: list[dict]) -> str:
+    if not events:
+        return "🗓️ No events or holidays in the next 30 days."
+    events = sorted(events, key=lambda e: e["event_date"])
+    return "🗓️ **Coming up (next 30 days)**\n\n" + "\n".join(
+        f"• {_fmt_date(e['event_date'])} - {e['title']} ({e['event_type'].title()})" for e in events[:8]
+    )
+
+
+async def _notifications_text(current: CurrentUser) -> str:
+    rows = (
+        await Notification.find(Notification.school_id == current.school_id, Notification.is_published == True)  # noqa: E712
+        .sort(-Notification.created_at)
+        .limit(8)
+        .to_list()
+    )
+    rows = [n for n in rows if not n.target_roles or current.role.value in n.target_roles][:4]
+    if not rows:
+        return "📢 No announcements right now."
+    return "📢 **Latest announcements**\n\n" + "\n".join(f"• [{n.notification_type.value.title()}] {n.title}" for n in rows)
+
+
+# ---------------------------------------------------------------------------
+# Role handlers
+# ---------------------------------------------------------------------------
+
+Handler = Callable[[CurrentUser, str], Awaitable[str | None]]
+
+
+async def _student_attendance(c: CurrentUser, m: str = "") -> str:
+    return _attendance_text(await _tool(c, "get_my_attendance"))
+
+
+async def _student_homework(c: CurrentUser, m: str = "") -> str:
+    return _homework_text(await _tool(c, "get_my_pending_homework"), await _subject_names(c.school_id))
+
+
+async def _student_fees(c: CurrentUser, m: str = "") -> str:
+    page = await fee_service.list_invoices(c, None, None, None, PageParams(page=1, page_size=100))
+    return await _fees_text_for_invoices(page.items)
+
+
+async def _student_timetable(c: CurrentUser, m: str = "") -> str:
+    return _timetable_text(await _tool(c, "get_my_timetable"), await _subject_names(c.school_id), {}, today_only=not _wants_week(m), with_section=False)
+
+
+async def _exams(c: CurrentUser, m: str = "") -> str:
+    from app.services import exam_service
+
+    page = await exam_service.list_exams(c.school_id, None, PageParams(page=1, page_size=20))
+    return _exams_text([e.model_dump(mode="json") for e in page.items])
+
+
+async def _events(c: CurrentUser, m: str = "") -> str:
+    from datetime import timedelta
+
+    from app.services import academic_service
+
+    today = date.today()
+    events = await academic_service.list_calendar_events(c.school_id, None, start_date=today, end_date=today + timedelta(days=30))
+    return _events_text([academic_service.to_calendar_event_out(e).model_dump(mode="json") for e in events])
+
+
+async def _parent_children(c: CurrentUser) -> list[dict]:
+    return await _tool(c, "list_my_children")
+
+
+async def _parent_attendance(c: CurrentUser, m: str = "") -> str:
+    out = []
+    for child in (await _parent_children(c))[:4]:
+        summary = await _tool(c, "get_child_attendance", student_id=child["id"])
+        out.append(_attendance_text(summary, who=child["full_name"] + "'s"))
+    return "\n\n".join(out) or "I couldn't find any children linked to your account."
+
+
+async def _parent_homework(c: CurrentUser, m: str = "") -> str:
+    subjects = await _subject_names(c.school_id)
+    out = []
+    for child in (await _parent_children(c))[:4]:
+        items = await _tool(c, "get_child_pending_homework", student_id=child["id"])
+        out.append(f"**{child['full_name']}**\n" + _homework_text(items, subjects))
+    return "\n\n".join(out) or "I couldn't find any children linked to your account."
+
+
+async def _parent_fees(c: CurrentUser, m: str = "") -> str:
+    out = []
+    for child in (await _parent_children(c))[:4]:
+        page = await _tool(c, "get_child_fees", student_id=child["id"])
+        items = page.get("items", page) if isinstance(page, dict) else page
+        # tool output is JSON; rebuild light objects for the shared formatter
+        objs = [type("Inv", (), {"total_amount": i["total_amount"], "amount_paid": i["amount_paid"], "due_date": i["due_date"]}) for i in items]
+        out.append(await _fees_text_for_invoices(objs, who=child["full_name"] + "'s"))
+    return "\n\n".join(out) or "I couldn't find any children linked to your account."
+
+
+async def _teacher_classes(c: CurrentUser, m: str = "") -> str:
+    today_only = not _wants_week(m)
+    slots = await _tool(c, "get_today_classes" if today_only else "get_my_classes")
+    return _timetable_text(slots, await _subject_names(c.school_id), await _section_labels(c.school_id), today_only, with_section=True)
+
+
+async def _teacher_attendance(c: CurrentUser, m: str = "") -> str:
+    slots = await _tool(c, "get_today_classes")
+    sections = await _section_labels(c.school_id)
+    lines = []
+    for section_id in sorted({s["section_id"] for s in slots}):
+        absent = await _tool(c, "get_absent_students", section_id=section_id)
+        lines.append(f"• {sections.get(section_id, 'Section')}: {len(absent)} absent today")
+    if not lines:
+        return "📊 You have no classes today. Mark attendance from the Attendance page."
+    return "📊 **Absentees in your classes today**\n\n" + "\n".join(lines) + "\n\nMark attendance from the Attendance page."
+
+
+async def _staff_summary(c: CurrentUser, m: str = "") -> str:
+    stats = await attendance_service.attendance_stats(c)
+    fees = await fee_service.fee_stats(c)
+    daily = await _tool(c, "get_school_daily_summary") if c.role == Role.PRINCIPAL else None
+    lines = [
+        f"• Students enrolled: {stats['total_students']}",
+        f"• Present today: {stats['present_today']} · Absent: {stats['absent_today']} ({stats['attendance_rate']}% rate, {stats['marked']} marked)",
+        f"• Fees collected: {_money(fees['total_collected'])} of {_money(fees['total_expected'])} ({fees['collection_rate']}%)",
+        f"• Fees outstanding: {_money(fees['total_pending'])}",
+    ]
+    if daily:
+        lines.insert(1, f"• Active teachers: {daily['active_teachers']} · Pending admissions: {daily['pending_admission_approvals']}")
+    return "🏫 **School today**\n\n" + "\n".join(lines)
+
+
+async def _staff_attendance(c: CurrentUser, m: str = "") -> str:
+    s = await attendance_service.attendance_stats(c)
+    return (
+        f"📊 **Attendance today ({_fmt_date(s['date'])})**\n\n"
+        f"• Enrolled: {s['total_students']}\n• Present: {s['present_today']} · Late: {s['late_today']} · Absent: {s['absent_today']}\n"
+        f"• Rate: **{s['attendance_rate']}%** ({s['marked']} marked)"
+    )
+
+
+async def _staff_fees(c: CurrentUser, m: str = "") -> str:
+    f = await fee_service.fee_stats(c)
+    return (
+        "💰 **Fee collection**\n\n"
+        f"• Billed: {_money(f['total_expected'])}\n• Collected: {_money(f['total_collected'])} ({f['collection_rate']}%)\n"
+        f"• Outstanding: **{_money(f['total_pending'])}**\n• Overdue invoices: {f['overdue_invoices']}"
+    )
+
+
+async def _staff_admissions(c: CurrentUser, m: str = "") -> str:
+    if c.role == Role.TEACHER:
+        return "Admissions are handled by the school office."
+    page = await _tool(c, "get_pending_admission_approvals" if c.role == Role.PRINCIPAL else "admission_search", **({} if c.role == Role.PRINCIPAL else {"status": "SUBMITTED"}))
+    total = page.get("total", 0) if isinstance(page, dict) else len(page)
+    return f"🧾 **Admissions**\n\n{total} application(s) are waiting for review. Open the Admissions page to approve or reject them."
+
+
+async def _leave(c: CurrentUser, m: str = "") -> str:
+    from app.services import analytics_service
+
+    if c.role in (Role.SCHOOL_ADMIN, Role.PRINCIPAL):
+        s = await analytics_service.leave_stats(c)
+        return f"📅 **Leave requests**\n\n• Pending approval: **{s['pending']}**\n• Approved: {s['approved']} · Rejected: {s['rejected']}\n\nReview them on the Leave Requests page."
+    from app.models.leave import LeaveRequest
+
+    requester_id = c.user.teacher_id if c.role == Role.TEACHER else c.user.student_id
+    mine = (
+        await LeaveRequest.find(LeaveRequest.school_id == c.school_id, LeaveRequest.requester_id == requester_id).to_list()
+        if requester_id
+        else []
+    )
+    pending = sum(1 for m in mine if m.status.value == "PENDING")
+    approved = sum(1 for m in mine if m.status.value == "APPROVED")
+    return (
+        f"📅 **Your leave requests**\n\n• Total: {len(mine)}\n• Pending: {pending} · Approved: {approved}\n\n"
+        "Submit or track them on the Leave page."
+    )
+
+
+async def _platform(c: CurrentUser, m: str = "") -> str:
+    from app.services import school_service
+
+    s = await school_service.get_platform_stats()
+    return (
+        "🌐 **Platform overview**\n\n"
+        f"• Schools: {s['total_schools']} ({s['active_schools']} active, {s['inactive_schools']} inactive)\n"
+        f"• Users: {s['total_users']} ({s['active_users']} active)"
+    )
+
+
+async def _school_info(c: CurrentUser, m: str = "") -> str:
+    if c.role == Role.SUPER_ADMIN:
+        return await _platform(c)
+    if c.role in (Role.SCHOOL_ADMIN, Role.PRINCIPAL):
+        return await _staff_summary(c)
+    return "School-wide statistics are available to the administration. Your dashboard shows what's relevant to you."
+
+
+_HANDLERS: dict[tuple[str, str], Handler] = {}
+
+
+def _register(intent: str, roles: tuple[Role, ...], fn: Handler) -> None:
+    for r in roles:
+        _HANDLERS[(intent, r.value)] = fn
+
+
+ADMINS = (Role.SCHOOL_ADMIN, Role.PRINCIPAL)
+_register("attendance", (Role.STUDENT,), _student_attendance)
+_register("attendance", (Role.PARENT,), _parent_attendance)
+_register("attendance", (Role.TEACHER,), _teacher_attendance)
+_register("attendance", ADMINS, _staff_attendance)
+_register("homework", (Role.STUDENT,), _student_homework)
+_register("homework", (Role.PARENT,), _parent_homework)
+_register("fees", (Role.STUDENT,), _student_fees)
+_register("fees", (Role.PARENT,), _parent_fees)
+_register("fees", ADMINS, _staff_fees)
+_register("timetable", (Role.STUDENT,), _student_timetable)
+_register("timetable", (Role.TEACHER,), _teacher_classes)
+_register("exams", (Role.STUDENT, Role.PARENT, Role.TEACHER, *ADMINS), _exams)
+_register("events", (Role.STUDENT, Role.PARENT, Role.TEACHER, *ADMINS), _events)
+_register("admissions", ADMINS, _staff_admissions)
+_register("leave", (Role.TEACHER, Role.STUDENT, *ADMINS), _leave)
+_register("platform", (Role.SUPER_ADMIN,), _platform)
+_register("school_info", (Role.SCHOOL_ADMIN, Role.PRINCIPAL, Role.SUPER_ADMIN), _school_info)
+
+
+# ---------------------------------------------------------------------------
+# Static texts
+# ---------------------------------------------------------------------------
+
+_CAPABILITIES: dict[Role, list[str]] = {
+    Role.SUPER_ADMIN: ["Platform overview (schools and users)", "Where to find Schools, Users, Audit logs and Analytics"],
+    Role.SCHOOL_ADMIN: ["School summary and today's attendance", "Fee collection and outstanding dues", "Pending admissions and leave requests", "Exams and announcements"],
+    Role.PRINCIPAL: ["School summary and today's attendance", "Fee collection and outstanding dues", "Pending admissions and leave requests", "Exams and announcements"],
+    Role.TEACHER: ["Today's classes and your weekly timetable", "Absentees in your classes today", "Exams and announcements"],
+    Role.STUDENT: ["Your attendance", "Pending homework", "Fees and dues", "Today's timetable, exams and events"],
+    Role.PARENT: ["Your children's attendance", "Their pending homework", "Fee status", "Exams, events and announcements"],
+}
+
+
+def get_greeting_for_role(name: str, role: Role) -> str:
+    items = "\n".join(f"• {c}" for c in _CAPABILITIES.get(role, []))
+    return f"Hello {name}! 👋 I'm the Cogniitec assistant.\n\nYou can ask me about:\n{items}\n\nWhat would you like to know?"
+
+
+def _unknown(role: Role) -> str:
+    items = "\n".join(f"• {c}" for c in _CAPABILITIES.get(role, []))
+    return f"I'm not sure I understand that. 🤔\n\nTry asking about:\n{items}{SUPPORT_MESSAGE}"
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 
 async def process_chat(current: CurrentUser, message: str) -> str:
-    """Process chat message and return response."""
+    """Return the assistant's reply to `message` for the signed-in user."""
     intent = match_intent(message)
-    school_id = current.school_id
     role = current.role
 
+    if intent == "greeting":
+        return get_greeting_for_role(current.user.full_name, role)
+    if intent == "thanks":
+        return "You're welcome! 😊 Ask me anything else about your school."
+    if intent == "help":
+        return get_greeting_for_role(current.user.full_name, role) + SUPPORT_MESSAGE
+
     try:
-        if intent == "greeting":
-            return get_greeting_for_role(current.user.full_name, role)
-
-        elif intent == "thanks":
-            return f"You're welcome! 😊 Feel free to ask if you need anything else.{SUPPORT_MESSAGE}"
-
-        elif intent == "schools_management":
-            if role == Role.SUPER_ADMIN:
-                return f"🏫 **Schools Management**\n\nYou can manage schools from your dashboard:\n• **View All Schools** - See all registered schools\n• **Add New School** - Register a new school\n• **School Details** - View/edit school information\n• **Activate/Deactivate** - Manage school status\n\nGo to **Schools** in your sidebar to get started!{SUPPORT_MESSAGE}"
-            else:
-                return f"School management is only available for Super Admins.{SUPPORT_MESSAGE}"
-
-        elif intent == "platform_users":
-            if role == Role.SUPER_ADMIN:
-                return f"👥 **Platform Users**\n\nYou can view all users across the platform:\n• **User Directory** - Browse all users\n• **Filter by Role** - Students, Teachers, Admins\n• **Filter by School** - View school-specific users\n\nGo to **Users** in your sidebar to view the directory!{SUPPORT_MESSAGE}"
-            else:
-                return f"Platform-wide user directory is only available for Super Admins.{SUPPORT_MESSAGE}"
-
-        elif intent == "audit_logs":
-            if role == Role.SUPER_ADMIN:
-                return f"📋 **Audit Logs**\n\nTrack all platform activities:\n• **User Actions** - Login, create, update, delete\n• **School Operations** - School management actions\n• **System Events** - Platform-wide events\n\nGo to **Audit Logs** in your sidebar to review activities!{SUPPORT_MESSAGE}"
-            else:
-                return f"Audit logs are only available for Super Admins.{SUPPORT_MESSAGE}"
-
-        elif intent == "platform_analytics":
-            if role == Role.SUPER_ADMIN:
-                return f"📊 **Platform Analytics**\n\nYour dashboard shows key metrics:\n• **Total Schools** - Active and inactive\n• **Total Users** - Students, Teachers, Admins\n• **Recent Activity** - Latest platform actions\n• **Growth Trends** - User and school growth\n\nCheck your **Dashboard** for real-time analytics!{SUPPORT_MESSAGE}"
-            else:
-                return f"Platform analytics are only available for Super Admins.{SUPPORT_MESSAGE}"
-
-        elif intent == "help":
-            if role == Role.SUPER_ADMIN:
-                return f"I'm here to help! As a Super Admin, you can:\n\n🏫 **Schools** - Manage all schools on the platform\n👥 **Users** - View platform-wide user directory\n📊 **Analytics** - Platform statistics and trends\n📋 **Audit Logs** - Track all platform activities\n⚙️ **Settings** - Configure platform settings{SUPPORT_MESSAGE}"
-            elif role == Role.SCHOOL_ADMIN:
-                return f"I'm here to help! As a School Admin, you can manage:\n\n👨‍🎓 **Students & Teachers** - Staff management\n📚 **Academics** - Classes, subjects, timetables\n💰 **Fees** - Fee structures and payments\n📊 **Attendance** - Attendance tracking\n📢 **Notifications** - School announcements{SUPPORT_MESSAGE}"
-            else:
-                return f"I'm here to help! You can ask me about:\n\n📊 **Attendance** - Check attendance records\n💰 **Fees** - View fee status\n📚 **Homework** - See assignments\n📢 **Notifications** - Get announcements\n📅 **Leave** - Check leave status\n🏫 **School Info** - Get statistics{SUPPORT_MESSAGE}"
-
-        elif intent == "attendance":
-            if role == Role.STUDENT:
-                data = await get_student_attendance(current)
-                if "error" in data:
-                    return f"I couldn't find your attendance records. Please contact your class teacher.{SUPPORT_MESSAGE}"
-                return f"📊 **Your Attendance Summary**\n\n• Total Days: {data['total_days']}\n• Present: {data['present']} days\n• Absent: {data['absent']} days\n• Attendance: {data['percentage']}%\n\nKeep up the good attendance! 🌟"
-            else:
-                return f"As a {role.value}, you can view attendance records in the Attendance section of your dashboard.{SUPPORT_MESSAGE}"
-
-        elif intent == "fees":
-            if role == Role.STUDENT:
-                data = await get_student_fees(current)
-                if "error" in data:
-                    return f"I couldn't find your fee records. Please contact the accounts office.{SUPPORT_MESSAGE}"
-                if data['pending'] > 0:
-                    return f"💰 **Your Fee Status**\n\n• Total Due: ₹{data['total_due']:,.0f}\n• Paid: ₹{data['total_paid']:,.0f}\n• Pending: ₹{data['pending']:,.0f}\n\nPlease clear the pending amount to avoid any issues.{SUPPORT_MESSAGE}"
-                else:
-                    return f"💰 **Your Fee Status**\n\n• Total Paid: ₹{data['total_paid']:,.0f}\n• Pending: ₹0\n\n✅ All fees are cleared! Great job!"
-            elif role == Role.PARENT:
-                return f"You can view your child's fee details in the Fees section. Select your child from the dropdown to see their fee status.{SUPPORT_MESSAGE}"
-            else:
-                return f"Fee management is available in the Fees section of your admin dashboard.{SUPPORT_MESSAGE}"
-
-        elif intent == "homework":
-            if role in [Role.STUDENT, Role.PARENT]:
-                homework = await get_pending_homework(current)
-                if not homework:
-                    return "📚 **Homework Status**\n\n✅ No pending homework! You're all caught up! 🎉"
-                hw_list = "\n".join([f"• {h['title']} (Due: {h['due_date']})" for h in homework])
-                return f"📚 **Pending Homework**\n\n{hw_list}\n\nMake sure to complete them before the due date!"
-            else:
-                return f"You can manage homework in the Homework section of your dashboard.{SUPPORT_MESSAGE}"
-
-        elif intent == "notifications":
-            notifications = await get_recent_notifications(school_id)
-            if not notifications:
-                return "📢 No recent notifications. Check back later!"
-            notif_list = "\n".join([f"• [{n['type']}] {n['title']}" for n in notifications])
-            return f"📢 **Recent Notifications**\n\n{notif_list}\n\nCheck the Notifications page for more details."
-
-        elif intent == "leave":
-            if role in [Role.TEACHER, Role.STUDENT]:
-                data = await get_leave_status(current)
-                return f"📅 **Leave Status**\n\n• Total Requests: {data['total']}\n• Pending: {data['pending']}\n• Approved: {data['approved']}\n\nYou can submit new leave requests from the Leave section."
-            else:
-                return f"Leave management is available in the Leave Requests section.{SUPPORT_MESSAGE}"
-
-        elif intent == "timetable":
-            return f"📅 Your timetable is available in the Timetable section of your dashboard. You can view your daily and weekly schedule there.{SUPPORT_MESSAGE}"
-
-        elif intent == "school_info":
-            if role in [Role.SCHOOL_ADMIN, Role.PRINCIPAL, Role.SUPER_ADMIN]:
-                stats = await get_school_stats(school_id)
-                return f"🏫 **School Statistics**\n\n• Total Students: {stats['total_students']}\n• Total Teachers: {stats['total_teachers']}\n• Total Classes: {stats['total_classes']}\n\nVisit the Dashboard for detailed analytics."
-            else:
-                return f"School information is available on your dashboard. Contact the administration for detailed statistics.{SUPPORT_MESSAGE}"
-
-        else:
-            if role == Role.SUPER_ADMIN:
-                return f"I'm not sure I understand that. 🤔\n\nAs a Super Admin, you can ask me about:\n• Schools management\n• Platform users\n• Analytics & statistics\n• Audit logs\n• Platform settings\n\nOr try rephrasing your question!{SUPPORT_MESSAGE}"
-            elif role == Role.SCHOOL_ADMIN:
-                return f"I'm not sure I understand that. 🤔\n\nAs a School Admin, you can ask me about:\n• Students & Teachers\n• Academics & Timetables\n• Fees & Payments\n• Attendance records\n• Notifications\n\nOr try rephrasing your question!{SUPPORT_MESSAGE}"
-            else:
-                return f"I'm not sure I understand that. 🤔\n\nYou can ask me about:\n• Attendance\n• Fees\n• Homework\n• Notifications\n• Leave status\n• School information\n\nOr try rephrasing your question!{SUPPORT_MESSAGE}"
-
-    except Exception as e:
+        if intent == "notifications" and current.school_id:
+            return await _notifications_text(current)
+        handler = _HANDLERS.get((intent, role.value))
+        if handler is None:
+            if intent in ("unknown",):
+                return _unknown(role)
+            items = "\n".join(f"• {c}" for c in _CAPABILITIES.get(role, []))
+            return f"That information isn't available to a {role.value.replace('_', ' ').title()} account.\n\nI can help with:\n{items}"
+        return await handler(current, message)
+    except (PermissionDeniedError, NotFoundError) as exc:
+        return f"I couldn't find that information: {exc}{SUPPORT_MESSAGE}"
+    except Exception:
+        logger.exception("Built-in assistant failed for role %s (intent=%s)", role, intent)
         return f"Sorry, I encountered an issue while processing your request. Please try again later.{SUPPORT_MESSAGE}"

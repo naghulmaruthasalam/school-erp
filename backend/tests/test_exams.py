@@ -36,6 +36,18 @@ async def _make_exam_setup(school_id: str):
     subject = Subject(school_id=school_id, name="Mathematics", code="MATH")
     await subject.insert()
 
+    from app.models.teacher import Teacher
+
+    teacher_doc = Teacher(
+        school_id=school_id,
+        employee_no="EX-T1",
+        first_name="Exam",
+        last_name="Teacher",
+        phone="9000000001",
+        assigned_class_ids=[str(klass.id)],
+    )
+    await teacher_doc.insert()
+
     exam = Exam(
         school_id=school_id,
         academic_year_id=academic_year_id,
@@ -89,6 +101,7 @@ async def _make_exam_setup(school_id: str):
         "exam_subject": exam_subject,
         "student1": student1,
         "student2": student2,
+        "teacher": teacher_doc,
     }
 
 
@@ -98,7 +111,7 @@ async def test_mark_entry_validates_max_marks(client):
     school_id = str(tenant.id)
     setup = await _make_exam_setup(school_id)
 
-    teacher = make_current_user(Role.TEACHER, school_id, teacher_id="t1")
+    teacher = make_current_user(Role.TEACHER, school_id, teacher_id=str(setup["teacher"].id))
     override_current_user(teacher)
 
     r = await client.post(
@@ -114,7 +127,7 @@ async def test_mark_entry_upserts_on_re_entry(client):
     school_id = str(tenant.id)
     setup = await _make_exam_setup(school_id)
 
-    teacher = make_current_user(Role.TEACHER, school_id, teacher_id="t1")
+    teacher = make_current_user(Role.TEACHER, school_id, teacher_id=str(setup["teacher"].id))
     override_current_user(teacher)
 
     exam_subject_id = str(setup["exam_subject"].id)
@@ -241,7 +254,7 @@ async def test_create_and_list_exams_admin_only(client):
     tenant = await _make_tenant("EX007")
     school_id = str(tenant.id)
 
-    teacher = make_current_user(Role.TEACHER, school_id, teacher_id="t1")
+    teacher = make_current_user(Role.TEACHER, school_id, teacher_id="000000000000000000000f09")
     override_current_user(teacher)
     r_forbidden = await client.post(
         "/api/v1/exams",
