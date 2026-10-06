@@ -1,11 +1,15 @@
 """FastAPI dependencies shared by every Copilot router."""
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import Depends
 
 from app.copilot.profiles import get_profile
 from app.core.config import get_settings
 from app.core.deps import CurrentUser, require_tenant_user
 from app.core.enums import Role
-from app.core.exceptions import PermissionDeniedError
+from app.copilot import llm
+from app.core.exceptions import AppError, PermissionDeniedError
 
 
 async def copilot_user(current: CurrentUser = Depends(require_tenant_user)) -> CurrentUser:
@@ -20,3 +24,18 @@ async def copilot_teacher(current: CurrentUser = Depends(copilot_user)) -> Curre
     if current.role != Role.TEACHER:
         raise PermissionDeniedError("This tool is for teachers")
     return current
+
+
+logger = logging.getLogger("copilot.api")
+
+
+@asynccontextmanager
+async def guard_llm(what: str):
+    """Turn model failures into clean API errors: 503 when no key is configured, 502 when the model call fails."""
+    try:
+        yield
+    except llm.LLMNotConfigured as exc:
+        raise AppError(503, str(exc)) from exc
+    except llm.LLMError as exc:
+        logger.warning("Copilot %s failed: %s", what, exc)
+        raise AppError(502, "The AI service is unavailable right now. Please try again in a moment.") from exc

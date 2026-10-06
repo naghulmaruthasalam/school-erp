@@ -189,3 +189,43 @@ async def call_chat_stream(messages: list[dict]) -> AsyncIterator[str]:
     except Exception as exc:  # noqa: BLE001
         logger.warning("LLM stream failed: %s", exc)
         raise LLMError(f"The model stream failed: {exc}") from exc
+
+
+async def call_vision_json(system: str, user: str, images: list[bytes], retries: int = 2, temperature: float = 0.2) -> dict:
+    """Read page images (JPEG bytes) with the model and return a JSON object. Used for answer-sheet transcription."""
+    _require_configured()
+    last: Exception | None = None
+    for attempt in range(retries + 1):
+        try:
+            if provider() == "openai":
+                import base64
+
+                content = [{"type": "text", "text": user}] + [
+                    {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(img).decode()}}
+                    for img in images
+                ]
+                response = await _openai().chat.completions.create(
+                    model=get_settings().openai_model, temperature=temperature, response_format={"type": "json_object"},
+                    messages=[{"role": "system", "content": system}, {"role": "user", "content": content}],
+                )
+                raw = response.choices[0].message.content or ""
+            else:
+                model = _gemini_model(system)
+                parts = [{"mime_type": "image/jpeg", "data": img} for img in images] + [user]
+                response = await asyncio.wait_for(
+                    model.generate_content_async(
+                        parts, generation_config={"temperature": temperature, "response_mime_type": "application/json"}
+                    ),
+                    LLM_TIMEOUT_SECONDS * 2,
+                )
+                raw = response.text or ""
+            data = json.loads(raw)
+            if not isinstance(data, dict):
+                raise ValueError("not a JSON object")
+            return data
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            logger.warning("Vision call failed (attempt %s/%s): %s", attempt + 1, retries + 1, exc)
+        if attempt < retries:
+            await asyncio.sleep(2**attempt)
+    raise LLMError(f"The model could not read the pages: {last}")
