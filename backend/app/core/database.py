@@ -14,6 +14,7 @@ def get_all_models() -> list:
     from app.models.cloud_service_log import CloudServiceLog
     from app.models.admission import Admission
     from app.models.ai_conversation import AIConversation
+    from app.models.copilot import CopilotSession
     from app.models.attendance import StaffAttendance, StudentAttendance
     from app.models.academic import (
         AcademicYear,
@@ -78,6 +79,7 @@ def get_all_models() -> list:
         DocumentModel,
         AIConversation,
         Syllabus,
+        CopilotSession,
     ]
 
 

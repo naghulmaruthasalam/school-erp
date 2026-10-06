@@ -63,6 +63,14 @@ def upload_bytes(key: str, data: bytes, content_type: str) -> None:
     )
 
 
+def read_bytes(key: str) -> bytes:
+    """Return a stored file's bytes (S3 object or local file)."""
+    if _use_local_storage:
+        return (LOCAL_UPLOADS_DIR / local_file_name(key)).read_bytes()
+    client = get_s3_client()
+    return client.get_object(Bucket=settings.s3_bucket_name, Key=key)["Body"].read()
+
+
 def delete_object(key: str) -> None:
     if _use_local_storage:
         file_path = LOCAL_UPLOADS_DIR / local_file_name(key)
