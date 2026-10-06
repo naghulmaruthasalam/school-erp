@@ -123,3 +123,18 @@ async def test_editor_update_keeps_topics_and_notes(client, school, year):
     assert r.status_code == 200
     ch = r.json()["chapters"][0]
     assert ch["description"] == "edited" and ch["topics"] == ["Chlorophyll", "Light reaction"] and ch["content"]
+
+
+@pytest.mark.asyncio
+async def test_check_content_script_finds_matching_chapters_and_files(school):
+    from app.models.document import Document
+    from scripts.check_content import check
+
+    await Document(school_id=SCHOOL, module="SYLLABUS_DOCUMENT", s3_key="k", content_type="application/pdf", size_bytes=10,
+                   original_filename="Unit1 Geography Map and names.pdf", uploaded_by="u").insert()
+    r = await check(SCHOOL, ["photosynthesis", "geography"])
+    assert any(c["chapter"] == "Photosynthesis" for c in r["matching_chapters"])
+    assert [f["file"] for f in r["pdf_json_or_matching_files"]] == ["Unit1 Geography Map and names.pdf"]
+    assert r["totals"]["syllabi"] >= 1
+    empty = await check(SCHOOL, ["caliphate"])
+    assert empty["matching_chapters"] == []

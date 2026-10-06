@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, File, Form, UploadFile
+from pydantic import BaseModel, Field
 from fastapi.responses import PlainTextResponse, RedirectResponse
 
 from app.core.deps import CurrentUser, require_tenant_user
@@ -11,7 +12,7 @@ from app.schemas.syllabus import (
     SyllabusOut,
     SyllabusUpdateRequest,
 )
-from app.services import syllabus_import_service, syllabus_service, upload_service
+from app.services import curriculum_source_service, syllabus_import_service, syllabus_service, upload_service
 
 router = APIRouter(prefix="/syllabus", tags=["syllabus"])
 
@@ -43,6 +44,45 @@ async def list_syllabus(
 async def syllabus_tree(current: CurrentUser = Depends(require_tenant_user)) -> dict:
     """Class -> subject -> chapter outline for the browser (scoped to what the user may see)."""
     return await syllabus_service.get_tree(current)
+
+
+class SourceIn(BaseModel):
+    url: str = Field(max_length=2000)
+    api_key: str | None = Field(default=None, max_length=2000)  # omitted = keep the saved key, "" = remove it
+    api_key_header: str = Field(default="Authorization", max_length=100)
+    field_map: dict[str, str] = Field(default_factory=dict)
+    value_map: dict[str, dict[str, str]] = Field(default_factory=dict)
+    create_missing: bool = True
+    mode: str = "merge"
+    auto_sync_minutes: int = 0
+
+
+@router.get("/source")
+async def get_source(current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    """The school's curriculum source (a link to the syllabus file). The API key is never returned."""
+    return await curriculum_source_service.read(current)
+
+
+@router.put("/source")
+async def save_source(payload: SourceIn, current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    return await curriculum_source_service.save(current, payload.model_dump())
+
+
+@router.delete("/source", status_code=204)
+async def delete_source(current: CurrentUser = Depends(require_tenant_user)) -> None:
+    await curriculum_source_service.remove(current)
+
+
+@router.post("/source/test")
+async def test_source(payload: SourceIn, current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    """Fetch the link and preview what a sync would do. Nothing is saved."""
+    return await curriculum_source_service.test(current, payload.model_dump())
+
+
+@router.post("/source/sync")
+async def sync_source(force: bool = False, current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    """Load the saved source into the syllabus now (skipped when the file is unchanged, unless force=true)."""
+    return await curriculum_source_service.sync_as(current, force=force)
 
 
 @router.get("/import/template", response_class=PlainTextResponse)

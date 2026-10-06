@@ -24,16 +24,26 @@ from app.models.syllabus import Chapter, Syllabus
 _WRITE_ROLES = (Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL)
 MAX_ROWS = 5000
 MAX_BYTES = 5 * 1024 * 1024
+_CANON = ("class", "subject", "chapter", "topics", "description", "content", "order", "language")
 _ROMAN = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii": 7, "viii": 8, "ix": 9, "x": 10, "xi": 11, "xii": 12}
 _ALIASES = {
-    "class": "class", "grade": "class", "standard": "class", "std": "class",
-    "subject": "subject",
-    "chapter": "chapter", "chapter_name": "chapter", "unit": "chapter", "lesson": "chapter",
-    "topics": "topics", "topic": "topics", "subtopics": "topics",
-    "description": "description", "summary": "description",
-    "content": "content", "notes": "content", "text": "content",
-    "order": "order", "chapter_no": "order", "chapter_number": "order", "no": "order",
+    "class": "class", "grade": "class", "standard": "class", "std": "class", "class_name": "class", "grade_name": "class",
+    "classname": "class", "gradename": "class", "class_title": "class", "grade_level": "class",
+    "grade_id": "class", "gradeid": "class", "class_id": "class", "classid": "class",
+    "subject_id": "subject", "subjectid": "subject",
+    "subject": "subject", "subject_name": "subject", "subjectname": "subject", "subject_title": "subject",
+    "chapter": "chapter", "chapter_name": "chapter", "chaptername": "chapter", "chapter_title": "chapter",
+    "unit": "chapter", "lesson": "chapter", "title": "chapter", "name": "chapter",
+    "topics": "topics", "topic": "topics", "subtopics": "topics", "sub_topics": "topics", "key_topics": "topics",
+    "description": "description", "summary": "description", "overview": "description",
+    "content": "content", "notes": "content", "text": "content", "body": "content", "chapter_content": "content",
+    "order": "order", "chapter_no": "order", "chapter_number": "order", "chapterno": "order", "no": "order",
+    "sequence": "order", "index": "order",
+    # one record per textbook unit, with the PDF's extracted text (unit_title_ar is left out on purpose)
+    "unit_title_en": "chapter", "unit_title": "chapter", "unit_number": "order", "unit_no": "order", "full_text": "content",
+    "language": "language", "lang": "language",
 }
+_LIST_KEYS = ("data", "chapters", "items", "results", "rows", "textbooks", "curriculum", "records", "documents")
 
 
 def class_key(name: str) -> str:
@@ -55,11 +65,25 @@ class Row:
     description: str | None = None
     content: str | None = None
     order: int | None = None
+    language: str = ""
+
+
+def clean_extracted_text(text: str) -> str:
+    """Tidy text pulled out of a PDF: drop the translator watermark, stray glyphs and one- or two-character fragments."""
+    text = re.sub(r"Machine\s+Translated\s+by\s+Google", " ", text, flags=re.I)
+    text = text.replace("\u00ff", " ").replace("\ufffd", " ")
+    lines = []
+    for line in text.splitlines():
+        line = re.sub(r"[ \t\u00a0]+", " ", line).strip()
+        if len(line) <= 2 and not line.isalnum():
+            continue
+        lines.append(line)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
 
 
 def _split_topics(value) -> list[str]:
     if isinstance(value, list):
-        return [str(v).strip() for v in value if str(v).strip()]
+        return [t for t in (_text(v) for v in value) if t]
     return [t.strip() for t in re.split(r"[;|\n]", str(value or "")) if t.strip()]
 
 
@@ -70,25 +94,57 @@ def _to_order(value) -> int | None:
         return None
 
 
-def _flat_row(raw: dict) -> Row:
+def _text(value) -> str:
+    """A cell that may be a string, a {name|title: ...} object, a number, or a list of paragraphs."""
+    if value is None:
+        return ""
+    if isinstance(value, dict):
+        if "$oid" in value:
+            return str(value["$oid"])
+        for key in ("name", "title", "label", "en", "text"):
+            if value.get(key):
+                return _text(value[key])
+        return ""
+    if isinstance(value, list):
+        return "\n\n".join(t for t in (_text(v) for v in value) if t)
+    text = str(value).strip()
+    repr_id = re.fullmatch(r"ObjectId\('([0-9a-fA-F]{24})'\)", text)  # an id exported as a Python repr
+    return repr_id.group(1) if repr_id else text
+
+
+def _flat_row(raw: dict, field_map: dict[str, str] | None = None, value_map: dict[str, dict[str, str]] | None = None) -> Row:
     mapped = {}
-    for key, value in raw.items():
-        alias = _ALIASES.get(re.sub(r"[\s-]+", "_", str(key).strip().lower()))
-        if alias:
+    lowered = {re.sub(r"[\s-]+", "_", str(k).strip().lower()): v for k, v in raw.items()}
+    for source, target in (field_map or {}).items():  # explicit mapping from the school's source settings wins
+        key = re.sub(r"[\s-]+", "_", source.strip().lower())
+        if key in lowered and target in _CANON:
+            mapped[target] = lowered[key]
+    for key, value in lowered.items():
+        alias = _ALIASES.get(key)
+        if alias and alias not in mapped:
             mapped[alias] = value
-    class_name, subject, chapter = (str(mapped.get(k) or "").strip() for k in ("class", "subject", "chapter"))
+    class_name, subject, chapter = (_text(mapped.get(k)) for k in ("class", "subject", "chapter"))
+    # sources that only carry ids: the school supplies id -> name tables (e.g. {"class": {"64f...": "Class 8"}})
+    class_name = (value_map or {}).get("class", {}).get(class_name, class_name)
+    subject = (value_map or {}).get("subject", {}).get(subject, subject)
     if not (class_name and subject and chapter):
-        raise ValueError("needs class, subject and chapter")
+        raise ValueError(f"needs class, subject and chapter (found fields: {', '.join(list(raw)[:12])})")
+    content = _text(mapped.get("content")) or None
+    if content and "full_text" in lowered and lowered["full_text"] and _text(lowered["full_text"]) == content:
+        content = clean_extracted_text(content) or None
     return Row(
         class_name=class_name, subject=subject, chapter=chapter,
         topics=_split_topics(mapped.get("topics")),
-        description=(str(mapped["description"]).strip() or None) if mapped.get("description") else None,
-        content=(str(mapped["content"]).strip() or None) if mapped.get("content") else None,
-        order=_to_order(mapped.get("order", "")),
+        description=_text(mapped.get("description")) or None,
+        content=content,
+        order=_to_order(_text(mapped.get("order", ""))),
+        language=_text(mapped.get("language")).lower()[:5],
     )
 
 
-def parse_rows(filename: str, data: bytes) -> tuple[list[Row], list[str]]:
+def parse_rows(
+    filename: str, data: bytes, field_map: dict[str, str] | None = None, value_map: dict[str, dict[str, str]] | None = None,
+) -> tuple[list[Row], list[str]]:
     """(rows, per-row problems). Raises ValidationAppError when the file can't be read at all."""
     try:
         text = data.decode("utf-8-sig")
@@ -102,6 +158,12 @@ def parse_rows(filename: str, data: bytes) -> tuple[list[Row], list[str]]:
             doc = json.loads(text)
         except json.JSONDecodeError as exc:
             raise ValidationAppError(f"That isn't valid JSON: {exc.msg} (line {exc.lineno})") from exc
+        if isinstance(doc, dict) and "classes" not in doc:
+            wrapped = next((doc[k] for k in _LIST_KEYS if isinstance(doc.get(k), list)), None)
+            if wrapped is None:
+                wrapped = next((v for v in doc.values() if isinstance(v, list) and v and isinstance(v[0], dict)), None)
+            if wrapped is not None:
+                doc = wrapped
         if isinstance(doc, dict):
             for ci, c in enumerate(doc.get("classes") or [], 1):
                 for s in c.get("subjects") or []:
@@ -117,7 +179,7 @@ def parse_rows(filename: str, data: bytes) -> tuple[list[Row], list[str]]:
         elif isinstance(doc, list):
             for i, raw in enumerate(doc, 1):
                 try:
-                    rows.append(_flat_row(raw if isinstance(raw, dict) else {}))
+                    rows.append(_flat_row(raw if isinstance(raw, dict) else {}, field_map, value_map))
                 except ValueError as exc:
                     problems.append(f"item {i}: {exc}")
         else:
@@ -128,7 +190,7 @@ def parse_rows(filename: str, data: bytes) -> tuple[list[Row], list[str]]:
             if not any((v or "").strip() for v in raw.values() if isinstance(v, str)):
                 continue
             try:
-                rows.append(_flat_row(raw))
+                rows.append(_flat_row(raw, field_map, value_map))
             except ValueError as exc:
                 problems.append(f"row {i}: {exc}")
     if len(rows) > MAX_ROWS:
@@ -149,23 +211,25 @@ TEMPLATE_CSV = (
 async def import_curriculum(
     current: CurrentUser, filename: str, data: bytes, *, dry_run: bool = True,
     create_missing: bool = False, mode: str = "merge", status: SyllabusStatus = SyllabusStatus.PUBLISHED,
+    field_map: dict[str, str] | None = None,
 ) -> dict:
     if current.role not in _WRITE_ROLES:
         raise PermissionDeniedError("Only teachers or school admins/principals can import a syllabus")
     return await run_import(
         current.school_id, str(current.user.id), filename, data,
-        dry_run=dry_run, create_missing=create_missing, mode=mode, status=status,
+        dry_run=dry_run, create_missing=create_missing, mode=mode, status=status, field_map=field_map,
     )
 
 
 async def run_import(
     school_id: str, user_id: str, filename: str, data: bytes, *, dry_run: bool = True,
     create_missing: bool = False, mode: str = "merge", status: SyllabusStatus = SyllabusStatus.PUBLISHED,
+    field_map: dict[str, str] | None = None, rows_override: tuple | None = None,
 ) -> dict:
     """The import itself, with no request context (also used by scripts/import_syllabus.py)."""
     if mode not in ("merge", "replace"):
         raise ValidationAppError("mode must be 'merge' or 'replace'")
-    rows, problems = parse_rows(filename, data)
+    rows, problems = rows_override if rows_override is not None else parse_rows(filename, data, field_map)
 
     year = await AcademicYear.find_one(AcademicYear.school_id == school_id, AcademicYear.is_current == True)  # noqa: E712
     if year is None:
@@ -179,7 +243,8 @@ async def run_import(
     by_subject = {_norm(s.name): s for s in subjects} | {_norm(s.code): s for s in subjects}
 
     groups: dict[tuple[str, str], list[Row]] = {}
-    for r in rows:
+    # the same unit can arrive once per language: apply English last so it is the text that stays
+    for r in sorted(rows, key=lambda x: x.language.startswith("en")):
         groups.setdefault((class_key(r.class_name), _norm(r.subject)), []).append(r)
 
     report = {"academic_year": year.name, "dry_run": dry_run, "problems": list(problems), "syllabi": [],
@@ -194,11 +259,12 @@ async def run_import(
                 report["problems"].append(f"Class '{class_name}' doesn't exist in {year.name} (tick 'create missing classes and subjects')")
                 report["totals"]["skipped_groups"] += 1
                 continue
-            school_class = Class(school_id=school_id, academic_year_id=str(year.id), name=class_name.strip(), order=len(by_class) + 1)
+            new_name = f"Class {class_name.strip()}" if class_name.strip().isdigit() else class_name.strip()
+            school_class = Class(school_id=school_id, academic_year_id=str(year.id), name=new_name, order=len(by_class) + 1)
             if not dry_run:
                 await school_class.insert()
             by_class[class_key(class_name)] = school_class
-            report["created_classes"].append(class_name.strip())
+            report["created_classes"].append(new_name)
         subject = by_subject.get(_norm(subject_name))
         if subject is None:
             if not create_missing:

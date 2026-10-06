@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -43,7 +44,11 @@ async def ensure_super_admin():
 async def lifespan(app: FastAPI):
     await init_db()
     await ensure_super_admin()
+    from app.services.curriculum_source_service import auto_sync_loop
+
+    auto_sync = asyncio.create_task(auto_sync_loop())
     yield
+    auto_sync.cancel()
     await close_db()
 
 
