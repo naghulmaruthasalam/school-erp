@@ -5,7 +5,7 @@ import { api } from "../../api/client";
 import { fetchAcademicYears, fetchClasses, fetchSections, fetchSubjects } from "./api";
 import {
   Plus, Trash2, Calendar, BookOpen, Users, GraduationCap,
-  Sparkles, Building, ChevronRight, AlertCircle
+  Sparkles
 } from "lucide-react";
 
 interface AcademicYear { id: string; name: string; start_date: string; end_date: string; is_current: boolean; }
@@ -109,7 +109,7 @@ export default function AcademicSetup() {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {tabs.map((t, i) => {
+        {tabs.map((t) => {
           const count = t.key === "years" ? yearsQuery.data?.length || 0
             : t.key === "classes" ? classCount
             : t.key === "sections" ? sectionCount

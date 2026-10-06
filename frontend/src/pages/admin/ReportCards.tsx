@@ -5,20 +5,30 @@ import { api } from "../../api/client";
 import { fetchClasses, fetchSections, listStudents } from "./api";
 import type { PageResponse } from "../../types/common";
 
-interface Mark {
-  id: string;
-  student_id: string;
-  exam_id: string;
+interface ResultSubject {
+  exam_subject_id: string;
   subject_id: string;
-  marks_obtained: number;
   max_marks: number;
-  grade: string;
+  pass_marks: number;
+  marks_obtained: number | null;
+  grade: string | null;
+}
+
+interface ExamResult {
+  exam_id: string;
+  student_id: string;
+  student_name: string;
+  subjects: ResultSubject[];
+  total_marks_obtained: number;
+  total_max_marks: number;
+  percentage: number;
+  overall_grade: string;
 }
 
 interface Exam {
   id: string;
   name: string;
-  exam_type: string;
+  term?: string | null;
 }
 
 export default function ReportCards() {
@@ -43,16 +53,24 @@ export default function ReportCards() {
     },
   });
 
-  const marksQuery = useQuery({
-    queryKey: ["marks", selectedStudent, selectedExam],
+  const subjectsQuery = useQuery({
+    queryKey: ["subjects"],
     queryFn: async () => {
-      const { data } = await api.get<Mark[]>("/exams/marks", {
-        params: { student_id: selectedStudent, exam_id: selectedExam },
-      });
+      const { data } = await api.get<{ id: string; name: string }[]>("/academics/subjects");
+      return data;
+    },
+  });
+
+  const resultQuery = useQuery({
+    queryKey: ["exam-result", selectedStudent, selectedExam],
+    queryFn: async () => {
+      const { data } = await api.get<ExamResult>(`/exams/${selectedExam}/students/${selectedStudent}/result`);
       return data;
     },
     enabled: !!selectedStudent && !!selectedExam,
   });
+
+  const subjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name ?? id;
 
   const getSectionName = (id: string) => {
     const section = sectionsQuery.data?.find((s) => s.id === id);
@@ -68,9 +86,12 @@ export default function ReportCards() {
     return "red";
   };
 
-  const totalMarks = marksQuery.data?.reduce((sum, m) => sum + m.marks_obtained, 0) || 0;
-  const maxMarks = marksQuery.data?.reduce((sum, m) => sum + m.max_marks, 0) || 0;
-  const percentage = maxMarks > 0 ? ((totalMarks / maxMarks) * 100).toFixed(1) : 0;
+  const result = resultQuery.data;
+  const rows = (result?.subjects ?? []).filter((r) => r.marks_obtained !== null);
+  const totalMarks = result?.total_marks_obtained ?? 0;
+  const maxMarks = result?.total_max_marks ?? 0;
+  const percentage = (result?.percentage ?? 0).toFixed(1);
+
 
   const selectedStudentData = studentsQuery.data?.items.find((s) => s.id === selectedStudent);
 
@@ -116,7 +137,7 @@ export default function ReportCards() {
             >
               <option value="">-- Select Exam --</option>
               {examsQuery.data?.items.map((e) => (
-                <option key={e.id} value={e.id}>{e.name} ({e.exam_type})</option>
+                <option key={e.id} value={e.id}>{e.name}{e.term ? ` (${e.term})` : ""}</option>
               ))}
             </select>
           </div>
@@ -124,9 +145,9 @@ export default function ReportCards() {
       </Card>
 
       {selectedStudent && selectedExam && (
-        marksQuery.isLoading ? (
+        resultQuery.isLoading ? (
           <div className="flex justify-center py-12"><Spinner /></div>
-        ) : marksQuery.data && marksQuery.data.length > 0 ? (
+        ) : result && rows.length > 0 ? (
           <Card>
             <div className="border-b border-line pb-4 mb-4">
               <div className="flex items-center justify-between">
@@ -154,16 +175,16 @@ export default function ReportCards() {
                 </tr>
               </thead>
               <tbody>
-                {marksQuery.data.map((mark) => (
-                  <tr key={mark.id} className="border-b border-violet-50">
-                    <td className="py-3 font-medium text-ink">{mark.subject_id}</td>
+                {rows.map((mark) => (
+                  <tr key={mark.exam_subject_id} className="border-b border-line">
+                    <td className="py-3 font-medium text-ink">{subjectName(mark.subject_id)}</td>
                     <td className="py-3 text-center">{mark.marks_obtained}</td>
                     <td className="py-3 text-center text-accent-fg">{mark.max_marks}</td>
                     <td className="py-3 text-center">
-                      {((mark.marks_obtained / mark.max_marks) * 100).toFixed(0)}%
+                      {(((mark.marks_obtained ?? 0) / mark.max_marks) * 100).toFixed(0)}%
                     </td>
                     <td className="py-3 text-center">
-                      <Badge tone={getGradeTone(mark.grade)}>{mark.grade}</Badge>
+                      <Badge tone={getGradeTone(mark.grade ?? "")}>{mark.grade ?? "-"}</Badge>
                     </td>
                   </tr>
                 ))}

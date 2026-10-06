@@ -7,9 +7,8 @@ interface CalendarEvent {
   id: string;
   title: string;
   event_type: string;
-  start_date: string;
-  end_date: string;
-  description?: string;
+  event_date: string;
+  description?: string | null;
 }
 
 export default function SchoolCalendar() {
@@ -19,7 +18,11 @@ export default function SchoolCalendar() {
     queryKey: ["calendar-events", selectedMonth],
     queryFn: async () => {
       try {
-        const { data } = await api.get<CalendarEvent[]>(`/calendar/events?month=${selectedMonth}`);
+        const [year, month] = selectedMonth.split("-").map(Number);
+        const lastDay = new Date(year, month, 0).getDate();
+        const { data } = await api.get<CalendarEvent[]>("/academics/calendar", {
+          params: { start_date: `${selectedMonth}-01`, end_date: `${selectedMonth}-${String(lastDay).padStart(2, "0")}` },
+        });
         return data;
       } catch {
         return [];
@@ -70,8 +73,7 @@ export default function SchoolCalendar() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-accent-fg dark:text-accent-fg">
-                    {formatDate(event.start_date)}
-                    {event.end_date !== event.start_date && ` - ${formatDate(event.end_date)}`}
+                    {formatDate(event.event_date)}
                   </p>
                 </div>
               </div>

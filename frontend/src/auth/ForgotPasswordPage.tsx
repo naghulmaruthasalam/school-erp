@@ -22,18 +22,26 @@ export default function ForgotPasswordPage() {
 
   const requestOtpMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/auth/forgot-password", { email, school_code: schoolCode || null });
+      const { data } = await api.post<{ message: string; needs_admin?: boolean }>("/auth/forgot-password", {
+        username: email.trim(),
+        school_code: schoolCode || null,
+      });
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.needs_admin) {
+        setError(data.message);
+        return;
+      }
       setStep("otp");
       setError("");
     },
-    onError: () => setError("Failed to send OTP. Please check your email."),
+    onError: () => setError("Failed to send OTP. Please check your username and school code."),
   });
 
   const verifyOtpMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/auth/verify-otp", { email, otp, school_code: schoolCode || null });
+      await api.post("/auth/verify-otp", { username: email.trim(), otp, school_code: schoolCode || null });
     },
     onSuccess: () => {
       setStep("password");
@@ -45,7 +53,7 @@ export default function ForgotPasswordPage() {
   const resetPasswordMutation = useMutation({
     mutationFn: async () => {
       await api.post("/auth/reset-password-otp", {
-        email,
+        username: email.trim(),
         otp,
         new_password: newPassword,
         confirm_password: confirmPassword,
@@ -65,7 +73,7 @@ export default function ForgotPasswordPage() {
 
     if (step === "email") {
       if (!email) {
-        setError("Please enter your email");
+        setError("Please enter your username");
         return;
       }
       requestOtpMutation.mutate();
@@ -125,7 +133,7 @@ export default function ForgotPasswordPage() {
                 {step === "success" && "Password Reset!"}
               </h1>
               <p className="text-ink-3 text-sm mt-1">
-                {step === "email" && "Enter your email to receive an OTP"}
+                {step === "email" && "Enter your username to receive an OTP on your registered email"}
                 {step === "otp" && "Enter the 6-digit code (use 123456 for testing)"}
                 {step === "password" && "Create your new password"}
                 {step === "success" && "Your password has been reset successfully"}
@@ -174,15 +182,16 @@ export default function ForgotPasswordPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-ink-2 mb-2">
-                        Email Address
+                        Username
                       </label>
                       <input
-                        type="email"
+                        type="text"
+                        autoComplete="username"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-3 lg-field"
-                        placeholder="you@example.com"
+                        placeholder="e.g. admin@school.com or BPS-TCH-001"
                       />
                     </div>
                     <div>

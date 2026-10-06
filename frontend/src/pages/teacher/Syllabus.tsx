@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button, PageHeader, Card, Spinner, Badge } from "../../components/ui";
-import { SyllabusViewer } from "../../components/SyllabusViewer";
-import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
+import { listSyllabus } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
 import { Plus, Filter, BookOpen, GraduationCap, FileText, Sparkles } from "lucide-react";
 

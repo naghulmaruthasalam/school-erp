@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, Spinner, Badge } from "./ui";
-import { BookOpen, FileText, ChevronDown, ChevronRight, Download, GraduationCap, Layers, Video, PlayCircle } from "lucide-react";
+import { BookOpen, FileText, ChevronDown, Download, GraduationCap, Layers, Video, PlayCircle } from "lucide-react";
 
 interface Chapter {
   id: string;

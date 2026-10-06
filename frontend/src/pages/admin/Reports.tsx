@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, PageHeader, Spinner, Badge, Button } from "../../components/ui";
+import { Card, PageHeader, Badge, Button } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
 import {
-  BarChart3, Users, TrendingUp, Calendar, DollarSign, BookOpen, Bus,
+  Users, TrendingUp, Calendar, DollarSign, BookOpen,
   Download, Filter, FileText, PieChart, Activity, AlertTriangle,
   CheckCircle, XCircle, Clock, GraduationCap, UserCheck, Award
 } from "lucide-react";
@@ -38,14 +38,6 @@ interface Student {
   full_name: string;
   admission_no: string;
   status: string;
-}
-
-interface AttendanceRecord {
-  date: string;
-  present: number;
-  absent: number;
-  late: number;
-  total: number;
 }
 
 export default function Reports() {
@@ -227,7 +219,7 @@ export default function Reports() {
                 <Badge tone="violet">Last 7 Days</Badge>
               </div>
               <div className="h-48 flex items-end justify-between gap-2 px-2">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => {
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
                   const height = 40 + Math.random() * 55;
                   return (
                     <div key={day} className="flex-1 flex flex-col items-center gap-2">
@@ -543,7 +535,7 @@ export default function Reports() {
           <Card className="p-6">
             <h3 className="font-semibold text-ink mb-4">Students by Class</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {classesQuery.data?.map((cls, i) => {
+              {classesQuery.data?.map((cls) => {
                 const count = Math.floor(Math.random() * 80) + 40;
                 return (
                   <div key={cls.id} className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl text-center hover:shadow-md transition-all">

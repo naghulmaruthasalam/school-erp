@@ -15,6 +15,7 @@ const statusConfig: Record<AttendanceStatus, { icon: typeof CheckCircle; color: 
   PRESENT: { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100 dark:bg-green-500/20" },
   ABSENT: { icon: XCircle, color: "text-red-600", bg: "bg-red-100 dark:bg-red-500/20" },
   LATE: { icon: Clock, color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-500/20" },
+  HALF_DAY: { icon: Clock, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-500/20" },
   EXCUSED: { icon: AlertCircle, color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-500/20" },
 };
 
@@ -216,7 +217,6 @@ export default function TeacherAttendance() {
                 <tbody className="divide-y divide-line dark:divide-line">
                   {roster.map((student, i) => {
                     const currentStatus = statuses[student.id] ?? "PRESENT";
-                    const config = statusConfig[currentStatus];
                     return (
                       <tr
                         key={student.id}

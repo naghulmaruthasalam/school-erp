@@ -52,7 +52,17 @@ export default function TeacherHomework() {
   const myHomework = (homeworkQuery.data?.items ?? []).filter((h) => h.teacher_id === teacherId);
 
   const createMutation = useMutation({
-    mutationFn: createHomework,
+    mutationFn: async (payload: HomeworkCreateRequest) => {
+      const attachment_document_ids: string[] = [];
+      for (const file of attachments) {
+        const body = new FormData();
+        body.append("file", file);
+        body.append("module", "HOMEWORK_ATTACHMENT");
+        const { data } = await api.post<{ id: string }>("/uploads", body);
+        attachment_document_ids.push(data.id);
+      }
+      return createHomework({ ...payload, attachment_document_ids });
+    },
     onSuccess: () => {
       setFormError(null); setForm(emptyForm); setAttachments([]); setGeneratedContent("");
       void queryClient.invalidateQueries({ queryKey: ["teacher", "homework"] });

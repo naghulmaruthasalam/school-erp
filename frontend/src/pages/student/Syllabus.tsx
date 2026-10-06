@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { PageHeader, Card, Spinner } from "../../components/ui";
+import { PageHeader, Card } from "../../components/ui";
 import { SyllabusViewer } from "../../components/SyllabusViewer";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";

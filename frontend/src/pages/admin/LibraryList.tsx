@@ -5,7 +5,7 @@ import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
 import {
   BookOpen, Search, Plus, Users, AlertTriangle, BookMarked, RotateCcw,
-  Trash2, Edit3, Calendar, DollarSign, CheckCircle, XCircle, Clock
+  CheckCircle, Clock
 } from "lucide-react";
 
 interface Book {

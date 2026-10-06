@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { Badge, Button, Card, ErrorText, Input, Label, PageHeader, Select, Spinner } from "../../components/ui";
+import { Button, Card, ErrorText, Input, Label, PageHeader, Select, Spinner } from "../../components/ui";
 import { api } from "../../api/client";
 import {
   Calendar,

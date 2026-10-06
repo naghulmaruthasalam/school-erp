@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Badge, StatTile } from "../../components/ui";
 import { api } from "../../api/client";
+import type { PageResponse } from "../../types/common";
 import { fetchClasses, fetchSections, listStudents } from "./api";
 
 interface AttendanceRecord {
   id: string;
   student_id: string;
-  student_name: string;
   date: string;
   status: string;
   remarks: string | null;
@@ -31,17 +31,21 @@ export default function AttendanceList() {
     queryKey: ["attendance", selectedSection, selectedDate],
     queryFn: async () => {
       if (!selectedSection) return [];
-      const { data } = await api.get<AttendanceRecord[]>("/attendance/student", {
-        params: { section_id: selectedSection, date: selectedDate },
+      const { data } = await api.get<PageResponse<AttendanceRecord>>("/attendance/students", {
+        params: { section_id: selectedSection, date_from: selectedDate, date_to: selectedDate, page_size: 500 },
       });
-      return data;
+      return data.items;
     },
     enabled: !!selectedSection && !!selectedDate,
   });
 
   const markMutation = useMutation({
     mutationFn: async (payload: { student_id: string; date: string; status: string }) => {
-      const { data } = await api.post("/attendance/student", payload);
+      const { data } = await api.post("/attendance/students", {
+        section_id: selectedSection,
+        date: payload.date,
+        records: [{ student_id: payload.student_id, status: payload.status }],
+      });
       return data;
     },
     onSuccess: () => {

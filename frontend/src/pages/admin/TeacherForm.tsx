@@ -114,6 +114,11 @@ export default function TeacherForm() {
         photoDocumentId = await uploadFile(photoFile, "TEACHER_PHOTO");
       }
 
+      const documentIds: string[] = [];
+      for (const doc of documents) {
+        if (doc.file) documentIds.push(await uploadFile(doc.file, "TEACHER_DOCUMENT"));
+      }
+
       const payload: TeacherCreateRequest = {
         ...form,
         dob: form.dob || null,
@@ -125,6 +130,7 @@ export default function TeacherForm() {
           .map((q) => q.trim())
           .filter(Boolean),
         photo_document_id: photoDocumentId,
+        document_ids: documentIds,
       };
       mutation.mutate(payload);
     } catch {

@@ -153,6 +153,11 @@ export default function StudentForm() {
         photoDocumentId = await uploadFile(photoFile, "STUDENT_PHOTO");
       }
 
+      const documentIds: string[] = [];
+      for (const doc of documents) {
+        if (doc.file) documentIds.push(await uploadFile(doc.file, "STUDENT_DOCUMENT"));
+      }
+
       const payload: StudentCreateRequest = {
         ...form,
         dob: form.dob || null,
@@ -164,6 +169,7 @@ export default function StudentForm() {
         phone: form.phone || null,
         email: form.email || null,
         photo_document_id: photoDocumentId,
+        document_ids: documentIds,
       };
       mutation.mutate(payload);
     } catch {

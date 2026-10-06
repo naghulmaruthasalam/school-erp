@@ -120,6 +120,7 @@ export interface HomeworkCreateRequest {
   description?: string | null;
   assigned_date: string;
   due_date: string;
+  attachment_document_ids?: string[];
 }
 
 export interface HomeworkOut {

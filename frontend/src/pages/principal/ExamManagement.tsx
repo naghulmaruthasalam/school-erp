@@ -4,15 +4,21 @@ import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
 
+// The API stores only dates and a free-text term for an exam; its status follows from the dates.
+const EXAM_STATUS_TONE = { UPCOMING: "violet", IN_PROGRESS: "yellow", COMPLETED: "green" } as const;
+function examStatus(start: string, end: string): keyof typeof EXAM_STATUS_TONE {
+  const today = new Date().toISOString().slice(0, 10);
+  return end < today ? "COMPLETED" : start > today ? "UPCOMING" : "IN_PROGRESS";
+}
+
 interface Exam {
   id: string;
   name: string;
-  exam_type: string;
+  term?: string | null;
   academic_year_id: string;
-  class_id: string;
+  class_ids: string[];
   start_date: string;
   end_date: string;
-  status: string;
 }
 
 interface AcademicYear {
@@ -30,7 +36,7 @@ export default function ExamManagement() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    exam_type: "UNIT_TEST",
+    term: "Unit Test",
     academic_year_id: "",
     class_id: "",
     start_date: "",
@@ -63,25 +69,19 @@ export default function ExamManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (payload: typeof form) => {
-      const { data } = await api.post("/exams", payload);
+      const { class_id, ...rest } = payload;
+      const { data } = await api.post("/exams", { ...rest, class_ids: [class_id] });
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exams"] });
       setShowForm(false);
-      setForm({ name: "", exam_type: "UNIT_TEST", academic_year_id: "", class_id: "", start_date: "", end_date: "" });
+      setForm({ name: "", term: "Unit Test", academic_year_id: "", class_id: "", start_date: "", end_date: "" });
     },
   });
 
   const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || id;
   const getYearName = (id: string) => yearsQuery.data?.find((y) => y.id === id)?.name || id;
-
-  const statusColors: Record<string, "gray" | "green" | "red" | "yellow" | "violet"> = {
-    SCHEDULED: "violet",
-    IN_PROGRESS: "yellow",
-    COMPLETED: "green",
-    CANCELLED: "red",
-  };
 
   const examTypes = [
     { value: "UNIT_TEST", label: "Unit Test" },
@@ -116,8 +116,8 @@ export default function ExamManagement() {
               <div>
                 <label className="block text-sm font-medium text-ink-2 mb-1">Exam Type</label>
                 <select
-                  value={form.exam_type}
-                  onChange={(e) => setForm({ ...form, exam_type: e.target.value })}
+                  value={form.term}
+                  onChange={(e) => setForm({ ...form, term: e.target.value })}
                   className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink dark:text-white focus:border-accent focus:outline-none"
                 >
                   {examTypes.map((t) => (
@@ -196,11 +196,13 @@ export default function ExamManagement() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-ink dark:text-white">{exam.name}</h3>
-                    <Badge tone={statusColors[exam.status] || "gray"}>{exam.status.replace(/_/g, " ")}</Badge>
-                    <Badge tone="violet">{exam.exam_type.replace(/_/g, " ")}</Badge>
+                    <Badge tone={EXAM_STATUS_TONE[examStatus(exam.start_date, exam.end_date)]}>
+                      {examStatus(exam.start_date, exam.end_date).replace("_", " ")}
+                    </Badge>
+                    {exam.term && <Badge tone="violet">{exam.term}</Badge>}
                   </div>
                   <p className="text-sm text-ink-2">
-                    {getClassName(exam.class_id)} • {getYearName(exam.academic_year_id)}
+                    {(exam.class_ids ?? []).map(getClassName).join(", ")} • {getYearName(exam.academic_year_id)}
                   </p>
                   <p className="text-xs text-ink-3">
                     {new Date(exam.start_date).toLocaleDateString()} - {new Date(exam.end_date).toLocaleDateString()}

@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge, Modal } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
+import { fetchClasses } from "./api";
 import {
-  Bus, MapPin, Users, Plus, Wrench, UserPlus, Route, Phone, User,
-  Fuel, Shield, Calendar, Trash2, Edit3, ChevronRight, Navigation
+  Bus, MapPin, Users, Plus, UserPlus, Route, Phone, User,
+  Shield, Calendar, Trash2, ChevronRight, Navigation
 } from "lucide-react";
 
 interface Vehicle {
@@ -56,7 +57,7 @@ interface Student {
   id: string;
   full_name: string;
   admission_no: string;
-  class_name?: string;
+  class_id?: string;
 }
 
 interface AcademicYear {
@@ -130,10 +131,12 @@ export default function TransportList() {
     },
   });
 
+  const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => fetchClasses() });
+
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => {
-      const { data } = await api.get<PageResponse<AcademicYear>>("/academics/years");
+      const { data } = await api.get<AcademicYear[]>("/academics/years");
       return data;
     },
   });
@@ -236,7 +239,7 @@ export default function TransportList() {
         ...assignForm,
         student_id: student.id,
         student_name: student.full_name,
-        student_class: student.class_name || ""
+        student_class: classesQuery.data?.find((c) => c.id === student.class_id)?.name ?? ""
       });
     }
   };
@@ -619,7 +622,7 @@ export default function TransportList() {
             <select value={assignForm.academic_year_id} onChange={(e) => setAssignForm({ ...assignForm, academic_year_id: e.target.value })}
               className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required>
               <option value="">-- Select Year --</option>
-              {yearsQuery.data?.items.map(y => (
+              {yearsQuery.data?.map(y => (
                 <option key={y.id} value={y.id}>{y.name} {y.is_current && "(Current)"}</option>
               ))}
             </select>

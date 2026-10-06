@@ -59,6 +59,18 @@ api.interceptors.response.use(
       return { data: error.data, status: 200, statusText: "OK", headers: {}, config: error.config };
     }
 
+    // FastAPI returns validation errors (422) as an array of objects; every form renders
+    // `detail` directly as text, so flatten it to a readable string here.
+    const data = error.response?.data as { detail?: unknown } | undefined;
+    if (data && Array.isArray(data.detail)) {
+      data.detail = data.detail
+        .map((d: { loc?: unknown[]; msg?: string }) => {
+          const field = Array.isArray(d?.loc) ? d.loc.filter((p) => p !== "body").join(".") : "";
+          return field ? `${field}: ${d?.msg ?? "invalid"}` : (d?.msg ?? "invalid");
+        })
+        .join("; ");
+    }
+
     const config = error.config as RetriableConfig | undefined;
     if (error.response?.status === 401 && config && !config._retried && !config.url?.includes("/auth/")) {
       config._retried = true;
