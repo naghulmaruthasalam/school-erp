@@ -19,6 +19,7 @@ from app.services.ai import (
     GeminiError,
     GeminiNotConfigured,
 )
+from app.models.curriculum import CurriculumUnit
 
 router = APIRouter(prefix="/teacher-copilot", tags=["teacher-copilot"])
 
@@ -28,6 +29,77 @@ ALLOWED_ROLES = {Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL}
 def _check_permission(current: CurrentUser):
     if current.role not in ALLOWED_ROLES:
         raise PermissionDeniedError("Only teachers, admins, and principals can use teacher copilot")
+
+
+# ==================== Curriculum Options ====================
+
+@router.get("/curriculum-options")
+async def get_curriculum_options(
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict[str, Any]:
+    """Get available grades, subjects, and chapters from curriculum database."""
+    _check_permission(current)
+
+    # Get all curriculum units
+    units = await CurriculumUnit.find().to_list()
+
+    # Build options structure
+    grades = sorted(set(u.grade for u in units if u.grade))
+
+    # Build subjects per grade
+    subjects_by_grade: dict[int, list[str]] = {}
+    for u in units:
+        if u.grade not in subjects_by_grade:
+            subjects_by_grade[u.grade] = []
+        if u.subject and u.subject not in subjects_by_grade[u.grade]:
+            subjects_by_grade[u.grade].append(u.subject)
+
+    # Build chapters per grade/subject
+    chapters_by_grade_subject: dict[str, list[dict]] = {}
+    for u in units:
+        key = f"{u.grade}_{u.subject}"
+        if key not in chapters_by_grade_subject:
+            chapters_by_grade_subject[key] = []
+        chapters_by_grade_subject[key].append({
+            "unit_number": u.unit_number,
+            "title_en": u.unit_title_en,
+            "title_ar": u.unit_title_ar,
+            "id": str(u.id),
+        })
+
+    # Sort chapters by unit number
+    for key in chapters_by_grade_subject:
+        chapters_by_grade_subject[key].sort(key=lambda x: x["unit_number"])
+
+    return {
+        "grades": grades,
+        "subjects_by_grade": subjects_by_grade,
+        "chapters_by_grade_subject": chapters_by_grade_subject,
+    }
+
+
+@router.get("/curriculum-content/{unit_id}")
+async def get_curriculum_content(
+    unit_id: str,
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict[str, Any]:
+    """Get full content for a specific curriculum unit."""
+    _check_permission(current)
+
+    unit = await CurriculumUnit.get(unit_id)
+    if not unit:
+        raise HTTPException(status_code=404, detail="Curriculum unit not found")
+
+    return {
+        "id": str(unit.id),
+        "grade": unit.grade,
+        "subject": unit.subject,
+        "unit_number": unit.unit_number,
+        "title_en": unit.unit_title_en,
+        "title_ar": unit.unit_title_ar,
+        "full_text": unit.full_text,
+        "resources": [r.model_dump() for r in unit.resources],
+    }
 
 
 # ==================== Lesson Plan Generator ====================

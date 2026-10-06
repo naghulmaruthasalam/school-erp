@@ -1,42 +1,92 @@
-import { useState } from "react";
-import { Card, PageHeader, Spinner } from "../../components/ui";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, PageHeader, Spinner, Button } from "../../components/ui";
 import { api } from "../../api/client";
+import { BookOpen, FileText, ClipboardList, Sparkles, Wand2, Download, Copy, Check } from "lucide-react";
 
 type Tab = "lesson-plan" | "question-paper" | "worksheet";
+
+interface CurriculumOptions {
+  grades: number[];
+  subjects_by_grade: Record<number, string[]>;
+  chapters_by_grade_subject: Record<string, { unit_number: number; title_en: string; title_ar: string; id: string }[]>;
+}
 
 export default function TeacherCopilot() {
   const [activeTab, setActiveTab] = useState<Tab>("lesson-plan");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  // Lesson Plan state
-  const [lpChapter, setLpChapter] = useState("");
-  const [lpSubject, setLpSubject] = useState("Mathematics");
-  const [lpGrade, setLpGrade] = useState("6");
+  // Shared state
+  const [grade, setGrade] = useState<number>(6);
+  const [subject, setSubject] = useState("");
+  const [chapter, setChapter] = useState("");
+  const [chapterId, setChapterId] = useState("");
 
-  // Question Paper state
-  const [qpSubject, setQpSubject] = useState("Mathematics");
-  const [qpGrade, setQpGrade] = useState("6");
-  const [qpChapters, setQpChapters] = useState("");
+  // Question Paper specific
   const [qpMarks, setQpMarks] = useState("100");
   const [qpDuration, setQpDuration] = useState("180");
+  const [qpMcq, setQpMcq] = useState("10");
+  const [qpShort, setQpShort] = useState("5");
+  const [qpLong, setQpLong] = useState("3");
 
-  // Worksheet state
-  const [wsTopic, setWsTopic] = useState("");
-  const [wsSubject, setWsSubject] = useState("Mathematics");
-  const [wsGrade, setWsGrade] = useState("6");
+  // Worksheet specific
   const [wsQuestions, setWsQuestions] = useState("10");
   const [wsDifficulty, setWsDifficulty] = useState("medium");
+  const [wsIncludeAnswers, setWsIncludeAnswers] = useState(true);
+
+  // Fetch curriculum options
+  const { data: curriculum, isLoading: loadingCurriculum } = useQuery({
+    queryKey: ["teacher-copilot", "curriculum-options"],
+    queryFn: async () => {
+      const res = await api.get<CurriculumOptions>("/teacher-copilot/curriculum-options");
+      return res.data;
+    },
+  });
+
+  // Set initial subject when curriculum loads
+  useEffect(() => {
+    if (curriculum && !subject) {
+      const subjects = curriculum.subjects_by_grade[grade] || [];
+      if (subjects.length > 0) setSubject(subjects[0]);
+    }
+  }, [curriculum, grade, subject]);
+
+  // Get available subjects for selected grade
+  const subjects = curriculum?.subjects_by_grade[grade] || [];
+
+  // Get available chapters for selected grade/subject
+  const chaptersKey = `${grade}_${subject}`;
+  const chapters = curriculum?.chapters_by_grade_subject[chaptersKey] || [];
+
+  // Reset chapter when grade/subject changes
+  useEffect(() => {
+    setChapter("");
+    setChapterId("");
+  }, [grade, subject]);
 
   const extractTopics = async () => {
+    if (!chapter) {
+      setError("Please select a chapter");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
+      // Get chapter content if we have an ID
+      let chapterContent = "";
+      if (chapterId) {
+        const contentRes = await api.get(`/teacher-copilot/curriculum-content/${chapterId}`);
+        chapterContent = contentRes.data.full_text || "";
+      }
+
       const res = await api.post("/teacher-copilot/lesson-plan/extract-topics", {
-        chapter_name: lpChapter,
-        subject: lpSubject,
-        grade: lpGrade,
+        chapter_name: chapter,
+        chapter_content: chapterContent,
+        subject,
+        grade: String(grade),
       });
       setResult({ type: "topics", data: res.data });
     } catch (err: any) {
@@ -47,16 +97,25 @@ export default function TeacherCopilot() {
   };
 
   const generateQuestionPaper = async () => {
+    if (!chapter) {
+      setError("Please select a chapter");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await api.post("/teacher-copilot/question-paper/generate", {
         board: "CBSE",
-        grade: qpGrade,
-        subject: qpSubject,
-        chapters: qpChapters.split(",").map(c => c.trim()),
+        grade: String(grade),
+        subject,
+        chapters: [chapter],
         total_marks: parseInt(qpMarks),
         duration_minutes: parseInt(qpDuration),
+        question_distribution: {
+          mcq: parseInt(qpMcq),
+          short_answer: parseInt(qpShort),
+          long_answer: parseInt(qpLong),
+        },
       });
       setResult({ type: "question-paper", data: res.data });
     } catch (err: any) {
@@ -67,15 +126,20 @@ export default function TeacherCopilot() {
   };
 
   const generateWorksheet = async () => {
+    if (!chapter) {
+      setError("Please select a chapter");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await api.post("/teacher-copilot/worksheet/generate", {
-        grade: wsGrade,
-        subject: wsSubject,
-        topic: wsTopic,
+        grade: String(grade),
+        subject,
+        topic: chapter,
         num_questions: parseInt(wsQuestions),
         difficulty: wsDifficulty,
+        include_answers: wsIncludeAnswers,
       });
       setResult({ type: "worksheet", data: res.data });
     } catch (err: any) {
@@ -85,11 +149,28 @@ export default function TeacherCopilot() {
     }
   };
 
+  const copyToClipboard = () => {
+    if (result?.data) {
+      const text = JSON.stringify(result.data, null, 2);
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const tabs = [
-    { id: "lesson-plan" as Tab, label: "Lesson Plan", icon: "📚" },
-    { id: "question-paper" as Tab, label: "Question Paper", icon: "📝" },
-    { id: "worksheet" as Tab, label: "Worksheet", icon: "📋" },
+    { id: "lesson-plan" as Tab, label: "Lesson Plan", icon: BookOpen, color: "from-violet-500 to-purple-600" },
+    { id: "question-paper" as Tab, label: "Question Paper", icon: FileText, color: "from-blue-500 to-cyan-500" },
+    { id: "worksheet" as Tab, label: "Worksheet", icon: ClipboardList, color: "from-emerald-500 to-teal-500" },
   ];
+
+  if (loadingCurriculum) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in-up">
@@ -99,331 +180,281 @@ export default function TeacherCopilot() {
       />
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => { setActiveTab(tab.id); setResult(null); setError(null); }}
-            className={`px-4 py-2 rounded-xl font-medium transition-all ${
-              activeTab === tab.id
-                ? "bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white shadow-lg"
-                : "bg-white dark:bg-[#1B1230] text-[#7C6F95] hover:bg-[#F7F5FF] dark:hover:bg-[#231640]"
-            }`}
-          >
-            <span className="mr-2">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex gap-3 mb-6">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); setResult(null); setError(null); }}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 ${
+                activeTab === tab.id
+                  ? `bg-gradient-to-r ${tab.color} text-white shadow-lg shadow-${tab.color.split("-")[1]}-500/30`
+                  : "bg-white dark:bg-surface border border-line hover:border-accent-fg/30 text-ink-2 hover:text-ink"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Form */}
-        <Card>
-          {activeTab === "lesson-plan" && (
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Left Panel - Form */}
+        <div className="lg:col-span-2">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 flex items-center gap-2">
+              <Wand2 className="w-5 h-5 text-violet-500" />
+              {activeTab === "lesson-plan" && "Generate Lesson Plan"}
+              {activeTab === "question-paper" && "Generate Question Paper"}
+              {activeTab === "worksheet" && "Generate Worksheet"}
+            </h3>
+
+            {/* Common Fields */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Generate Lesson Plan</h3>
+              {/* Grade */}
               <div>
-                <label className="block text-sm font-medium text-[#7C6F95] mb-1">Chapter Name</label>
-                <input
-                  type="text"
-                  value={lpChapter}
-                  onChange={(e) => setLpChapter(e.target.value)}
-                  placeholder="e.g., Fractions and Decimals"
-                  className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white focus:ring-2 focus:ring-[#6D28D9]"
-                />
+                <label className="block text-sm font-medium text-ink-2 mb-1.5">Grade</label>
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(parseInt(e.target.value))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                >
+                  {curriculum?.grades.map((g) => (
+                    <option key={g} value={g}>Grade {g}</option>
+                  ))}
+                </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Subject</label>
-                  <select
-                    value={lpSubject}
-                    onChange={(e) => setLpSubject(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  >
-                    <option>Mathematics</option>
-                    <option>Science</option>
-                    <option>Social Studies</option>
-                    <option>English</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Grade</label>
-                  <select
-                    value={lpGrade}
-                    onChange={(e) => setLpGrade(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  >
-                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(g => (
-                      <option key={g} value={g}>Grade {g}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <button
-                onClick={extractTopics}
-                disabled={loading || !lpChapter}
-                className="w-full py-3 bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
-              >
-                {loading ? <Spinner /> : "Extract Topics"}
-              </button>
-            </div>
-          )}
 
-          {activeTab === "question-paper" && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Generate Question Paper</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Subject</label>
-                  <select
-                    value={qpSubject}
-                    onChange={(e) => setQpSubject(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  >
-                    <option>Mathematics</option>
-                    <option>Science</option>
-                    <option>Social Studies</option>
-                    <option>English</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Grade</label>
-                  <select
-                    value={qpGrade}
-                    onChange={(e) => setQpGrade(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  >
-                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(g => (
-                      <option key={g} value={g}>Grade {g}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {/* Subject */}
               <div>
-                <label className="block text-sm font-medium text-[#7C6F95] mb-1">Chapters (comma separated)</label>
-                <input
-                  type="text"
-                  value={qpChapters}
-                  onChange={(e) => setQpChapters(e.target.value)}
-                  placeholder="e.g., Fractions, Decimals, Geometry"
-                  className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                />
+                <label className="block text-sm font-medium text-ink-2 mb-1.5">Subject</label>
+                <select
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                >
+                  {subjects.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Total Marks</label>
-                  <input
-                    type="number"
-                    value={qpMarks}
-                    onChange={(e) => setQpMarks(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Duration (mins)</label>
-                  <input
-                    type="number"
-                    value={qpDuration}
-                    onChange={(e) => setQpDuration(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={generateQuestionPaper}
-                disabled={loading || !qpChapters}
-                className="w-full py-3 bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
-              >
-                {loading ? <Spinner /> : "Generate Question Paper"}
-              </button>
-            </div>
-          )}
 
-          {activeTab === "worksheet" && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Generate Worksheet</h3>
+              {/* Chapter */}
               <div>
-                <label className="block text-sm font-medium text-[#7C6F95] mb-1">Topic</label>
-                <input
-                  type="text"
-                  value={wsTopic}
-                  onChange={(e) => setWsTopic(e.target.value)}
-                  placeholder="e.g., Addition of Fractions"
-                  className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                />
+                <label className="block text-sm font-medium text-ink-2 mb-1.5">Chapter</label>
+                <select
+                  value={chapter}
+                  onChange={(e) => {
+                    const selected = chapters.find(c => c.title_en === e.target.value);
+                    setChapter(e.target.value);
+                    setChapterId(selected?.id || "");
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                >
+                  <option value="">Select a chapter</option>
+                  {chapters.map((c) => (
+                    <option key={c.id} value={c.title_en}>
+                      Unit {c.unit_number}: {c.title_en}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Subject</label>
-                  <select
-                    value={wsSubject}
-                    onChange={(e) => setWsSubject(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  >
-                    <option>Mathematics</option>
-                    <option>Science</option>
-                    <option>Social Studies</option>
-                    <option>English</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Grade</label>
-                  <select
-                    value={wsGrade}
-                    onChange={(e) => setWsGrade(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  >
-                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(g => (
-                      <option key={g} value={g}>Grade {g}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Questions</label>
-                  <input
-                    type="number"
-                    value={wsQuestions}
-                    onChange={(e) => setWsQuestions(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#7C6F95] mb-1">Difficulty</label>
-                  <select
-                    value={wsDifficulty}
-                    onChange={(e) => setWsDifficulty(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] text-[#24113F] dark:text-white"
-                  >
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                  </select>
-                </div>
-              </div>
-              <button
-                onClick={generateWorksheet}
-                disabled={loading || !wsTopic}
-                className="w-full py-3 bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
-              >
-                {loading ? <Spinner /> : "Generate Worksheet"}
-              </button>
-            </div>
-          )}
-        </Card>
 
-        {/* Result Display */}
-        <Card className="max-h-[600px] overflow-y-auto">
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4">Generated Content</h3>
+              {/* Question Paper specific fields */}
+              {activeTab === "question-paper" && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Total Marks</label>
+                      <input
+                        type="number"
+                        value={qpMarks}
+                        onChange={(e) => setQpMarks(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Duration (min)</label>
+                      <input
+                        type="number"
+                        value={qpDuration}
+                        onChange={(e) => setQpDuration(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-ink-2 mb-1">MCQs</label>
+                      <input
+                        type="number"
+                        value={qpMcq}
+                        onChange={(e) => setQpMcq(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-line bg-white dark:bg-surface text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-ink-2 mb-1">Short Ans</label>
+                      <input
+                        type="number"
+                        value={qpShort}
+                        onChange={(e) => setQpShort(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-line bg-white dark:bg-surface text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-ink-2 mb-1">Long Ans</label>
+                      <input
+                        type="number"
+                        value={qpLong}
+                        onChange={(e) => setQpLong(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-line bg-white dark:bg-surface text-sm"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
-          {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400">
-              {error}
-            </div>
-          )}
+              {/* Worksheet specific fields */}
+              {activeTab === "worksheet" && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Questions</label>
+                      <input
+                        type="number"
+                        value={wsQuestions}
+                        onChange={(e) => setWsQuestions(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Difficulty</label>
+                      <select
+                        value={wsDifficulty}
+                        onChange={(e) => setWsDifficulty(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                      >
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                      </select>
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={wsIncludeAnswers}
+                      onChange={(e) => setWsIncludeAnswers(e.target.checked)}
+                      className="w-4 h-4 rounded border-line text-emerald-500 focus:ring-emerald-500"
+                    />
+                    <span className="text-sm text-ink-2">Include answer key</span>
+                  </label>
+                </>
+              )}
 
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Spinner />
-              <p className="mt-4 text-[#7C6F95]">Generating with AI...</p>
-            </div>
-          )}
-
-          {!loading && !error && !result && (
-            <div className="flex flex-col items-center justify-center py-12 text-[#7C6F95]">
-              <span className="text-4xl mb-4">✨</span>
-              <p>Generated content will appear here</p>
-            </div>
-          )}
-
-          {result?.type === "topics" && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-[#6D28D9]">Extracted Topics:</h4>
-              <ul className="space-y-2">
-                {result.data.topics?.map((topic: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 p-3 bg-[#F7F5FF] dark:bg-[#231640] rounded-lg">
-                    <span className="text-[#6D28D9] font-bold">{i + 1}.</span>
-                    <span className="text-[#24113F] dark:text-white">{topic}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {result?.type === "question-paper" && (
-            <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-[#6D28D9]/10 to-[#8B5CF6]/10 rounded-xl">
-                <h4 className="font-bold text-[#6D28D9]">{result.data.title}</h4>
-                <p className="text-sm text-[#7C6F95]">
-                  Total Marks: {result.data.total_marks} | Duration: {result.data.duration_minutes} mins
-                </p>
-              </div>
-              {result.data.general_instructions?.length > 0 && (
-                <div>
-                  <h5 className="font-medium text-[#24113F] dark:text-white mb-2">Instructions:</h5>
-                  <ul className="text-sm text-[#7C6F95] list-disc pl-5 space-y-1">
-                    {result.data.general_instructions.map((ins: string, i: number) => (
-                      <li key={i}>{ins}</li>
-                    ))}
-                  </ul>
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm">
+                  {error}
                 </div>
               )}
-              {result.data.sections?.map((section: any, si: number) => (
-                <div key={si} className="border-t border-[#E5DDF5] dark:border-[#2D1B4E] pt-4">
-                  <h5 className="font-semibold text-[#6D28D9]">{section.section_name}: {section.section_label}</h5>
-                  <p className="text-xs text-[#7C6F95] mb-3">{section.instructions}</p>
-                  {section.questions?.map((q: any, qi: number) => (
-                    <div key={qi} className="mb-3 p-3 bg-[#F7F5FF] dark:bg-[#231640] rounded-lg">
-                      <p className="font-medium text-[#24113F] dark:text-white">
-                        Q{q.question_number}. {q.question_text} <span className="text-[#7C6F95]">({q.marks} marks)</span>
-                      </p>
-                      {q.options && (
-                        <ul className="mt-2 pl-4 text-sm text-[#7C6F95]">
-                          {q.options.map((opt: string, oi: number) => (
-                            <li key={oi}>{String.fromCharCode(65 + oi)}. {opt}</li>
-                          ))}
-                        </ul>
-                      )}
-                      {q.answer_key && (
-                        <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                          <strong>Answer:</strong> {q.answer_key}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
 
-          {result?.type === "worksheet" && (
-            <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-[#6D28D9]/10 to-[#8B5CF6]/10 rounded-xl">
-                <h4 className="font-bold text-[#6D28D9]">{result.data.title}</h4>
-                <p className="text-sm text-[#7C6F95]">{result.data.instructions}</p>
+              <Button
+                onClick={() => {
+                  if (activeTab === "lesson-plan") extractTopics();
+                  else if (activeTab === "question-paper") generateQuestionPaper();
+                  else generateWorksheet();
+                }}
+                disabled={loading || !chapter}
+                className={`w-full py-3 flex items-center justify-center gap-2 ${
+                  activeTab === "lesson-plan" ? "bg-gradient-to-r from-violet-500 to-purple-600" :
+                  activeTab === "question-paper" ? "bg-gradient-to-r from-blue-500 to-cyan-500" :
+                  "bg-gradient-to-r from-emerald-500 to-teal-500"
+                } text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all`}
+              >
+                {loading ? <Spinner className="!w-5 !h-5" /> : <Sparkles className="w-5 h-5" />}
+                {loading ? "Generating..." : "Generate"}
+              </Button>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Panel - Results */}
+        <div className="lg:col-span-3">
+          <Card className="p-6 min-h-[400px]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-ink dark:text-white">Generated Content</h3>
+              {result && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={copyToClipboard}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-ink-3" />}
+                  </button>
+                  <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Download">
+                    <Download className="w-5 h-5 text-ink-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!result ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/20 dark:to-purple-500/20 flex items-center justify-center mb-4">
+                  <Sparkles className="w-8 h-8 text-violet-500" />
+                </div>
+                <p className="text-ink-3 mb-2">Generated content will appear here</p>
+                <p className="text-sm text-ink-4">Select grade, subject, and chapter, then click Generate</p>
               </div>
-              {result.data.questions?.map((q: any, i: number) => (
-                <div key={i} className="p-3 bg-[#F7F5FF] dark:bg-[#231640] rounded-lg">
-                  <p className="font-medium text-[#24113F] dark:text-white">
-                    Q{q.question_number}. {q.question_text}
-                  </p>
-                  {q.options && (
-                    <ul className="mt-2 pl-4 text-sm text-[#7C6F95]">
-                      {q.options.map((opt: string, oi: number) => (
-                        <li key={oi}>{String.fromCharCode(65 + oi)}. {opt}</li>
+            ) : (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                {result.type === "topics" && result.data.topics && (
+                  <div>
+                    <h4 className="text-violet-600 dark:text-violet-400 mb-3">Extracted Topics</h4>
+                    <ul className="space-y-2">
+                      {result.data.topics.map((topic: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center text-xs font-medium flex-shrink-0">
+                            {i + 1}
+                          </span>
+                          <span>{topic}</span>
+                        </li>
                       ))}
                     </ul>
-                  )}
-                  {q.hint && <p className="mt-1 text-xs text-[#6D28D9]">Hint: {q.hint}</p>}
-                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                    <strong>Answer:</strong> {q.answer}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+                  </div>
+                )}
+
+                {result.type === "question-paper" && (
+                  <div className="space-y-6">
+                    <div className="text-center border-b pb-4 mb-4">
+                      <h4 className="text-xl font-bold">{subject} - Grade {grade}</h4>
+                      <p className="text-sm text-ink-3">Question Paper | Total Marks: {qpMarks} | Duration: {qpDuration} min</p>
+                    </div>
+                    <pre className="text-sm bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto whitespace-pre-wrap">
+                      {typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2)}
+                    </pre>
+                  </div>
+                )}
+
+                {result.type === "worksheet" && (
+                  <div className="space-y-6">
+                    <div className="text-center border-b pb-4 mb-4">
+                      <h4 className="text-xl font-bold">{subject} Worksheet - Grade {grade}</h4>
+                      <p className="text-sm text-ink-3">Topic: {chapter} | Difficulty: {wsDifficulty}</p>
+                    </div>
+                    <pre className="text-sm bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto whitespace-pre-wrap">
+                      {typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -135,25 +135,23 @@ export default function AiChatWidget() {
           className="animate-float relative group"
           aria-label="Open AI Assistant"
         >
-          {/* Glass orb with the mascot face */}
-          <div className="glass relative grid h-14 w-14 place-items-center !rounded-full transition-transform duration-300 group-hover:scale-110">
-            <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-accent to-accent-2 shadow-[0_8px_20px_-6px_var(--accent-glow)]" />
-            <div className="absolute inset-1.5 rounded-full bg-gradient-to-b from-white/35 to-transparent" />
-            <div className="relative h-8 w-8">
-              {/* Ears */}
-              <div className="absolute -top-1 left-0.5 h-0 w-0 border-b-[9px] border-l-[5px] border-r-[5px] border-b-white/80 border-l-transparent border-r-transparent" />
-              <div className="absolute -top-1 right-0.5 h-0 w-0 border-b-[9px] border-l-[5px] border-r-[5px] border-b-white/80 border-l-transparent border-r-transparent" />
-              {/* Eyes */}
-              <div className="absolute left-1 top-2.5 flex h-2.5 w-2.5 items-center justify-center overflow-hidden rounded-full bg-surface">
-                <div className="h-1.5 w-1.5 rounded-full bg-surface transition-transform duration-75" style={{ transform: `translate(${eyePos.x}px, ${eyePos.y}px)` }} />
-              </div>
-              <div className="absolute right-1 top-2.5 flex h-2.5 w-2.5 items-center justify-center overflow-hidden rounded-full bg-surface">
-                <div className="h-1.5 w-1.5 rounded-full bg-surface transition-transform duration-75" style={{ transform: `translate(${eyePos.x}px, ${eyePos.y}px)` }} />
-              </div>
-              {/* Nose + mouth */}
-              <div className="absolute left-1/2 top-5 h-1 w-1.5 -translate-x-1/2 rounded-full bg-pink-200" />
-              <div className="absolute bottom-0.5 left-1/2 h-1.5 w-3 -translate-x-1/2 rounded-b-full border-b-2 border-pink-100" />
-            </div>
+          {/* Modern AI Assistant Icon */}
+          <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 shadow-lg shadow-violet-500/40 transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-violet-500/50 flex items-center justify-center overflow-hidden">
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+            {/* Inner glow */}
+            <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 to-transparent" />
+            {/* AI Icon - Sparkle/Brain hybrid */}
+            <svg className="relative w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
+            </svg>
+            {/* Pulse ring */}
+            <div className="absolute inset-0 rounded-2xl border-2 border-white/30 animate-ping opacity-30" style={{ animationDuration: '2s' }} />
+          </div>
+          {/* Status dot */}
+          <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white shadow-sm">
+            <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-50" />
           </div>
         </button>
       )}

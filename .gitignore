@@ -42,3 +42,4 @@ backend/uploads/
 # Temp files
 *.zip
 *.ndjson
+skillorea_ref/

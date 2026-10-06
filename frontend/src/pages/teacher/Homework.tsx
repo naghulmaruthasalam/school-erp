@@ -356,18 +356,7 @@ export default function TeacherHomework() {
                 </div>
               </div>
             </Card>
-          ) : (
-            <Card className="text-center py-8" gradient>
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
-                <Bot className="w-8 h-8 text-white" />
-              </div>
-              <p className="text-ink dark:text-white font-bold mb-2">AI Homework Generator</p>
-              <p className="text-sm text-ink-3 mb-4">Need help creating homework? Use AI to generate questions and instructions.</p>
-              <Button onClick={() => setShowCopilot(true)} glow>
-                <Sparkles className="w-4 h-4" /> Open AI Copilot
-              </Button>
-            </Card>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
