@@ -1,8 +1,11 @@
 from datetime import date
+from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
 
 from app.core.deps import CurrentUser, require_tenant_user
+from app.core.enums import Role
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.homework import (
     HomeworkCreateRequest,
@@ -13,6 +16,7 @@ from app.schemas.homework import (
     PendingHomeworkOut,
 )
 from app.services import homework_service
+from app.services.ai import validate_text_homework, validate_image_homework, get_quick_feedback, GeminiError, GeminiNotConfigured
 
 router = APIRouter(prefix="/homework", tags=["homework"])
 
@@ -84,3 +88,105 @@ async def update_submission(
     current: CurrentUser = Depends(require_tenant_user),
 ) -> HomeworkSubmissionOut:
     return await homework_service.update_submission(current, submission_id, payload)
+
+
+# ==================== AI Validation Endpoints ====================
+
+class TextSubmissionRequest(BaseModel):
+    homework_id: str
+    answers: list[str]
+
+
+class QuickFeedbackRequest(BaseModel):
+    question: str
+    answer: str
+    subject: str
+    grade: str
+
+
+@router.post("/submissions/{submission_id}/ai-validate")
+async def ai_validate_submission(
+    submission_id: str,
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict[str, Any]:
+    """Get AI evaluation and feedback for a homework submission."""
+    if current.role not in {Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL}:
+        raise HTTPException(status_code=403, detail="Only teachers can validate submissions")
+
+    try:
+        # Get submission and homework details
+        submission = await homework_service.get_submission(current, submission_id)
+        homework = await homework_service.get_homework(current, submission.homework_id)
+
+        # Get student answers from submission
+        student_answers = submission.content.split("\n---\n") if submission.content else []
+
+        # Build questions list from homework
+        questions = [{"question": homework.description, "marks": 10}]
+
+        result = await validate_text_homework(
+            homework_id=submission.homework_id,
+            student_id=submission.student_id,
+            homework_title=homework.title,
+            homework_description=homework.description,
+            questions=questions,
+            student_answers=student_answers if student_answers else [submission.content or ""],
+        )
+
+        return result.model_dump(mode="json")
+    except GeminiNotConfigured as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except GeminiError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/submissions/{submission_id}/ai-validate-images")
+async def ai_validate_submission_images(
+    submission_id: str,
+    images: list[UploadFile] = File(...),
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict[str, Any]:
+    """Get AI evaluation for handwritten/image homework submission."""
+    if current.role not in {Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL}:
+        raise HTTPException(status_code=403, detail="Only teachers can validate submissions")
+
+    try:
+        submission = await homework_service.get_submission(current, submission_id)
+        homework = await homework_service.get_homework(current, submission.homework_id)
+
+        image_bytes_list = [await img.read() for img in images]
+        questions = [{"question": homework.description, "marks": 10}]
+
+        result = await validate_image_homework(
+            homework_id=submission.homework_id,
+            student_id=submission.student_id,
+            homework_title=homework.title,
+            homework_description=homework.description,
+            questions=questions,
+            image_bytes_list=image_bytes_list,
+        )
+
+        return result.model_dump(mode="json")
+    except GeminiNotConfigured as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except GeminiError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/quick-feedback")
+async def api_quick_feedback(
+    req: QuickFeedbackRequest,
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict[str, Any]:
+    """Get quick AI feedback on a single answer (for students while typing)."""
+    try:
+        return await get_quick_feedback(
+            student_answer=req.answer,
+            question=req.question,
+            subject=req.subject,
+            grade_level=req.grade,
+        )
+    except GeminiNotConfigured as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except GeminiError as e:
+        raise HTTPException(status_code=500, detail=str(e))

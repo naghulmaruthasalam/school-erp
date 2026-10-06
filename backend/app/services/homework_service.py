@@ -246,6 +246,14 @@ async def delete_homework(current: CurrentUser, homework_id: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+async def get_submission(current: CurrentUser, submission_id: str) -> HomeworkSubmissionOut:
+    """Get a single homework submission."""
+    submission = await HomeworkSubmission.get(submission_id)
+    if submission is None or submission.school_id != current.school_id:
+        raise NotFoundError("Submission not found")
+    return to_submission_out(submission)
+
+
 async def list_submissions(current: CurrentUser, homework_id: str) -> list[HomeworkSubmissionOut]:
     homework = await _get_homework_or_404(current, homework_id)
 
