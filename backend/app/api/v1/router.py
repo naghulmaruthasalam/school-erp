@@ -5,6 +5,8 @@ from app.api.v1.analytics import router as analytics_router
 from app.api.v1.admissions import router as admissions_router
 from app.api.v1.ai import router as ai_router
 from app.api.v1.copilot import router as copilot_router
+from app.api.v1.copilot_grading import router as copilot_grading_router
+from app.api.v1.copilot_qpg import router as copilot_qpg_router
 from app.api.v1.attendance import router as attendance_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.exams import router as exams_router
@@ -41,6 +43,8 @@ api_router.include_router(fees_router)
 api_router.include_router(payments_router)
 api_router.include_router(ai_router)
 api_router.include_router(copilot_router)
+api_router.include_router(copilot_qpg_router)
+api_router.include_router(copilot_grading_router)
 api_router.include_router(analytics_router)
 api_router.include_router(users_router)
 api_router.include_router(leave_router)

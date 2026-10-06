@@ -3,9 +3,10 @@ import json
 import logging
 
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 
-from app.copilot import grounding, llm, service, sessions
+from app.copilot import files, grounding, llm, service, sessions
+from app.copilot.deps import copilot_user
 from app.copilot.features import FEATURES
 from app.copilot.off_topic import LANGUAGES
 from app.copilot.profiles import Profile, get_profile
@@ -23,13 +24,6 @@ from app.schemas.copilot import (
 
 router = APIRouter(prefix="/copilot", tags=["copilot"])
 logger = logging.getLogger(__name__)
-
-
-async def copilot_user(current: CurrentUser = Depends(require_tenant_user)) -> CurrentUser:
-    """Any school user whose role has the Copilot enabled (COPILOT_ENABLED_ROLES)."""
-    if current.role.value not in get_settings().copilot_roles or get_profile(current.role) is None:
-        raise PermissionDeniedError("The Copilot isn't enabled for your role")
-    return current
 
 
 def _profile(current: CurrentUser) -> Profile:
@@ -192,3 +186,26 @@ async def run_tool(key: str, payload: ToolRequest, current: CurrentUser = Depend
         raise AppError(502, "The AI service is unavailable right now. Please try again in a moment.") from exc
     except ValueError as exc:  # pydantic validation of the tool's own params
         raise ValidationAppError(str(exc)) from exc
+
+
+# ------------------------------------------------------------------ generated files (history)
+
+@router.get("/files")
+async def list_my_files(kind: str | None = None, current: CurrentUser = Depends(copilot_user)) -> list[dict]:
+    """Documents the Copilot generated for this user (PDFs / text), newest first."""
+    return [files.file_info(f) for f in await files.list_files(current, kind)]
+
+
+@router.get("/files/{file_id}/download")
+async def download_file(file_id: str, current: CurrentUser = Depends(copilot_user)) -> Response:
+    record, data = await files.read_owned(current, file_id)
+    return Response(
+        content=data,
+        media_type=record.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{record.filename}"', "X-Content-Type-Options": "nosniff"},
+    )
+
+
+@router.delete("/files/{file_id}", status_code=204)
+async def delete_file(file_id: str, current: CurrentUser = Depends(copilot_user)) -> None:
+    await files.delete_owned(current, file_id)

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BookOpen, CalendarCheck, CalendarRange, FileText, HeartHandshake, History, ListChecks, Megaphone,
+  BookOpen, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, History, ListChecks, Megaphone,
   MessageSquareText, Send, Sparkles, Trash2, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -19,7 +19,7 @@ import ToolRunner from "./ToolRunner";
 type Tab = "chat" | "tools" | "history";
 
 const TOOL_ICONS: Record<string, LucideIcon> = {
-  ListChecks, CalendarCheck, CalendarRange, FileText, HeartHandshake, Megaphone, MessageSquareText,
+  ListChecks, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, Megaphone, MessageSquareText,
 };
 
 const MODE_LABEL: Record<Mode, string> = { school: "My school", study: "Study help" };

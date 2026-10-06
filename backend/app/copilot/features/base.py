@@ -29,6 +29,9 @@ class Feature:
     needs_context: bool = False  # needs class (+ subject + chapter) picked
     require_subject: bool = False
     require_chapter: bool = False
+    # True for tools with their own endpoints and UI panel (question paper, grading) instead of the generic
+    # form + /tools/{key} flow.
+    dedicated: bool = False
     fields: list[dict] = field(default_factory=list)
 
     def spec(self) -> dict:
@@ -40,5 +43,6 @@ class Feature:
             "needs_context": self.needs_context,
             "require_subject": self.require_subject,
             "require_chapter": self.require_chapter,
+            "dedicated": self.dedicated,
             "fields": self.fields,
         }

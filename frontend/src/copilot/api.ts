@@ -23,6 +23,7 @@ export interface ToolSpec {
   needs_context: boolean;
   require_subject: boolean;
   require_chapter: boolean;
+  dedicated?: boolean;
   fields: ToolField[];
 }
 

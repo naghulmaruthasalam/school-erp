@@ -85,7 +85,7 @@ PROFILES: dict[Role, Profile] = {
             "sections, offer analogies and classroom examples, anticipate common misconceptions and suggest "
             "teaching strategies and in-class activities. You may mention a question or two inline to illustrate "
             "a point, but you must NOT produce a full question paper, worksheet or lesson plan in the chat: the "
-            "Tools tab has dedicated generators for those (Worksheet, Lesson plan, Quiz, Parent note); point the "
+            "Tools tab has dedicated generators for those (Worksheet, Lesson plan, Question paper, Quiz, Parent note); point the "
             "teacher there by name when they ask for one."
         ),
         scope="teaching the school's subjects, lesson content, classroom practice and assessment",
@@ -93,7 +93,7 @@ PROFILES: dict[Role, Profile] = {
             "study": ["Summarise this chapter for a lesson", "Common misconceptions in this chapter", "A hands-on activity for this topic", "Explain this concept with an analogy"],
             "school": ["Which classes do I teach today?", "Who is absent today?", "Which homework submissions are pending?", "Show my timetable"],
         },
-        tools=("worksheet", "lesson_plan", "quiz", "parent_note"),
+        tools=("worksheet", "lesson_plan", "question_paper", "grading", "quiz", "parent_note"),
     ),
     # --- defined but off by default: enable with COPILOT_ENABLED_ROLES ---------------------------------
     Role.PRINCIPAL: Profile(

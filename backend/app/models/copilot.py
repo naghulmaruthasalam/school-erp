@@ -28,3 +28,21 @@ class CopilotSession(TenantDocument):
     class Settings:
         name = "copilot_sessions"
         indexes = ["school_id", "user_id"]
+
+
+class CopilotFile(TenantDocument):
+    """A document the Copilot generated for a user (worksheet / lesson plan / question paper / answer key /
+    grading report). The bytes live in the normal file storage (S3 or local disk); this is the history row."""
+
+    user_id: str
+    kind: str  # worksheet | lesson_plan | question_paper | answer_key | grading_report
+    title: str
+    filename: str
+    content_type: str
+    size_bytes: int
+    storage_key: str
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+    class Settings:
+        name = "copilot_files"
+        indexes = ["school_id", "user_id", "kind"]

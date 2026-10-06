@@ -22,3 +22,11 @@ httpx==0.27.2
 pypdf==5.9.0
 # Copilot: optional second LLM provider (COPILOT_LLM_PROVIDER=openai); imported only when selected
 openai>=1.100.0,<2
+
+# Copilot: server-side PDF export (worksheets, lesson plans, question papers, grading reports)
+markdown==3.7
+nh3==0.3.7
+playwright==1.61.0
+# Copilot: answer-sheet grading (render PDF pages / images)
+pypdfium2>=4.30,!=4.30.1
+Pillow>=10.0

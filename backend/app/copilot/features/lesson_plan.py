@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from app.copilot import llm
 from app.copilot.features.base import Feature
+from app.copilot.features.export import export_markdown
 
 logger = logging.getLogger("copilot.lesson_plan")
 
@@ -21,16 +22,28 @@ class TeachingSlot(BaseModel):
     minutes: int = Field(gt=0, le=MAX_TEACHING_MINUTES_PER_DAY)
 
 
+class PlanHeader(BaseModel):
+    school_name: str = Field(default="", max_length=200)
+    teacher_name_label: str = Field(default="Teacher Name:", max_length=100)
+    plan_title: str = Field(default="LESSON PLAN", max_length=200)
+
+
 class LessonPlanParams(BaseModel):
-    step: Literal["topics", "schedule"] = "topics"
+    step: Literal["topics", "schedule", "finalize"] = "topics"
     topics: list[str] = Field(default_factory=list, max_length=50)
     start_date: date | None = None
     target_completion: date | None = None
     teaching_dates: list[TeachingSlot] = Field(default_factory=list)
+    slots: list["LessonSlot"] = Field(default_factory=list, max_length=60)  # finalize: carried from the schedule step
+    buffer_notice: str | None = Field(default=None, max_length=1000)
+    header: PlanHeader = Field(default_factory=PlanHeader)
+    export_format: Literal["pdf", "text"] = "pdf"
     language: str = "English"
 
     @model_validator(mode="after")
     def _check_schedule(self) -> "LessonPlanParams":
+        if self.step == "finalize" and not self.slots:
+            raise ValueError("There is no lesson plan to export")
         if self.step != "schedule":
             return self
         if not self.topics:
@@ -66,6 +79,8 @@ class LessonSlot(BaseModel):
     teacher_note: str
     pacing_flag: str | None = None
 
+
+LessonPlanParams.model_rebuild()
 
 _DASH = re.compile(r"\s*(?:—|--)\s*")
 
@@ -116,6 +131,28 @@ async def run(current, ctx, params: dict) -> dict:
         )
         data = await llm.call_json(system, f"{where}\n\nMaterial:\n{ctx.text}")
         return {"step": "topics", "chapter": ctx.chapter, "topics": [str(t) for t in data.get("topics", []) if t]}
+
+    if p.step == "finalize":
+        h = p.header
+        header_lines = [
+            f"{h.teacher_name_label} ____________________________",
+            f"Class: {ctx.class_name}    Subject: {ctx.subject_name}    {ctx.chapter}",
+        ]
+        title = f"{h.school_name}\n{h.plan_title}" if h.school_name else h.plan_title
+        body: list[str] = []
+        for slot in p.slots:
+            body.append(f"## {slot.date.strftime('%a, %b')} {slot.date.day} · {slot.minutes_allocated} min ({slot.session_type})")
+            body.append(f"**{slot.topic}**\n")
+            if slot.pacing_flag:
+                body.append(f"> ⚠ Pacing flag: {slot.pacing_flag}\n")
+            body.append("**Sequence**\n")
+            body.extend(f"{i}. **{st.label}** ({st.minutes} min) → {st.description}" for i, st in enumerate(slot.sequence, 1))
+            body.append("\n**Teacher Note**\n")
+            body.append(f"{slot.teacher_note}\n\n---\n")
+        if p.buffer_notice:
+            body.append(f"**Note:** {p.buffer_notice}")
+        return await export_markdown(current, "lesson_plan", title, header_lines, "\n".join(body), p.export_format,
+                                     {"chapter": ctx.chapter, "subject": ctx.subject_name, "class": ctx.class_name})
 
     names = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
     available = "\n".join(

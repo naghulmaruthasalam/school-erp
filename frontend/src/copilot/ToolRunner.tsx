@@ -4,9 +4,11 @@ import { useState, type ReactNode } from "react";
 import { Button, ErrorText, Input, Label, Select } from "../components/ui";
 import { errorMessage, runTool, type CopilotContextOptions, type StudyContextSel, type ToolField, type ToolSpec } from "./api";
 import ContextPicker from "./ContextPicker";
+import GradingTool from "./GradingTool";
+import QuestionPaperTool from "./QuestionPaperTool";
 import { DocumentResult, QuizResult } from "./results";
 
-interface Props {
+export interface ToolProps {
   tool: ToolSpec;
   options: CopilotContextOptions;
   language: string;
@@ -98,7 +100,7 @@ function GenericResult({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function GenericTool({ tool, options, language, initialContext, onBack }: Props) {
+function GenericTool({ tool, options, language, initialContext, onBack }: ToolProps) {
   const [ctx, setCtx] = useState<StudyContextSel>(initialContext);
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     Object.fromEntries(tool.fields.filter((f) => f.default !== undefined).map((f) => [f.name, f.default])),
@@ -133,7 +135,7 @@ interface Topic {
   suggested_activities: string[];
 }
 
-function WorksheetTool({ tool, options, language, initialContext, onBack }: Props) {
+function WorksheetTool({ tool, options, language, initialContext, onBack }: ToolProps) {
   const [ctx, setCtx] = useState<StudyContextSel>(initialContext);
   const [topics, setTopics] = useState<Topic[] | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
@@ -224,7 +226,7 @@ interface PlanResult {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-function LessonPlanTool({ tool, options, language, initialContext, onBack }: Props) {
+function LessonPlanTool({ tool, options, language, initialContext, onBack }: ToolProps) {
   const [ctx, setCtx] = useState<StudyContextSel>(initialContext);
   const [topics, setTopics] = useState<string[] | null>(null);
   const [start, setStart] = useState(today());
@@ -305,7 +307,9 @@ function PlanView({ plan, title }: { plan: PlanResult; title: string }) {
   );
 }
 
-export default function ToolRunner(props: Props) {
+export default function ToolRunner(props: ToolProps) {
+  if (props.tool.key === "question_paper") return <QuestionPaperTool {...props} />;
+  if (props.tool.key === "grading") return <GradingTool {...props} />;
   if (props.tool.key === "worksheet") return <WorksheetTool {...props} />;
   if (props.tool.key === "lesson_plan") return <LessonPlanTool {...props} />;
   return <GenericTool {...props} />;
