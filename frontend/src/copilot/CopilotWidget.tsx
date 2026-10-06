@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, History, ListChecks, Megaphone,
-  MessageSquareText, Send, Sparkles, Trash2, Wrench, X, type LucideIcon,
+  Download, MessageSquareText, Send, Sparkles, Trash2, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AiChatWidget from "../ai/AiChatWidget";
+import { api } from "../api/client";
 import { useAuthStore } from "../auth/store";
 import { Button, ErrorText, Select } from "../components/ui";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -14,6 +15,7 @@ import {
 } from "./api";
 import ContextPicker from "./ContextPicker";
 import Markdown from "./Markdown";
+import { downloadCopilotFile, type CopilotFileInfo } from "./download";
 import ToolRunner from "./ToolRunner";
 
 type Tab = "chat" | "tools" | "history";
@@ -23,6 +25,9 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
 };
 
 const MODE_LABEL: Record<Mode, string> = { school: "My school", study: "Study help" };
+const KIND_LABEL: Record<string, string> = {
+  worksheet: "Worksheet", lesson_plan: "Lesson plan", question_paper: "Question paper", answer_key: "Answer key", grading_report: "Grading report",
+};
 
 /** Role-aware Copilot (student, parent, teacher, and any role enabled on the server). Falls back to the
  * original AI assistant for roles without a Copilot profile, in demo mode, or if the profile can't load. */
@@ -56,10 +61,22 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tool, setTool] = useState<ToolSpec | null>(null);
+  const [historyView, setHistoryView] = useState<"chats" | "files">("chats");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const contextQuery = useQuery({ queryKey: ["copilot", "context"], queryFn: fetchContext, enabled: open, staleTime: 5 * 60 * 1000 });
   const historyQuery = useQuery({ queryKey: ["copilot", "sessions"], queryFn: listSessions, enabled: open && tab === "history" });
+  const filesQuery = useQuery({
+    queryKey: ["copilot", "files"],
+    queryFn: async () => (await api.get<CopilotFileInfo[]>("/copilot/files")).data,
+    enabled: open && tab === "history" && historyView === "files",
+  });
+  const removeFile = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/copilot/files/${id}`);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["copilot", "files"] }),
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -303,18 +320,42 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
 
         {tab === "history" && (
           <div className="flex-1 space-y-2 overflow-y-auto px-4 pb-4">
-            {historyQuery.isLoading && <p className="text-[13px] text-ink-3">Loading…</p>}
-            {historyQuery.data?.length === 0 && <p className="text-[13px] text-ink-3">No chats yet. Your conversations will appear here.</p>}
-            {historyQuery.data?.map((s) => (
-              <div key={s.id} className="glass-row !py-2">
-                <button className="min-w-0 flex-1 text-start" onClick={() => loadSession.mutate(s.id)}>
-                  <span className="block truncate text-sm font-medium text-ink">{s.title ?? "New chat"}</span>
-                  <span className="block truncate text-xs text-ink-3">{MODE_LABEL[s.mode]}{s.label ? ` · ${s.label}` : ""} · {new Date(s.updated_at).toLocaleDateString()}</span>
-                </button>
-                <button aria-label="Delete chat" className="text-ink-3 hover:text-red-500" onClick={() => removeSession.mutate(s.id)}><Trash2 size={15} /></button>
-              </div>
-            ))}
-            <Button variant="secondary" size="sm" className="w-full" onClick={() => { reset(); setTab("chat"); }}>New chat</Button>
+            <div className="lg-seg w-full [&>button]:flex-1">
+              <button aria-pressed={historyView === "chats"} onClick={() => setHistoryView("chats")}>Chats</button>
+              <button aria-pressed={historyView === "files"} onClick={() => setHistoryView("files")}>Files</button>
+            </div>
+            {historyView === "chats" && (
+              <>
+                {historyQuery.isLoading && <p className="text-[13px] text-ink-3">Loading…</p>}
+                {historyQuery.data?.length === 0 && <p className="text-[13px] text-ink-3">No chats yet. Your conversations will appear here.</p>}
+                {historyQuery.data?.map((s) => (
+                  <div key={s.id} className="glass-row !py-2">
+                    <button className="min-w-0 flex-1 text-start" onClick={() => loadSession.mutate(s.id)}>
+                      <span className="block truncate text-sm font-medium text-ink">{s.title ?? "New chat"}</span>
+                      <span className="block truncate text-xs text-ink-3">{MODE_LABEL[s.mode]}{s.label ? ` · ${s.label}` : ""} · {new Date(s.updated_at).toLocaleDateString()}</span>
+                    </button>
+                    <button aria-label="Delete chat" className="text-ink-3 hover:text-red-500" onClick={() => removeSession.mutate(s.id)}><Trash2 size={15} /></button>
+                  </div>
+                ))}
+                <Button variant="secondary" size="sm" className="w-full" onClick={() => { reset(); setTab("chat"); }}>New chat</Button>
+              </>
+            )}
+            {historyView === "files" && (
+              <>
+                {filesQuery.isLoading && <p className="text-[13px] text-ink-3">Loading…</p>}
+                {filesQuery.data?.length === 0 && <p className="text-[13px] text-ink-3">No files yet. Worksheets, lesson plans, question papers and reports you export are kept here.</p>}
+                {filesQuery.data?.map((f) => (
+                  <div key={f.id} className="glass-row !py-2">
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-ink">{f.title}</span>
+                      <span className="block truncate text-xs text-ink-3">{KIND_LABEL[f.kind] ?? f.kind} · {new Date(f.created_at).toLocaleDateString()} · {Math.max(1, Math.round(f.size_bytes / 1024))} KB</span>
+                    </div>
+                    <button aria-label="Download file" className="text-ink-3 hover:text-accent" onClick={() => downloadCopilotFile(f.id, f.filename)}><Download size={16} /></button>
+                    <button aria-label="Delete file" className="text-ink-3 hover:text-red-500" onClick={() => removeFile.mutate(f.id)}><Trash2 size={15} /></button>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>

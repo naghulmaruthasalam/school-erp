@@ -4,9 +4,10 @@ import { useState, type ReactNode } from "react";
 import { Button, ErrorText, Input, Label, Select } from "../components/ui";
 import { errorMessage, runTool, type CopilotContextOptions, type StudyContextSel, type ToolField, type ToolSpec } from "./api";
 import ContextPicker from "./ContextPicker";
+import type { CopilotFileInfo } from "./download";
 import GradingTool from "./GradingTool";
 import QuestionPaperTool from "./QuestionPaperTool";
-import { DocumentResult, QuizResult } from "./results";
+import { DocumentResult, ExportPanel, QuizResult } from "./results";
 
 export interface ToolProps {
   tool: ToolSpec;
@@ -199,7 +200,20 @@ function WorksheetTool({ tool, options, language, initialContext, onBack }: Tool
         </div>
       )}
       {make.isError && <ErrorText>{errorMessage(make.error)}</ErrorText>}
-      {make.data && <GenericResult data={make.data as Record<string, unknown>} />}
+      {make.data && (
+        <>
+          <GenericResult data={make.data as Record<string, unknown>} />
+          <ExportPanel
+            fields={[
+              { key: "school_name", label: "School name" },
+              { key: "worksheet_title", label: "Title", default: "HOMEWORK WORKSHEET" },
+            ]}
+            run={(format, header) =>
+              runTool(tool.key, ctx, { step: "finalize", content: String((make.data as Record<string, unknown>).content ?? ""), header, export_format: format }, language) as Promise<{ file: CopilotFileInfo }>
+            }
+          />
+        </>
+      )}
     </Shell>
   );
 }
@@ -278,7 +292,22 @@ function LessonPlanTool({ tool, options, language, initialContext, onBack }: Too
         </div>
       )}
       {plan.isError && <ErrorText>{errorMessage(plan.error)}</ErrorText>}
-      {plan.data && <PlanView plan={plan.data} title={`Lesson plan: ${ctx.chapter ?? ""}`} />}
+      {plan.data && (
+        <>
+          <PlanView plan={plan.data} title={`Lesson plan: ${ctx.chapter ?? ""}`} />
+          {plan.data.slots.length > 0 && (
+            <ExportPanel
+              fields={[
+                { key: "school_name", label: "School name" },
+                { key: "plan_title", label: "Title", default: "LESSON PLAN" },
+              ]}
+              run={(format, header) =>
+                runTool(tool.key, ctx, { step: "finalize", slots: plan.data!.slots, buffer_notice: plan.data!.buffer_notice, header, export_format: format }, language) as Promise<{ file: CopilotFileInfo }>
+              }
+            />
+          )}
+        </>
+      )}
     </Shell>
   );
 }

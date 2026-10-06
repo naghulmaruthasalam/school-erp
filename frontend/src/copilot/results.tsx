@@ -1,6 +1,8 @@
 import { Check, Copy, Printer } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../components/ui";
+import { Button, ErrorText, Input, Label } from "../components/ui";
+import { errorMessage } from "./api";
+import { downloadCopilotFile, type CopilotFileInfo } from "./download";
 import Markdown from "./Markdown";
 
 /** Copy / print actions for generated content. Printing opens a clean window with the page's own styles
@@ -143,6 +145,58 @@ export function QuizResult({ title, questions }: { title: string; questions: Qui
           );
         })}
       </ol>
+    </div>
+  );
+}
+
+/** Export a generated document to a saved PDF / text file in the user's Copilot history, then download it. */
+export function ExportPanel({
+  fields,
+  run,
+}: {
+  fields: { key: string; label: string; default?: string }[];
+  run: (format: "pdf" | "text", header: Record<string, string>) => Promise<{ file: CopilotFileInfo }>;
+}) {
+  const [header, setHeader] = useState<Record<string, string>>(() => Object.fromEntries(fields.map((f) => [f.key, f.default ?? ""])));
+  const [busy, setBusy] = useState<"pdf" | "text" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<CopilotFileInfo | null>(null);
+
+  async function go(format: "pdf" | "text") {
+    setBusy(format);
+    setError(null);
+    try {
+      const { file } = await run(format, Object.fromEntries(Object.entries(header).filter(([, v]) => v.trim())));
+      setSaved(file);
+      await downloadCopilotFile(file.id, file.filename);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="space-y-2 rounded-2xl bg-surface-3 p-3">
+      <p className="text-[13px] font-semibold text-ink">Export</p>
+      <div className="grid grid-cols-2 gap-2">
+        {fields.map((f) => (
+          <div key={f.key}>
+            <Label htmlFor={`ex-${f.key}`}>{f.label}</Label>
+            <Input id={`ex-${f.key}`} value={header[f.key]} onChange={(e) => setHeader((h) => ({ ...h, [f.key]: e.target.value }))} />
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={() => go("pdf")} disabled={busy !== null}>
+          {busy === "pdf" ? "Rendering PDF…" : "Download PDF"}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => go("text")} disabled={busy !== null}>
+          {busy === "text" ? "Saving…" : "Download text"}
+        </Button>
+      </div>
+      {error && <ErrorText>{error}</ErrorText>}
+      {saved && !error && <p className="text-xs text-ink-3">Saved to your Files: {saved.filename}</p>}
     </div>
   );
 }
