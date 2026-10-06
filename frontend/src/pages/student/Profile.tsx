@@ -25,6 +25,9 @@ export default function StudentProfile() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const { data: profile, isLoading, error } = useMyProfile();
+  const { data: schoolClass } = useMyClass(profile?.class_id);
+  const { data: section } = useMySection(profile?.section_id);
+  const { data: academicYear } = useMyAcademicYear(profile?.academic_year_id);
 
   useEffect(() => {
     async function fetchPhotoUrl() {
@@ -41,9 +44,6 @@ export default function StudentProfile() {
     }
     fetchPhotoUrl();
   }, [profile?.photo_document_id]);
-  const { data: schoolClass } = useMyClass(profile?.class_id);
-  const { data: section } = useMySection(profile?.section_id);
-  const { data: academicYear } = useMyAcademicYear(profile?.academic_year_id);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

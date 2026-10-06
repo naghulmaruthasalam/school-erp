@@ -26,7 +26,7 @@ export const teacherNavItems: NavItem[] = [
   { label: "navigation.myClasses", to: "/teacher/timetable", icon: TimetableIcon },
   { label: "navigation.attendance", to: "/teacher/attendance", icon: AttendanceIcon },
   { label: "navigation.homework", to: "/teacher/homework", icon: HomeworkIcon },
-  { label: "AI Copilot", to: "/teacher/copilot", icon: () => <span className="text-lg">🤖</span> },
+  { label: "AI Copilot", to: "/teacher/copilot", icon: HomeworkIcon },
   { label: "navigation.syllabus", to: "/teacher/syllabus", icon: SyllabusIcon },
   { label: "navigation.marks", to: "/teacher/marks", icon: MarksIcon },
   { label: "navigation.leave", to: "/teacher/leave", icon: LeaveIcon },
@@ -43,7 +43,6 @@ export const teacherChildRoutes = (
     <Route path="attendance" element={<TeacherAttendance />} />
     <Route path="homework" element={<TeacherHomework />} />
     <Route path="homework/:homeworkId" element={<TeacherHomeworkSubmissions />} />
-    <Route path="copilot" element={<TeacherCopilot />} />
     <Route path="syllabus" element={<TeacherSyllabus />} />
     <Route path="syllabus/new" element={<TeacherSyllabusForm />} />
     <Route path="syllabus/:id" element={<TeacherSyllabusDetail />} />
@@ -53,5 +52,6 @@ export const teacherChildRoutes = (
     <Route path="notifications" element={<TeacherNotifications />} />
     <Route path="settings" element={<TeacherSettings />} />
     <Route path="about" element={<TeacherAbout />} />
+    <Route path="copilot" element={<TeacherCopilot />} />
   </>
 );
