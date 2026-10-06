@@ -1,0 +1,109 @@
+# Copilot
+
+An AI assistant inside the ERP, built from the Skillorea Teacher Copilot backend (chat pipeline, safety gate,
+worksheet and lesson-plan generators) and adapted to the ERP's own login, roles, database and syllabus data.
+
+It appears as a floating button on every dashboard. **Student, parent and teacher** get the Copilot; the other
+roles keep the classic assistant until you switch their Copilot on (see "Other roles").
+
+## What each login gets
+
+| | Student - *Study Buddy* | Parent - *Parent Companion* | Teacher - *Teaching Copilot* |
+|---|---|---|---|
+| **Study help** (chat grounded in the class's syllabus) | Explains lessons step by step, gives hints before answers, never hands over finished homework | Explains topics in plain language and suggests simple ways to help at home | Explains concepts, misconceptions, analogies, activities and teaching strategies |
+| **My school** (the user's own ERP data) | Homework due, attendance, timetable, exams and results | Own children's attendance, homework, results, fees, events | Today's classes, absentees, homework submissions, timetable |
+| **Tools** | Practice quiz, Study plan (from your homework + exams) | Child progress summary (with tips for home) | Worksheet generator, Lesson plan, Practice quiz (class test), Parent note |
+| **Picks** | Own class is automatic; chooses subject + chapter | Chooses the child (own class is automatic) | Chooses class, subject, chapter |
+
+Every chat is saved per user (History tab), can be reopened or deleted, and is visible only to its owner.
+Replies stream in live, render Markdown, tables and maths (KaTeX), and can be requested in English, Arabic,
+Hindi or Tamil (default follows the app language). Worksheets, plans and quizzes have Copy and Print / PDF.
+
+## How it stays safe and grounded
+
+- **Access is decided on the server.** A student can only use their own class; a parent only their own child's;
+  a teacher only classes they teach (timetable / subject assignment / assigned classes). Drafts of a syllabus
+  are never shown to students or parents. "My school" answers go through the same permission-checked services
+  as the REST API, so nobody sees another user's records.
+- **Grounding.** Study help and the tools use the school's syllabus for that class + subject: the outline, the
+  selected chapter, and the text of PDF / text documents attached to the syllabus. It is re-read on every message,
+  never taken from the client. With no material the model uses its subject knowledge and says when unsure.
+- **Gate.** Every message is classified (unsafe / off-topic) before the chat model sees it; those get a fixed,
+  localised reply. The gate fails open if the classifier is down; the main prompt's own rules are the backstop.
+- **Limits.** 2,000 characters per message, `COPILOT_MESSAGES_PER_MINUTE` messages per user (default 20),
+  uploaded document text capped at `COPILOT_MAX_CONTEXT_CHARS`.
+- **Without an AI key** "My school" still answers (built-in assistant); Study help and the tools explain that the
+  key is missing (tools return 503 with the variable name). Nothing crashes.
+
+## Setup
+
+```
+GEMINI_API_KEY=...                 # https://aistudio.google.com/apikey  (default provider)
+GEMINI_MODEL_NAME=gemini-2.0-flash
+# optional
+COPILOT_LLM_PROVIDER=gemini        # or openai (then set OPENAI_API_KEY / OPENAI_MODEL)
+COPILOT_ENABLED_ROLES=STUDENT,PARENT,TEACHER
+COPILOT_MESSAGES_PER_MINUTE=20
+COPILOT_MAX_CONTEXT_CHARS=60000
+```
+For good study answers, publish a **Syllabus** (Admin / Teacher > Syllabus) for each class + subject with chapters,
+and attach the chapter PDFs: the Copilot reads them.
+
+## API (all under `/api/v1/copilot`, bearer token)
+
+| | |
+|---|---|
+| `GET /profile` | persona, modes, quick actions, tools and their form specs; `{"enabled": false}` if not on for this role |
+| `GET /context` | classes > subjects > chapters this user may use (+ a parent's children) |
+| `POST /sessions` | `{mode: "study"\|"school", language, class_id?, subject_id?, chapter?, student_id?}` |
+| `GET /sessions`, `GET/DELETE /sessions/{id}` | the user's chat history |
+| `POST /sessions/{id}/messages` | `{message}` -> `{reply, title}` |
+| `POST /sessions/{id}/messages/stream` | same, as Server-Sent Events (`chunk`, `done`, `error`) |
+| `POST /tools/{key}` | `{context: {class_id, subject_id, chapter, student_id}, params: {...}, language}` |
+
+## Architecture (backend/app/copilot)
+
+```
+llm.py        Gemini (default) / OpenAI, retries, streaming, clear "not configured" error
+safety.py     unsafe + on-topic gate          off_topic.py  localised fixed replies
+grounding.py  access rules + syllabus/document context + the picker options
+profiles.py   ONE PROFILE PER ROLE  <- where roles are added or tuned
+features/     the tools                      <- where tools are added
+service.py    the two chat modes (study / school), streaming
+sessions.py   owner-scoped history, rate limiting     models/copilot.py  the collection
+```
+Frontend: `frontend/src/copilot/` (`CopilotWidget` + `ToolRunner`, `ContextPicker`, `Markdown`, `results`).
+`DashboardLayout` mounts `CopilotWidget`, which falls back to the classic `AiChatWidget` for roles without a
+Copilot (and in demo mode).
+
+## Other roles (integration-ready)
+
+Profiles for **principal** ("School Insights"), **school admin** ("Operations Copilot") and **super admin** already
+exist in `profiles.py`. Switch them on without code changes:
+
+```
+COPILOT_ENABLED_ROLES=STUDENT,PARENT,TEACHER,PRINCIPAL,SCHOOL_ADMIN
+```
+They get "My school" answers over their role's ERP tools (school summary, attendance trend, fee collection,
+admissions) and the Announcement draft tool; principals also get Study help. Super admins have no school, so the
+Copilot stays off for them.
+
+### Add a role or tune one
+Edit its `Profile` in `profiles.py`: `persona`, `scope` (what the gate treats as on-topic), `quick_actions` per
+mode, `tools`, `study_enabled`. Then add the role to `COPILOT_ENABLED_ROLES`.
+
+### Add a tool
+1. Create `features/my_tool.py` exposing `FEATURE = Feature(key, title, description, icon, handler, fields=[...])`.
+   The handler is `async def run(current, ctx, params) -> dict`; `ctx` is the grounded `StudyContext` when
+   `needs_context=True`. Use `llm.call_text/call_json` and `features/erp_data.call(...)` for the user's own data.
+2. Add it to `ALL` in `features/__init__.py`.
+3. List its key in the `tools` of the roles that should see it.
+The UI builds the form from `fields` (text, textarea, number, select, date, child) and renders `questions` (quiz) or
+`content` (Markdown) results; multi-step tools (worksheet, lesson plan) have their own panels in `ToolRunner.tsx`.
+
+## Not included from the Skillorea backend
+
+Cognito login, plans/payments/entitlements, admin dashboards (the ERP has its own auth and roles), the
+question-paper generator and AI answer-sheet grading (large question-bank and Chromium/Playwright pipelines),
+and server-side PDF rendering (the UI offers Print / PDF instead). The profile/tool registry is where they
+would plug in.

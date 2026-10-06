@@ -10,7 +10,7 @@ from app.copilot.features import FEATURES
 from app.copilot.off_topic import LANGUAGES
 from app.copilot.profiles import Profile, get_profile
 from app.core.config import get_settings
-from app.core.deps import CurrentUser, require_tenant_user
+from app.core.deps import CurrentUser, get_current_user, require_tenant_user
 from app.core.exceptions import AppError, NotFoundError, PermissionDeniedError, ValidationAppError
 from app.models.copilot import CopilotSession
 from app.schemas.copilot import (
@@ -56,11 +56,16 @@ def _session_out(session: CopilotSession) -> SessionOut:
 
 
 @router.get("/profile")
-async def my_profile(current: CurrentUser = Depends(copilot_user)) -> dict:
-    """What this role's Copilot looks like: persona, modes, quick actions and tools (with their form specs)."""
-    profile = _profile(current)
+async def my_profile(current: CurrentUser = Depends(get_current_user)) -> dict:
+    """What this role's Copilot looks like: persona, modes, quick actions and tools (with their form specs).
+    Answers {"enabled": false} (not an error) when the Copilot isn't switched on for this user's role, so the
+    app can quietly fall back to the classic assistant."""
+    profile = get_profile(current.role)
+    if current.school_id is None or current.role.value not in get_settings().copilot_roles or profile is None:
+        return {"enabled": False, "role": current.role.value}
     modes = ["school"] + (["study"] if profile.study_enabled else [])
     return {
+        "enabled": True,
         "role": current.role.value,
         "title": profile.title,
         "tagline": profile.tagline,

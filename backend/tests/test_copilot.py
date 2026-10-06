@@ -138,17 +138,20 @@ async def test_profile_differs_per_role_and_lists_that_roles_tools(client, schoo
 @pytest.mark.asyncio
 async def test_roles_not_enabled_are_refused_until_configured(client, school, monkeypatch):
     override_current_user(make_current_user(Role.PRINCIPAL, SCHOOL))
-    assert (await client.get("/api/v1/copilot/profile")).status_code == 403
+    assert (await client.get("/api/v1/copilot/profile")).json() == {"enabled": False, "role": "PRINCIPAL"}
+    assert (await client.get("/api/v1/copilot/context")).status_code == 403
+    assert (await client.post("/api/v1/copilot/sessions", json={"mode": "school"})).status_code == 403
     monkeypatch.setattr(get_settings(), "copilot_enabled_roles", "STUDENT,PARENT,TEACHER,PRINCIPAL")
     r = await client.get("/api/v1/copilot/profile")
-    assert r.status_code == 200 and r.json()["title"] == "School Insights"
+    assert r.status_code == 200 and r.json()["enabled"] is True and r.json()["title"] == "School Insights"
     assert [t["key"] for t in r.json()["tools"]] == ["announcement"]
 
 
 @pytest.mark.asyncio
 async def test_super_admin_has_no_copilot_without_a_school(client, school):
     override_current_user(make_current_user(Role.SUPER_ADMIN, None))
-    assert (await client.get("/api/v1/copilot/profile")).status_code == 403
+    assert (await client.get("/api/v1/copilot/profile")).json()["enabled"] is False
+    assert (await client.get("/api/v1/copilot/context")).status_code == 403
 
 
 # ------------------------------------------------------------------ context options + access rules

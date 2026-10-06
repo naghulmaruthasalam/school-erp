@@ -62,6 +62,13 @@ no-op'ing:
 | Online fee payments (PayU) | `PAYU_MERCHANT_KEY`, `PAYU_MERCHANT_SALT`, `PAYU_BASE_URL`, plus `BACKEND_BASE_URL` (must be publicly reachable — PayU redirects the browser back to it) |
 | Fee refunds (PayU) | `PAYU_POSTSERVICE_URL` (uses the same key/salt as checkout) |
 
+## Copilot (AI study and teaching assistant)
+
+Student, parent and teacher logins get a Copilot: curriculum-grounded study help, answers about their own school
+data, and role-specific tools (quiz, study plan, child progress summary, worksheet, lesson plan, parent note).
+Principal and admin profiles are built and switch on with `COPILOT_ENABLED_ROLES`. It needs `GEMINI_API_KEY`
+(see `backend/.env.example`). Details, API and how to add roles or tools: [docs/COPILOT.md](docs/COPILOT.md).
+
 ## Project layout
 
 ```

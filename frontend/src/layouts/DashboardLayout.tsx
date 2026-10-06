@@ -1,7 +1,7 @@
 import { useState, type ReactNode, type ComponentType, type SVGProps } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Search, ChevronDown, LogOut, Menu, X, Sparkles, Settings, User, Ellipsis } from "lucide-react";
-import AiChatWidget from "../ai/AiChatWidget";
+import CopilotWidget from "../copilot/CopilotWidget";
 import NotificationBell from "../components/NotificationBell";
 import type { Role } from "../types/auth";
 import { useAuthStore } from "../auth/store";
@@ -336,7 +336,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
         </button>
       </nav>
 
-      <AiChatWidget />
+      <CopilotWidget />
     </div>
   );
 }
