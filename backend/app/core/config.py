@@ -33,14 +33,14 @@ class Settings(BaseSettings):
     gemini_model_name: str = "gemini-2.0-flash"
 
     # --- Copilot (study + teaching assistant for student / parent / teacher logins) ---
-    # Roles that get the Copilot. Add PRINCIPAL, SCHOOL_ADMIN or SUPER_ADMIN to turn it on for them
+    # Roles that get the Copilot (every login by default; remove a role here to switch it off for that role)
     # (their profiles are already defined in app/copilot/profiles.py).
     # Curriculum source (a link to the syllabus JSON/CSV/ZIP, e.g. a pre-signed S3 URL). Private/internal addresses
     # and plain http are refused unless this is switched on (local development only).
     curriculum_allow_private_urls: bool = False
     curriculum_fetch_max_mb: int = 50
     curriculum_fetch_timeout_seconds: int = 30
-    copilot_enabled_roles: str = "STUDENT,PARENT,TEACHER"
+    copilot_enabled_roles: str = "STUDENT,PARENT,TEACHER,PRINCIPAL,SCHOOL_ADMIN,SUPER_ADMIN"
     # "gemini" (uses GEMINI_API_KEY / GEMINI_MODEL_NAME above) or "openai".
     copilot_llm_provider: str = "gemini"
     openai_api_key: str | None = None

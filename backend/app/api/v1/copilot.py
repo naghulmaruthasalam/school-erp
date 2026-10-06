@@ -53,10 +53,17 @@ def _session_out(session: CopilotSession) -> SessionOut:
 async def my_profile(current: CurrentUser = Depends(get_current_user)) -> dict:
     """What this role's Copilot looks like: persona, modes, quick actions and tools (with their form specs).
     Answers {"enabled": false} (not an error) when the Copilot isn't switched on for this user's role, so the
-    app can quietly fall back to the classic assistant."""
+    app simply shows no Copilot button."""
     profile = get_profile(current.role)
-    if current.school_id is None or current.role.value not in get_settings().copilot_roles or profile is None:
+    if current.role.value not in get_settings().copilot_roles or profile is None:
         return {"enabled": False, "role": current.role.value}
+    if current.school_id is None:
+        # The platform owner (super admin) has no school: one chat about platform data, no saved sessions or tools.
+        return {
+            "enabled": True, "platform": True, "role": current.role.value, "title": profile.title, "tagline": profile.tagline,
+            "modes": ["school"], "default_mode": "school", "quick_actions": profile.quick_actions, "tools": [],
+            "languages": LANGUAGES, "ai_configured": llm.is_configured(),
+        }
     modes = ["school"] + (["study"] if profile.study_enabled else [])
     return {
         "enabled": True,

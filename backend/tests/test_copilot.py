@@ -137,6 +137,7 @@ async def test_profile_differs_per_role_and_lists_that_roles_tools(client, schoo
 
 @pytest.mark.asyncio
 async def test_roles_not_enabled_are_refused_until_configured(client, school, monkeypatch):
+    monkeypatch.setattr(get_settings(), "copilot_enabled_roles", "STUDENT,PARENT,TEACHER")  # an operator switched the principal off
     override_current_user(make_current_user(Role.PRINCIPAL, SCHOOL))
     assert (await client.get("/api/v1/copilot/profile")).json() == {"enabled": False, "role": "PRINCIPAL"}
     assert (await client.get("/api/v1/copilot/context")).status_code == 403
@@ -148,10 +149,17 @@ async def test_roles_not_enabled_are_refused_until_configured(client, school, mo
 
 
 @pytest.mark.asyncio
-async def test_super_admin_has_no_copilot_without_a_school(client, school):
+async def test_every_login_gets_a_copilot_and_the_super_admin_a_platform_chat(client, school, monkeypatch):
+    for role, title in ((Role.PRINCIPAL, "School Insights"), (Role.SCHOOL_ADMIN, "Operations Copilot")):
+        override_current_user(make_current_user(role, SCHOOL))
+        r = (await client.get("/api/v1/copilot/profile")).json()
+        assert r["enabled"] is True and r["title"] == title and "platform" not in r
     override_current_user(make_current_user(Role.SUPER_ADMIN, None))
+    r = (await client.get("/api/v1/copilot/profile")).json()
+    assert r["enabled"] is True and r["platform"] is True and r["modes"] == ["school"] and r["tools"] == []
+    assert (await client.get("/api/v1/copilot/context")).status_code == 403  # no school: no saved sessions or school context
+    monkeypatch.setattr(get_settings(), "copilot_enabled_roles", "STUDENT,PARENT,TEACHER")
     assert (await client.get("/api/v1/copilot/profile")).json()["enabled"] is False
-    assert (await client.get("/api/v1/copilot/context")).status_code == 403
 
 
 # ------------------------------------------------------------------ context options + access rules

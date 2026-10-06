@@ -67,7 +67,8 @@ no-op'ing:
 Student, parent and teacher logins get a Copilot: curriculum-grounded study help, answers about their own school
 data, and role-specific tools (explain it, quiz, study plan, child progress summary, homework ideas, worksheet, lesson plan,
 parent note, question papers from a question bank, and AI grading of scanned answer sheets with PDF reports).
-Principal and admin profiles are built and switch on with `COPILOT_ENABLED_ROLES`. It needs `GEMINI_API_KEY`
+Every login (student, parent, teacher, principal, school admin, super admin) gets the same single round Copilot button, with
+features that depend on the role (`COPILOT_ENABLED_ROLES` can switch roles off). It needs `GEMINI_API_KEY`
 (see `backend/.env.example`). Details, API and how to add roles or tools: [docs/COPILOT.md](docs/COPILOT.md).
 
 The syllabus (class -> subject -> chapter, with topics and notes) lives in the database and drives both the

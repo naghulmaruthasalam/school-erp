@@ -1,6 +1,8 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { authStore } from "../auth/store";
 import { getDemoResponse } from "./demoData";
+import { getDemoSyllabusResponse, postDemoResponse } from "./demoSyllabus";
+import { getDemoCopilotToolsResponse, mutateDemoCopilotTools } from "./demoCopilotTools";
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -9,8 +11,12 @@ export const api = axios.create({ baseURL: apiBaseUrl });
 api.interceptors.request.use((config) => {
   const { accessToken, isDemo } = authStore.getState();
 
+  if (isDemo && (config.method === "post" || config.method === "patch" || config.method === "delete")) {
+    const created = mutateDemoCopilotTools(config.method, config.url || "", config.data) ?? (config.method === "post" ? postDemoResponse(config.url || "", config.data) : null);
+    if (created) return Promise.reject({ __isDemo: true, data: created, config });
+  }
   if (isDemo && config.method === "get") {
-    const demoData = getDemoResponse(config.url || "");
+    const demoData = getDemoCopilotToolsResponse(config.url || "", config.params) ?? getDemoSyllabusResponse(config.url || "", config.params) ?? getDemoResponse(config.url || "");
     if (demoData) {
       return Promise.reject({ __isDemo: true, data: demoData, config });
     }

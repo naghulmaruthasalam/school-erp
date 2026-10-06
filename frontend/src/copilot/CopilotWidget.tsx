@@ -4,7 +4,6 @@ import {
   NotebookPen, Download, MessageSquareText, Send, Sparkles, Trash2, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import AiChatWidget from "../ai/AiChatWidget";
 import { api } from "../api/client";
 import { useAuthStore } from "../auth/store";
 import { Button, ErrorText, Select } from "../components/ui";
@@ -31,22 +30,45 @@ const KIND_LABEL: Record<string, string> = {
   worksheet: "Worksheet", lesson_plan: "Lesson plan", question_paper: "Question paper", answer_key: "Answer key", grading_report: "Grading report",
 };
 
-/** Role-aware Copilot (student, parent, teacher, and any role enabled on the server). Falls back to the
- * original AI assistant for roles without a Copilot profile, in demo mode, or if the profile can't load. */
+/** The one Copilot button for every login (student, parent, teacher, principal, school admin, super admin). What it
+ * offers (modes, quick actions, tools) comes from the server's profile for the signed-in role; in demo mode the same
+ * panel runs on sample data. Shows nothing only if an operator switched the Copilot off for the role. */
 export default function CopilotWidget() {
   const user = useAuthStore((s) => s.user);
   const isDemo = useAuthStore((s) => s.isDemo);
   const profileQuery = useQuery({
-    queryKey: ["copilot", "profile", user?.id],
+    queryKey: ["copilot", "profile", user?.id, isDemo],
     queryFn: fetchProfile,
-    enabled: !!user && !isDemo,
+    enabled: !!user,
     retry: false,
     staleTime: 10 * 60 * 1000,
   });
   if (!user) return null;
-  if (isDemo || profileQuery.isError || profileQuery.data?.enabled === false) return <AiChatWidget />;
-  if (!profileQuery.data) return null;
+  if (profileQuery.isError) return <CopilotUnavailable reason={errorMessage(profileQuery.error, "The Copilot can't reach the server right now.")} onRetry={() => void profileQuery.refetch()} />;
+  if (!profileQuery.data || profileQuery.data.enabled === false) return null;
   return <CopilotPanel profile={profileQuery.data} />;
+}
+
+/** Same round button, so the Copilot is always in the same place; explains why it isn't ready and lets the user retry. */
+function CopilotUnavailable({ reason, onRetry }: { reason: string; onRetry: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="fixed bottom-24 end-4 z-50 lg:bottom-6 lg:end-6">
+      {open && (
+        <div role="dialog" aria-label="Copilot" className="glass-strong mb-3 w-[min(22rem,calc(100vw-2rem))] space-y-2 rounded-[24px] p-4 animate-pop-in">
+          <p className="text-sm font-semibold text-ink">The Copilot isn't ready</p>
+          <p className="text-[13px] text-ink-3">{reason}</p>
+          <Button size="sm" onClick={onRetry}>Try again</Button>
+        </div>
+      )}
+      <button onClick={() => setOpen(!open)} className="group relative ms-auto block" aria-label="Open AI Copilot">
+        <div className="glass relative grid h-14 w-14 place-items-center !rounded-full transition-transform duration-300 group-hover:scale-110">
+          <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-accent to-accent-2 opacity-70" />
+          <Sparkles className="relative text-white" size={24} />
+        </div>
+      </button>
+    </div>
+  );
 }
 
 function CopilotPanel({ profile }: { profile: CopilotProfile }) {
@@ -66,7 +88,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
   const [historyView, setHistoryView] = useState<"chats" | "files">("chats");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const contextQuery = useQuery({ queryKey: ["copilot", "context"], queryFn: fetchContext, enabled: open, staleTime: 5 * 60 * 1000 });
+  const contextQuery = useQuery({ queryKey: ["copilot", "context"], queryFn: fetchContext, enabled: open && !profile.platform, staleTime: 5 * 60 * 1000 });
   const historyQuery = useQuery({ queryKey: ["copilot", "sessions"], queryFn: listSessions, enabled: open && tab === "history" });
   const filesQuery = useQuery({
     queryKey: ["copilot", "files"],
@@ -243,7 +265,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
             {profile.tools.length > 0 && (
               <button aria-pressed={tab === "tools"} onClick={() => { setTab("tools"); setTool(null); }}><Wrench size={14} className="me-1 inline" />Tools</button>
             )}
-            <button aria-pressed={tab === "history"} onClick={() => setTab("history")}><History size={14} className="me-1 inline" />History</button>
+            {!profile.platform && <button aria-pressed={tab === "history"} onClick={() => setTab("history")}><History size={14} className="me-1 inline" />History</button>}
           </div>
         </div>
 
