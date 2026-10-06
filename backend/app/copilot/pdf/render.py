@@ -58,11 +58,18 @@ def font_face_css() -> str:
 """
 
 
+def chromium_path() -> str | None:
+    """COPILOT_CHROMIUM_PATH from backend/.env (settings) or the process environment."""
+    from app.core.config import get_settings
+
+    return get_settings().copilot_chromium_path or os.environ.get("COPILOT_CHROMIUM_PATH") or None
+
+
 def is_available() -> bool:
     """Playwright is importable and a browser is configured (COPILOT_CHROMIUM_PATH or Playwright's own)."""
     if importlib.util.find_spec("playwright") is None:
         return False
-    custom = os.environ.get("COPILOT_CHROMIUM_PATH")
+    custom = chromium_path()
     return Path(custom).exists() if custom else True  # Playwright's own browser is checked when rendering
 
 
@@ -72,7 +79,8 @@ def _render_blocking(html: str, footer: bool) -> bytes:
         html_path.write_text(html, encoding="utf-8")
         cmd = [sys.executable, str(WORKER), str(html_path), str(pdf_path)] + ([] if footer else ["--no-footer"])
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=RENDER_TIMEOUT_SECONDS)
+            env = {**os.environ, **({"COPILOT_CHROMIUM_PATH": chromium_path()} if chromium_path() else {})}
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=RENDER_TIMEOUT_SECONDS, env=env)
         except subprocess.TimeoutExpired as exc:
             raise AppError(504, "PDF rendering timed out. Please try again.") from exc
         if result.returncode != 0:

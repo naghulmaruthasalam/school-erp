@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     copilot_messages_per_minute: int = 20
+    # Chromium/Chrome/Edge executable for PDF export (falls back to the COPILOT_CHROMIUM_PATH environment variable, then Playwright's own)
+    copilot_chromium_path: str | None = None
     copilot_max_history_messages: int = 30
     # Cap on curriculum text (syllabus outline + attached document text) sent to the model per message.
     copilot_max_context_chars: int = 60000
