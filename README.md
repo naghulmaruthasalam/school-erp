@@ -65,7 +65,8 @@ no-op'ing:
 ## Copilot (AI study and teaching assistant)
 
 Student, parent and teacher logins get a Copilot: curriculum-grounded study help, answers about their own school
-data, and role-specific tools (quiz, study plan, child progress summary, worksheet, lesson plan, parent note).
+data, and role-specific tools (explain it, quiz, study plan, child progress summary, homework ideas, worksheet, lesson plan,
+parent note, question papers from a question bank, and AI grading of scanned answer sheets with PDF reports).
 Principal and admin profiles are built and switch on with `COPILOT_ENABLED_ROLES`. It needs `GEMINI_API_KEY`
 (see `backend/.env.example`). Details, API and how to add roles or tools: [docs/COPILOT.md](docs/COPILOT.md).
 

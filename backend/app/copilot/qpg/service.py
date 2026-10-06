@@ -206,7 +206,7 @@ def paper_markdown(paper: GeneratedPaper, include_answers: bool) -> str:
             number += 1
             out.append(f"**{number}.** {q['text']} *[{q['marks']}]*\n")
             if q.get("options"):
-                out.append("\n".join(f"- ({chr(97 + i)}) {o}" for i, o in enumerate(q["options"])) + "\n")
+                out.append("  \n".join(f"({chr(97 + i)}) {o}" for i, o in enumerate(q["options"])) + "\n")
             if include_answers:
                 out.append(f"**Answer:** {q.get('answer') or '-'}" + (f"  \n**Key points:** {q['keywords']}" if q.get("keywords") else "") + "\n")
     return "\n".join(out)

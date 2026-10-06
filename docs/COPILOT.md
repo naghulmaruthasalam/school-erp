@@ -148,9 +148,44 @@ mode, `tools`, `study_enabled`. Then add the role to `COPILOT_ENABLED_ROLES`.
 The UI builds the form from `fields` (text, textarea, number, select, date, child) and renders `questions` (quiz) or
 `content` (Markdown) results; multi-step tools (worksheet, lesson plan) have their own panels in `ToolRunner.tsx`.
 
+## Question papers, answer-sheet grading and PDFs (teachers)
+
+Ported from the Skillorea backend and rebuilt on the ERP's own data, auth and storage.
+
+**Question paper** (Tools -> Question paper, `/api/v1/copilot/qpg`)
+* Pick class, subject and chapters (from the syllabus) and how many of each question type per chapter: multiple
+  choice 1 mark, short 2, long 5 (classes 11-12 also get "state precisely" 3 and "answer in brief" 4). Limits: 25
+  marks per chapter (shared out evenly beyond 4 chapters) and 100 per paper.
+* Questions come from the **school's question bank** first (shared by the school's teachers; teachers can also add
+  their own). When the bank can't fill a chapter, the AI writes the shortfall (plus two spare) from that chapter's
+  syllabus notes and saves them to the bank, so papers get more varied over time.
+* **Shuffle-bag rotation** per teacher, chapter and type: every question is used once before any repeats, and
+  newly added questions join the current pass. Papers are saved (last 30 per teacher) with the full answer key.
+* Export the question paper or the answer key as PDF (or text) with the teacher's own header (school, exam title,
+  date, time). Files land in the Files history.
+* API: `GET /options`, `POST /generate`, `GET /papers`, `GET|DELETE /papers/{id}`, `POST /papers/{id}/export`,
+  `GET|POST /bank`, `DELETE /bank/{id}`.
+
+**Grading** (Tools -> Grade answer sheets, `/api/v1/copilot/grading`)
+* Choose one of your generated papers, upload a student's pages (JPG, PNG, WEBP or PDF, up to 20 pages, 15 MB each)
+  and the AI reads all pages together and finds each answer wherever it falls, even across page breaks.
+* **Marking**: multiple choice is matched against the key without the AI (letters, option text, LaTeX vs plain
+  notation, sub/superscripts, arrows...), with a narrow AI check only when that doesn't match; every other type is marked
+  by the AI against the model answer and key points (step marks for maths-type subjects, point-by-point otherwise),
+  in half-mark steps. Unclear matches and failed marks are flagged "check" for the teacher.
+* **Several students**: a class set is graded in the background (four at a time, up to 80 students) with live
+  progress ("Question 3 of 6"); one failure doesn't stop the others. One batch per teacher at a time.
+* Teachers can **adjust marks and feedback** per question (half-mark steps, within the question's marks); totals update.
+* **Report**: a class summary plus one table per student, as PDF or text, saved to the Files history.
+* API: `POST /evaluate`, `POST /batch`, `GET /batch/{id}`, `GET /results`, `GET|PATCH|DELETE /results/{id}`, `POST /report`.
+* Answer sheets are processed in memory and never stored; only the transcribed answers, marks and feedback are kept.
+* Not ported: grading of diagrams/drawings by comparing against reference images, and HEIC photos (convert to JPG).
+
+**PDF export** needs Chromium. The backend Docker image installs it; elsewhere run
+`playwright install --with-deps chromium`, or point `COPILOT_CHROMIUM_PATH` at an existing Chromium/Chrome.
+Without it exports return a clear 503 and the text export still works.
+
 ## Not included from the Skillorea backend
 
-Cognito login, plans/payments/entitlements, admin dashboards (the ERP has its own auth and roles), the
-question-paper generator and AI answer-sheet grading (large question-bank and Chromium/Playwright pipelines),
-and server-side PDF rendering (the UI offers Print / PDF instead). The profile/tool registry is where they
-would plug in.
+Cognito login, plans/payments/entitlements and generation quotas, the admin console, app-version gating and the AWS
+pipeline (the ERP has its own auth, roles and deployment). The profile/tool registry is where more would plug in.
