@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
-import { fetchClasses, fetchSections, fetchSubjects } from "./api";
+import { fetchClasses, fetchSections, fetchSubjects, listTeachers } from "./api";
 import type { PageResponse } from "../../types/common";
 
 interface Homework {
@@ -26,12 +26,14 @@ export default function HomeworkList() {
     description: "",
     section_id: "",
     subject_id: "",
+    teacher_id: "",
     due_date: "",
   });
 
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => fetchClasses() });
   const sectionsQuery = useQuery({ queryKey: ["sections"], queryFn: () => fetchSections() });
   const subjectsQuery = useQuery({ queryKey: ["subjects"], queryFn: fetchSubjects });
+  const teachersQuery = useQuery({ queryKey: ["teachers", "all"], queryFn: () => listTeachers({ page_size: 100 }) });
 
   const homeworkQuery = useQuery({
     queryKey: ["homework", selectedSection],
@@ -45,13 +47,17 @@ export default function HomeworkList() {
 
   const createMutation = useMutation({
     mutationFn: async (payload: typeof form) => {
-      const { data } = await api.post("/homework", payload);
+      const { data } = await api.post("/homework", {
+        ...payload,
+        teacher_id: payload.teacher_id || undefined,
+        assigned_date: new Date().toISOString().slice(0, 10),
+      });
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["homework"] });
       setShowForm(false);
-      setForm({ title: "", description: "", section_id: "", subject_id: "", due_date: "" });
+      setForm({ title: "", description: "", section_id: "", subject_id: "", teacher_id: "", due_date: "" });
     },
   });
 
@@ -138,6 +144,19 @@ export default function HomeworkList() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Teacher (optional)</label>
+                <select
+                  value={form.teacher_id}
+                  onChange={(e) => setForm({ ...form, teacher_id: e.target.value })}
+                  className="w-full rounded-lg border border-line px-3 py-2"
+                >
+                  <option value="">Auto (subject teacher)</option>
+                  {teachersQuery.data?.items.map((t) => (
+                    <option key={t.id} value={t.id}>{t.full_name}</option>
+                  ))}
+                </select>
+              </div>
               <div className="col-span-2 md:col-span-3">
                 <label className="block text-sm font-medium text-ink-2 mb-1">Description</label>
                 <textarea
@@ -149,6 +168,11 @@ export default function HomeworkList() {
                 />
               </div>
             </div>
+            {createMutation.isError && (
+              <p className="text-sm text-red-600">
+                {(createMutation.error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to assign homework."}
+              </p>
+            )}
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? "Assigning..." : "Assign Homework"}
             </Button>

@@ -21,6 +21,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Spinner } from "../../components/ui";
+import { api } from "../../api/client";
+import { timeAgo } from "../../lib/time";
 import { AttendanceLineChart, FeeCollectionBarChart } from "../../components/Charts";
 import { fetchAttendanceTrend, fetchFeeCollection, fetchLeaveStats, fetchPendingFees, listAdmissions, listStudents, listTeachers } from "./api";
 
@@ -191,6 +193,20 @@ function ActivityItem({ title, description, time, icon, color }: ActivityItemPro
   );
 }
 
+interface ActivityEvent {
+  type: "admission" | "leave" | "payment" | "attendance";
+  title: string;
+  description: string;
+  time: string;
+}
+
+const ACTIVITY_LOOK: Record<string, { Icon: typeof UserPlus; color: string }> = {
+  admission: { Icon: UserPlus, color: "bg-gradient-to-br from-blue-500 to-blue-600" },
+  leave: { Icon: Calendar, color: "bg-gradient-to-br from-amber-500 to-amber-600" },
+  payment: { Icon: IndianRupee, color: "bg-gradient-to-br from-emerald-500 to-emerald-600" },
+  attendance: { Icon: ClipboardList, color: "bg-gradient-to-br from-violet-500 to-violet-600" },
+};
+
 export default function AdminDashboard() {
   const [greeting, setGreeting] = useState(getGreeting());
 
@@ -229,6 +245,11 @@ export default function AdminDashboard() {
   const feeCollectionQuery = useQuery({
     queryKey: ["admin", "fee-collection"],
     queryFn: () => fetchFeeCollection(6),
+  });
+
+  const activityQuery = useQuery({
+    queryKey: ["admin", "recent-activity"],
+    queryFn: async () => (await api.get<ActivityEvent[]>("/analytics/recent-activity", { params: { limit: 8 } })).data,
   });
 
   const pendingFeesQuery = useQuery({
@@ -507,35 +528,26 @@ export default function AdminDashboard() {
                 View All <ArrowRight size={12} />
               </Link>
             </div>
-            <div className={`divide-y divide-line`}>
-              <ActivityItem
-                title="New Admission"
-                description="Priya Sharma admitted to Grade 6"
-                time="2h ago"
-                icon={<UserPlus size={14} className="text-white" />}
-                color="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <ActivityItem
-                title="Leave Request"
-                description="Teacher Mrs. S. Priya applied for leave"
-                time="4h ago"
-                icon={<Calendar size={14} className="text-white" />}
-                color="bg-gradient-to-br from-amber-500 to-amber-600"
-              />
-              <ActivityItem
-                title="Fee Payment"
-                description="Rahul Verma paid ₹5,000"
-                time="5h ago"
-                icon={<IndianRupee size={14} className="text-white" />}
-                color="bg-gradient-to-br from-emerald-500 to-emerald-600"
-              />
-              <ActivityItem
-                title="Attendance Updated"
-                description="Class 8 - A (28 students marked)"
-                time="6h ago"
-                icon={<ClipboardList size={14} className="text-white" />}
-                color="bg-gradient-to-br from-violet-500 to-violet-600"
-              />
+            <div className="divide-y divide-line">
+              {activityQuery.isLoading ? (
+                <div className="flex justify-center py-6"><Spinner /></div>
+              ) : activityQuery.data && activityQuery.data.length > 0 ? (
+                activityQuery.data.slice(0, 5).map((a, i) => {
+                  const look = ACTIVITY_LOOK[a.type] ?? ACTIVITY_LOOK.attendance;
+                  return (
+                    <ActivityItem
+                      key={`${a.type}-${a.time}-${i}`}
+                      title={a.title}
+                      description={a.description}
+                      time={timeAgo(a.time)}
+                      icon={<look.Icon size={14} className="text-white" />}
+                      color={look.color}
+                    />
+                  );
+                })
+              ) : (
+                <p className="py-6 text-center text-sm text-ink-3">Nothing has happened yet.</p>
+              )}
             </div>
           </div>
         </div>

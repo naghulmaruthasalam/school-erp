@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Card, PageHeader, Spinner, Badge, StatTile } from "../../components/ui";
+import FeesNav from "./fees/FeesNav";
 import { api } from "../../api/client";
 import { fetchPendingFees } from "./api";
 import type { PageResponse } from "../../types/common";
@@ -53,6 +55,7 @@ export default function FeeList() {
   return (
     <div className="animate-fade-in-up">
       <PageHeader title="Fee Management" subtitle="Invoices, payments, and collection tracking" />
+      <FeesNav />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatTile
@@ -96,7 +99,7 @@ export default function FeeList() {
             >
               <option value="">All Status</option>
               <option value="PENDING">Pending</option>
-              <option value="PARTIAL">Partial</option>
+              <option value="PARTIALLY_PAID">Partially paid</option>
               <option value="PAID">Paid</option>
               <option value="OVERDUE">Overdue</option>
             </select>
@@ -121,6 +124,7 @@ export default function FeeList() {
                     <p className="text-xs text-accent-fg">Due: {new Date(inv.due_date).toLocaleDateString()}</p>
                   </div>
                   <div className="text-right">
+                    <Link to={`/admin/fees/invoices/${inv.id}`} className="text-xs font-medium text-accent-fg hover:underline">View / record payment</Link>
                     <p className="text-lg font-semibold text-ink">₹{inv.total_amount.toLocaleString()}</p>
                     <p className="text-sm text-green-600">Paid: ₹{inv.paid_amount.toLocaleString()}</p>
                     {inv.total_amount - inv.paid_amount > 0 && (

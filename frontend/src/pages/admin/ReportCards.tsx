@@ -92,6 +92,14 @@ export default function ReportCards() {
   const maxMarks = result?.total_max_marks ?? 0;
   const percentage = (result?.percentage ?? 0).toFixed(1);
 
+  async function downloadPdf() {
+    const { data } = await api.get<Blob>(`/exams/${selectedExam}/students/${selectedStudent}/report-card`, {
+      responseType: "blob",
+    });
+    const url = URL.createObjectURL(data);
+    window.open(url, "_blank", "noopener");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
 
   const selectedStudentData = studentsQuery.data?.items.find((s) => s.id === selectedStudent);
 
@@ -192,7 +200,7 @@ export default function ReportCards() {
             </table>
 
             <div className="mt-4 flex justify-end">
-              <Button variant="secondary" onClick={() => window.print()}>Print Report Card</Button>
+              <Button variant="secondary" onClick={downloadPdf}>Download Report Card (PDF)</Button>
             </div>
           </Card>
         ) : (

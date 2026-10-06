@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Badge, Button, Card, ErrorText, Input, Label, PageHeader } from "../../../components/ui";
+import FeesNav from "./FeesNav";
 import { DataTable, type Column } from "../../../components/DataTable";
 import {
   createFeeAssignment,
@@ -162,6 +163,7 @@ export default function FeeOverview() {
   return (
     <div>
       <PageHeader title="Fee Overview" subtitle="Look up a student to assign fees, raise invoices and track payments." />
+      <FeesNav />
 
       <Card className="mb-6">
         <h2 className="mb-4 text-sm font-semibold text-ink">Find Student</h2>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { api } from "../../api/client";
 import { Badge, Button, Card, ErrorText, PageHeader, Spinner } from "../../components/ui";
 import { DataTable, Pagination, type Column } from "../../components/DataTable";
 import { fetchHomework, fetchHomeworkSubmissions, fetchPendingHomework, updateHomeworkSubmission } from "./api";
@@ -15,13 +16,23 @@ const PAGE_SIZE = 10;
 function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; studentId: string }) {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const mutation = useMutation({
     mutationFn: async () => {
       const submissions = await fetchHomeworkSubmissions(homeworkId);
       const mine = submissions.find((s) => s.student_id === studentId);
       if (!mine) throw new Error("No submission record found for this homework yet.");
-      return updateHomeworkSubmission(mine.id, { status: "SUBMITTED" });
+      let attachmentIds = mine.attachment_document_ids ?? [];
+      if (file) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("module", "HOMEWORK_SUBMISSION");
+        const { data } = await api.post<{ id: string }>("/uploads", form);
+        attachmentIds = [...attachmentIds, data.id];
+      }
+      return updateHomeworkSubmission(mine.id, { status: "SUBMITTED", attachment_document_ids: attachmentIds });
     },
     onSuccess: () => {
       setError("");
@@ -33,6 +44,10 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
 
   return (
     <div className="text-right">
+      <input ref={fileRef} type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      <button type="button" className="mb-2 block w-full text-xs text-accent-fg hover:underline" onClick={() => fileRef.current?.click()}>
+        {file ? `Attached: ${file.name}` : "Attach file (optional)"}
+      </button>
       <Button variant="secondary" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
         {mutation.isPending ? "Saving…" : "Mark as Submitted"}
       </Button>

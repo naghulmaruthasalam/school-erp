@@ -1,3 +1,4 @@
+import { openDocument } from "../../api/files";
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
@@ -158,14 +159,13 @@ export default function DocumentList() {
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-4 pt-3 border-t border-line">
-                <a
-                  href={`${api.defaults.baseURL}/uploads/documents/${doc.id}/download`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => openDocument(doc.id)}
                   className="text-sm text-accent-fg hover:underline"
                 >
                   Download
-                </a>
+                </button>
                 <span className="text-ink-2">|</span>
                 <button
                   onClick={() => {

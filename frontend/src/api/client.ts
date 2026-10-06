@@ -71,6 +71,12 @@ api.interceptors.response.use(
         .join("; ");
     }
 
+    // Surface the server's explanation (instead of "Request failed with status code 4xx") to
+    // forms that display `err.message`.
+    if (typeof data?.detail === "string" && data.detail && error.response && error.response.status !== 401) {
+      error.message = data.detail;
+    }
+
     const config = error.config as RetriableConfig | undefined;
     if (error.response?.status === 401 && config && !config._retried && !config.url?.includes("/auth/")) {
       config._retried = true;

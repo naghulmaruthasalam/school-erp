@@ -1,3 +1,4 @@
+import DocumentImage from "../../components/DocumentImage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -230,20 +231,18 @@ export default function StudentDetail() {
               <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-4 border-white/30 overflow-hidden">
                 {uploading ? (
                   <Spinner />
-                ) : student.photo_document_id ? (
-                  <img
-                    src={`/api/v1/uploads/documents/${student.photo_document_id}/download`}
+                ) : (
+                  <DocumentImage
+                    documentId={student.photo_document_id}
                     alt={student.full_name}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
+                    fallback={
+                      <span className="text-4xl font-bold text-white">
+                        {student.full_name?.charAt(0)?.toUpperCase()}
+                      </span>
+                    }
                   />
-                ) : null}
-                <span className={`text-4xl font-bold text-white ${student.photo_document_id ? 'hidden' : ''}`}>
-                  {student.full_name?.charAt(0)?.toUpperCase()}
-                </span>
+                )}
               </div>
               <button
                 onClick={() => fileInputRef.current?.click()}

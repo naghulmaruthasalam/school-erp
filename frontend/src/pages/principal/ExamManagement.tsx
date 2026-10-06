@@ -1,15 +1,10 @@
 import { useState } from "react";
+import { EXAM_STATUS_TONE, examStatus } from "../../lib/exam";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
+import { ExamSubjectsPanel } from "../../components/ExamSubjectsPanel";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
-
-// The API stores only dates and a free-text term for an exam; its status follows from the dates.
-const EXAM_STATUS_TONE = { UPCOMING: "violet", IN_PROGRESS: "yellow", COMPLETED: "green" } as const;
-function examStatus(start: string, end: string): keyof typeof EXAM_STATUS_TONE {
-  const today = new Date().toISOString().slice(0, 10);
-  return end < today ? "COMPLETED" : start > today ? "UPCOMING" : "IN_PROGRESS";
-}
 
 interface Exam {
   id: string;
@@ -34,6 +29,7 @@ interface Class {
 export default function ExamManagement() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [openExamId, setOpenExamId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     term: "Unit Test",
@@ -209,9 +205,12 @@ export default function ExamManagement() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="secondary">View Results</Button>
+                  <Button variant="secondary" onClick={() => setOpenExamId(openExamId === exam.id ? null : exam.id)}>
+                    {openExamId === exam.id ? "Hide subjects" : "Subjects & marks"}
+                  </Button>
                 </div>
               </div>
+              {openExamId === exam.id && <ExamSubjectsPanel examId={exam.id} classIds={exam.class_ids} />}
             </Card>
           ))}
           {examsQuery.data?.items.length === 0 && (

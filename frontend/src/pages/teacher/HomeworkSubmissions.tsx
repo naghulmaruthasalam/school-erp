@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { Badge, Card, PageHeader, Spinner } from "../../components/ui";
 import { DataTable } from "../../components/DataTable";
+import { openDocument } from "../../api/files";
 import { fetchSectionRoster, getHomework, listHomeworkSubmissions } from "./api";
 import { sectionLabel, useClasses, useSections, useSubjects } from "./hooks";
 import type { HomeworkSubmissionStatus } from "./types";
@@ -86,6 +87,21 @@ export default function TeacherHomeworkSubmissions() {
             {
               header: "Submitted At",
               cell: (r) => (r.submitted_at ? new Date(r.submitted_at).toLocaleString() : "—"),
+            },
+            {
+              header: "Attachments",
+              cell: (r) =>
+                r.attachment_document_ids.length === 0 ? (
+                  "—"
+                ) : (
+                  <span className="flex flex-wrap gap-2">
+                    {r.attachment_document_ids.map((docId, i) => (
+                      <button key={docId} type="button" className="text-accent-fg hover:underline" onClick={() => void openDocument(docId)}>
+                        File {i + 1}
+                      </button>
+                    ))}
+                  </span>
+                ),
             },
             { header: "Remarks", cell: (r) => r.remarks ?? "—" },
           ]}

@@ -1,3 +1,4 @@
+import { openDocument } from "../api/files";
 import { useState } from "react";
 import { Card, Spinner, Badge } from "./ui";
 import { BookOpen, FileText, ChevronDown, Download, GraduationCap, Layers, Video, PlayCircle } from "lucide-react";
@@ -46,7 +47,6 @@ export function SyllabusViewer({
   getClassName,
   getSubjectName,
   getYearName,
-  getDocumentUrl,
   emptyMessage = "No syllabus available.",
 }: SyllabusViewerProps) {
   const [expandedSyllabus, setExpandedSyllabus] = useState<string | null>(null);
@@ -195,9 +195,15 @@ export function SyllabusViewer({
                         return (
                           <a
                             key={doc.id}
-                            href={doc.video_url || getDocumentUrl(doc.id)}
-                            target="_blank"
+                            href={doc.video_url || "#"}
+                            target={doc.video_url ? "_blank" : undefined}
                             rel="noopener noreferrer"
+                            onClick={(e) => {
+                              if (!doc.video_url) {
+                                e.preventDefault();
+                                void openDocument(doc.id);
+                              }
+                            }}
                             className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-300 group border hover:shadow-lg ${
                               isVideo
                                 ? "bg-gradient-to-r from-pink-500/10 to-rose-500/10 border-pink-500/20 hover:border-pink-500/40 hover:shadow-pink-500/10"

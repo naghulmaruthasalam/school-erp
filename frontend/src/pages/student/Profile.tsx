@@ -1,3 +1,4 @@
+import DocumentImage from "../../components/DocumentImage";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Badge, Card, PageHeader, Spinner } from "../../components/ui";
@@ -79,16 +80,17 @@ export default function StudentProfile() {
                   <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-4 border-white/30 overflow-hidden">
                     {uploading ? (
                       <Spinner />
-                    ) : profile.photo_document_id ? (
-                      <img
-                        src={`/api/v1/uploads/documents/${profile.photo_document_id}/download`}
+                    ) : (
+                      <DocumentImage
+                        documentId={profile.photo_document_id}
                         alt={profile.full_name}
                         className="w-full h-full object-cover"
+                        fallback={
+                          <span className="text-4xl font-bold text-white">
+                            {profile.full_name?.charAt(0)?.toUpperCase()}
+                          </span>
+                        }
                       />
-                    ) : (
-                      <span className="text-4xl font-bold text-white">
-                        {profile.full_name?.charAt(0)?.toUpperCase()}
-                      </span>
                     )}
                   </div>
                   <button

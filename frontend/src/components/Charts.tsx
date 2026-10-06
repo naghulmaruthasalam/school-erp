@@ -170,3 +170,19 @@ export function HomeworkCompletionChart({ data, height = 200 }: ChartProps) {
     </ResponsiveContainer>
   );
 }
+
+export function ClassFeeBarChart({ data, height = 250 }: ChartProps) {
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -4 }} barCategoryGap="28%">
+        {grid}
+        <XAxis dataKey="name" {...axisProps} />
+        <YAxis {...axisProps} />
+        <Tooltip {...tooltipProps} formatter={(value, name) => [`₹${Number(value).toLocaleString("en-IN")}`, name === "collected" ? "Collected" : "Pending"]} />
+        <Legend iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ink-2)" }} formatter={(v) => (v === "collected" ? "Collected" : "Pending")} />
+        <Bar dataKey="collected" stackId="fees" fill="#30c25a" radius={[0, 0, 4, 4]} />
+        <Bar dataKey="pending" stackId="fees" fill="#ff9f0a" radius={[10, 10, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}

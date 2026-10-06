@@ -28,6 +28,8 @@ export default function AcademicSetup() {
   const [classForm, setClassForm] = useState({ name: "", academic_year_id: "", order: 0 });
   const [sectionForm, setSectionForm] = useState({ name: "", class_id: "", room_no: "" });
   const [subjectForm, setSubjectForm] = useState({ name: "", code: "" });
+  const [formError, setFormError] = useState<string | null>(null);
+  const onCreateError = (err: unknown) => setFormError(err instanceof Error ? err.message : "Failed to save.");
 
   const yearsQuery = useQuery({ queryKey: ["academic-years"], queryFn: fetchAcademicYears });
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => fetchClasses() });
@@ -36,22 +38,26 @@ export default function AcademicSetup() {
 
   const createYear = useMutation({
     mutationFn: async (p: typeof yearForm) => { await api.post("/academics/years", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["academic-years"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["academic-years"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const createClass = useMutation({
     mutationFn: async (p: typeof classForm) => { await api.post("/academics/classes", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["classes"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["classes"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const createSection = useMutation({
     mutationFn: async (p: typeof sectionForm) => { await api.post("/academics/sections", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["sections"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["sections"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const createSubject = useMutation({
     mutationFn: async (p: typeof subjectForm) => { await api.post("/academics/subjects", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["subjects"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["subjects"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const deleteClass = useMutation({
@@ -102,7 +108,7 @@ export default function AcademicSetup() {
   return (
     <div className="animate-page-enter">
       <PageHeader title="Academic Setup" subtitle="Configure academic structure">
-        <Button onClick={() => setShowForm(!showForm)} glow>
+        <Button onClick={() => { setShowForm(!showForm); setFormError(null); }} glow>
           {showForm ? "Cancel" : <><Plus className="w-4 h-4" /> Add New</>}
         </Button>
       </PageHeader>
@@ -117,7 +123,7 @@ export default function AcademicSetup() {
           return (
             <div
               key={t.key}
-              onClick={() => { setActiveTab(t.key); setShowForm(false); }}
+              onClick={() => { setActiveTab(t.key); setShowForm(false); setFormError(null); }}
               className={`p-4 rounded-2xl cursor-pointer transition-all duration-300 ${
                 activeTab === t.key
                   ? "bg-gradient-to-br " + t.color + " text-white shadow-xl scale-[1.02]"
@@ -156,6 +162,7 @@ export default function AcademicSetup() {
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" required />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createYear.isPending} glow>
               {createYear.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Year
@@ -190,6 +197,7 @@ export default function AcademicSetup() {
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createClass.isPending} glow>
               {createClass.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Class
@@ -224,6 +232,7 @@ export default function AcademicSetup() {
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createSection.isPending} glow>
               {createSection.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Section
@@ -250,6 +259,7 @@ export default function AcademicSetup() {
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="MATH" required />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createSubject.isPending} glow>
               {createSubject.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Subject

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Card, ErrorText, Input, Label, PageHeader } from "../../../components/ui";
+import FeesNav from "./FeesNav";
 import { DataTable, type Column } from "../../../components/DataTable";
 import { listAcademicYears, listClasses } from "../academics/api";
 import { createFeeStructure, listFeeCategories, listFeeStructures } from "./api";
@@ -79,6 +80,7 @@ export default function FeeStructureList() {
   return (
     <div>
       <PageHeader title="Fee Structures" subtitle="Amounts due per class, category and academic year." />
+      <FeesNav />
 
       <Card className="mb-6">
         <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-lg">

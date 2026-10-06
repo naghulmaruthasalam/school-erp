@@ -1,8 +1,9 @@
+import { openDocument } from "../../api/files";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "./api";
-import { getSyllabus, getSyllabusDocumentUrl } from "./syllabusApi";
+import { getSyllabus } from "./syllabusApi";
 
 export default function SyllabusDetail() {
   const { id } = useParams<{ id: string }>();
@@ -108,9 +109,11 @@ export default function SyllabusDetail() {
                 {syl.documents.map((doc) => (
                   <li key={doc.id}>
                     <a
-                      href={getSyllabusDocumentUrl(doc.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void openDocument(doc.id);
+                      }}
                       className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink hover:underline"
                     >
                       <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

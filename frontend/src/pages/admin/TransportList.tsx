@@ -650,7 +650,10 @@ export default function TransportList() {
           {selectedRoute && selectedRoute.stops.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-ink-2 mb-1">Stop *</label>
-              <select value={assignForm.stop_name} onChange={(e) => setAssignForm({ ...assignForm, stop_name: e.target.value })}
+              <select value={assignForm.stop_name} onChange={(e) => {
+                const stop = selectedRoute.stops.find((st) => st.name === e.target.value);
+                setAssignForm({ ...assignForm, stop_name: e.target.value, monthly_fee: stop?.fare || assignForm.monthly_fee });
+              }}
                 className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required>
                 <option value="">-- Select Stop --</option>
                 {selectedRoute.stops.map((s, i) => (

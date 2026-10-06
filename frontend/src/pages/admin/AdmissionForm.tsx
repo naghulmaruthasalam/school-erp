@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, ErrorText, Input, Label, Select } from "../../components/ui";
+import { api } from "../../api/client";
 import { createAdmission } from "./api";
 import { useAcademicYears, useClasses } from "./hooks";
 import type { AdmissionCreateRequest } from "./types";
@@ -61,6 +62,7 @@ export default function AdmissionForm() {
   const [form, setForm] = useState<AdmissionCreateRequest>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState(0);
+  const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<{ name: string; file: File | null }[]>([
     { name: "Birth Certificate", file: null },
     { name: "Previous School/Transfer Certificate", file: null },
@@ -193,7 +195,15 @@ export default function AdmissionForm() {
     });
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function uploadFile(file: File, module: string): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("module", module);
+    const { data } = await api.post("/uploads", formData);
+    return data.id;
+  }
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -206,12 +216,37 @@ export default function AdmissionForm() {
       return;
     }
 
+    // Upload the selected documents first; the application stores their ids.
+    let studentPhotoId: string | undefined;
+    const documentIds: string[] = [];
+    setUploading(true);
+    try {
+      for (const doc of documents) {
+        if (!doc.file) continue;
+        if (doc.name === "Student Photo") {
+          studentPhotoId = await uploadFile(doc.file, "STUDENT_PHOTO");
+        } else {
+          documentIds.push(await uploadFile(doc.file, "ADMISSION_DOCUMENT"));
+        }
+      }
+    } catch {
+      setError("Failed to upload documents. Please try again.");
+      return;
+    } finally {
+      setUploading(false);
+    }
+
     const payload: AdmissionCreateRequest = {
       ...form,
       dob: form.dob || null,
       gender: form.gender || null,
+      academic_year_id: form.academic_year_id || null,
       applicant_email: form.applicant_email || null,
+      father_email: form.father_email || null,
+      mother_email: form.mother_email || null,
       guardian_email: form.guardian_email || null,
+      student_photo_id: studentPhotoId,
+      document_ids: documentIds,
     };
     mutation.mutate(payload);
   }
@@ -516,7 +551,7 @@ export default function AdmissionForm() {
                       />
                     </div>
                     {doc.file && (
-                      <span className="text-sm text-emerald-600 font-medium">✓ Uploaded</span>
+                      <span className="text-sm text-emerald-600 font-medium">✓ Selected</span>
                     )}
                   </div>
                 ))}
@@ -579,8 +614,8 @@ export default function AdmissionForm() {
                   Next →
                 </Button>
               ) : (
-                <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending ? "Submitting..." : "Submit Application"}
+                <Button type="submit" disabled={mutation.isPending || uploading}>
+                  {uploading ? "Uploading..." : mutation.isPending ? "Submitting..." : "Submit Application"}
                 </Button>
               )}
             </div>

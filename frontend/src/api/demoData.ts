@@ -193,6 +193,7 @@ export const DEMO_DATA: Record<string, unknown> = {
   ],
 
   "/fees/stats": {
+    total_expected: 8500000,
     total_collected: 7000000,
     total_pending: 1500000,
     collection_percentage: 82.4,
@@ -229,6 +230,21 @@ export const DEMO_DATA: Record<string, unknown> = {
     { month: "Jul", amount: 1100000 },
     { month: "Aug", amount: 980000 },
     { month: "Sep", amount: 1050000 },
+  ],
+
+  "/analytics/fee-by-class": [
+    { name: "Class 6", billed: 1400000, collected: 1210000, pending: 190000 },
+    { name: "Class 7", billed: 1500000, collected: 1260000, pending: 240000 },
+    { name: "Class 8", billed: 1550000, collected: 1300000, pending: 250000 },
+    { name: "Class 9", billed: 1900000, collected: 1550000, pending: 350000 },
+    { name: "Class 10", billed: 2150000, collected: 1680000, pending: 470000 },
+  ],
+
+  "/analytics/recent-activity": [
+    { type: "payment", title: "Fee Payment", description: "Aarav Sharma paid ₹12,500", time: new Date(Date.now() - 12 * 60000).toISOString() },
+    { type: "admission", title: "New Admission", description: "Diya Nair applied for admission", time: new Date(Date.now() - 95 * 60000).toISOString() },
+    { type: "attendance", title: "Attendance Marked", description: "Class 8-A: 38 students marked", time: new Date(Date.now() - 4 * 3600000).toISOString() },
+    { type: "leave", title: "Leave Request", description: "Ravi Menon requested casual leave (pending)", time: new Date(Date.now() - 26 * 3600000).toISOString() },
   ],
 
   "/analytics/student-distribution": [
@@ -412,10 +428,10 @@ export const DEMO_DATA: Record<string, unknown> = {
   // Exams
   "/exams": {
     items: [
-      { id: "e1", name: "Mid-Term Examination", exam_type: "MID_TERM", class_id: "c1", start_date: "2026-10-15", end_date: "2026-10-25", status: "upcoming", academic_year_id: "ay1" },
-      { id: "e2", name: "Unit Test 3", exam_type: "UNIT_TEST", class_id: "c1", start_date: "2026-10-05", end_date: "2026-10-06", status: "upcoming", academic_year_id: "ay1" },
-      { id: "e3", name: "Unit Test 2", exam_type: "UNIT_TEST", class_id: "c1", start_date: "2026-08-20", end_date: "2026-08-21", status: "completed", academic_year_id: "ay1" },
-      { id: "e4", name: "Unit Test 1", exam_type: "UNIT_TEST", class_id: "c2", start_date: "2026-06-15", end_date: "2026-06-16", status: "completed", academic_year_id: "ay1" },
+      { id: "e1", name: "Mid-Term Examination", exam_type: "MID_TERM", class_id: "c1", class_ids: ["c1"], term: "UNIT_TEST", start_date: "2026-10-15", end_date: "2026-10-25", status: "upcoming", academic_year_id: "ay1" },
+      { id: "e2", name: "Unit Test 3", exam_type: "UNIT_TEST", class_id: "c1", class_ids: ["c1"], term: "UNIT_TEST", start_date: "2026-10-05", end_date: "2026-10-06", status: "upcoming", academic_year_id: "ay1" },
+      { id: "e3", name: "Unit Test 2", exam_type: "UNIT_TEST", class_id: "c1", class_ids: ["c1"], term: "UNIT_TEST", start_date: "2026-08-20", end_date: "2026-08-21", status: "completed", academic_year_id: "ay1" },
+      { id: "e4", name: "Unit Test 1", exam_type: "UNIT_TEST", class_id: "c2", class_ids: ["c2"], term: "UNIT_TEST", start_date: "2026-06-15", end_date: "2026-06-16", status: "completed", academic_year_id: "ay1" },
     ],
     total: 4,
     page: 1,
@@ -753,6 +769,8 @@ export function getDemoResponse(url: string): unknown | null {
   if (cleanUrl.endsWith("/analytics/pending-fees")) return DEMO_DATA["/analytics/pending-fees"];
   if (cleanUrl.includes("/analytics/attendance-trend")) return DEMO_DATA["/analytics/attendance-trend"];
   if (cleanUrl.includes("/analytics/fee-collection")) return DEMO_DATA["/analytics/fee-collection"];
+  if (cleanUrl.includes("/analytics/fee-by-class")) return DEMO_DATA["/analytics/fee-by-class"];
+  if (cleanUrl.includes("/analytics/recent-activity")) return DEMO_DATA["/analytics/recent-activity"];
   if (cleanUrl.endsWith("/analytics/student-distribution")) return DEMO_DATA["/analytics/student-distribution"];
   if (cleanUrl.includes("/analytics/attendance-daily")) return DEMO_DATA["/analytics/attendance-daily"];
   if (cleanUrl.includes("/attendance/staff")) return DEMO_DATA["/attendance/staff"];

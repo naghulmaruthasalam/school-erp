@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Select } from "../../components/ui";
+import { AttendanceLineChart } from "../../components/Charts";
 import { api } from "../../api/client";
+import { fetchAttendanceTrend } from "./api";
 
 interface AttendanceStats {
   total_students: number;
@@ -33,14 +35,12 @@ export default function AttendanceReports() {
       const params = new URLSearchParams();
       params.append("date", selectedDate);
       if (classFilter) params.append("class_id", classFilter);
-      try {
-        const { data } = await api.get<AttendanceStats>(`/attendance/stats?${params}`);
-        return data;
-      } catch {
-        return { total_students: 0, present_today: 0, absent_today: 0, attendance_percentage: 0 };
-      }
+      const { data } = await api.get<AttendanceStats>(`/attendance/stats?${params}`);
+      return data;
     },
   });
+
+  const trendQuery = useQuery({ queryKey: ["attendance-trend", 14], queryFn: () => fetchAttendanceTrend(14) });
 
   const stats = statsQuery.data || { total_students: 0, present_today: 0, absent_today: 0, attendance_percentage: 0 };
 
@@ -89,16 +89,20 @@ export default function AttendanceReports() {
           </Card>
           <Card>
             <p className="text-sm font-medium text-ink-2">Attendance Rate</p>
-            <p className="text-3xl font-bold text-accent-fg dark:text-accent-fg mt-1">{stats.attendance_percentage.toFixed(1)}%</p>
+            <p className="text-3xl font-bold text-accent-fg dark:text-accent-fg mt-1">{(stats.attendance_percentage ?? 0).toFixed(1)}%</p>
           </Card>
         </div>
       )}
 
       <Card className="mt-6">
-        <h3 className="font-semibold text-ink dark:text-white mb-4">Attendance Trends</h3>
-        <div className="h-64 flex items-center justify-center text-ink-3">
-          <p>Attendance trend chart will be displayed here</p>
-        </div>
+        <h3 className="font-semibold text-ink dark:text-white mb-4">Attendance Trend (last 14 days)</h3>
+        {trendQuery.isLoading ? (
+          <div className="flex h-64 items-center justify-center"><Spinner /></div>
+        ) : trendQuery.data && trendQuery.data.length > 0 ? (
+          <AttendanceLineChart data={trendQuery.data} height={260} />
+        ) : (
+          <p className="flex h-64 items-center justify-center text-sm text-ink-3">No attendance has been marked in the last 14 days.</p>
+        )}
       </Card>
     </div>
   );

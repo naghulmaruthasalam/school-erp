@@ -147,6 +147,9 @@ export default function AdmissionDetail() {
               <Field label="Email" value={admission.applicant_email ?? "—"} />
               <Field label="Applying For Class" value={classNameById.get(admission.applying_for_class_id) ?? admission.applying_for_class_id} />
               <Field label="Application Date" value={new Date(admission.created_at).toLocaleDateString()} />
+              <Field label="Blood Group" value={admission.blood_group || "—"} />
+              <Field label="Admission Type" value={admission.admission_type || "—"} />
+              <Field label="Previous School" value={admission.previous_school || "—"} />
             </dl>
           </div>
 
@@ -157,6 +160,14 @@ export default function AdmissionDetail() {
               <Field label="Guardian Name" value={admission.guardian_name} />
               <Field label="Guardian Phone" value={admission.guardian_phone} />
               <Field label="Guardian Email" value={admission.guardian_email ?? "—"} />
+              <Field label="Relationship" value={admission.guardian_relationship || admission.primary_guardian || "—"} />
+              <Field label="Father" value={admission.father_name || "—"} />
+              <Field label="Mother" value={admission.mother_name || "—"} />
+              <Field
+                label="Address"
+                value={[admission.address_line1, admission.address_line2, admission.city, admission.state, admission.postal_code].filter(Boolean).join(", ") || "—"}
+              />
+              <Field label="Documents" value={`${admission.document_ids.length + (admission.student_photo_id ? 1 : 0)} uploaded`} />
             </dl>
           </div>
 

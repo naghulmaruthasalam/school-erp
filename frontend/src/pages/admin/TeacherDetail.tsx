@@ -1,3 +1,4 @@
+import DocumentImage from "../../components/DocumentImage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -169,16 +170,17 @@ export default function TeacherDetail() {
               <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-4 border-white/30 overflow-hidden">
                 {uploading ? (
                   <Spinner />
-                ) : teacher.photo_document_id ? (
-                  <img
-                    src={`/api/v1/uploads/documents/${teacher.photo_document_id}/download`}
+                ) : (
+                  <DocumentImage
+                    documentId={teacher.photo_document_id}
                     alt={teacher.full_name}
                     className="w-full h-full object-cover"
+                    fallback={
+                      <span className="text-4xl font-bold text-white">
+                        {teacher.full_name?.charAt(0)?.toUpperCase()}
+                      </span>
+                    }
                   />
-                ) : (
-                  <span className="text-4xl font-bold text-white">
-                    {teacher.full_name?.charAt(0)?.toUpperCase()}
-                  </span>
                 )}
               </div>
               <button
