@@ -125,7 +125,7 @@ def as_teacher():
 
 @pytest.mark.asyncio
 async def test_profile_differs_per_role_and_lists_that_roles_tools(client, school, fake):
-    expected = {"STUDENT": {"quiz", "study_plan"}, "PARENT": {"child_report"}, "TEACHER": {"worksheet", "lesson_plan", "question_paper", "grading", "quiz", "parent_note"}}
+    expected = {"STUDENT": {"explain", "quiz", "study_plan"}, "PARENT": {"explain", "child_report"}, "TEACHER": {"homework_ideas", "worksheet", "lesson_plan", "question_paper", "grading", "quiz", "explain", "parent_note"}}
     for role_name, setup in (("STUDENT", as_student), ("PARENT", as_parent), ("TEACHER", as_teacher)):
         setup()
         r = await client.get("/api/v1/copilot/profile")
@@ -329,6 +329,7 @@ async def test_a_role_can_only_run_its_own_tools(client, school, fake):
     assert (await client.post("/api/v1/copilot/tools/nope", json={})).status_code == 404
     as_parent()
     assert (await client.post("/api/v1/copilot/tools/quiz", json={})).status_code == 404
+    assert (await client.post("/api/v1/copilot/tools/homework_ideas", json={})).status_code == 404
 
 
 @pytest.mark.asyncio

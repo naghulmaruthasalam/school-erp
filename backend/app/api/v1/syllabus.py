@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, File, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi.responses import PlainTextResponse, RedirectResponse
 
 from app.core.deps import CurrentUser, require_tenant_user
 from app.core.enums import SyllabusStatus
@@ -11,7 +11,7 @@ from app.schemas.syllabus import (
     SyllabusOut,
     SyllabusUpdateRequest,
 )
-from app.services import syllabus_service, upload_service
+from app.services import syllabus_import_service, syllabus_service, upload_service
 
 router = APIRouter(prefix="/syllabus", tags=["syllabus"])
 
@@ -36,7 +36,40 @@ async def list_syllabus(
     return await syllabus_service.list_syllabus(current, class_id, subject_id, academic_year_id, params, status)
 
 
-# Fixed paths first, so "documents" is never read as a syllabus id.
+# Fixed paths first, so "documents", "tree" and "import" are never read as a syllabus id.
+
+
+@router.get("/tree")
+async def syllabus_tree(current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    """Class -> subject -> chapter outline for the browser (scoped to what the user may see)."""
+    return await syllabus_service.get_tree(current)
+
+
+@router.get("/import/template", response_class=PlainTextResponse)
+async def import_template(current: CurrentUser = Depends(require_tenant_user)) -> PlainTextResponse:
+    return PlainTextResponse(
+        syllabus_import_service.TEMPLATE_CSV, media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="syllabus-template.csv"'},
+    )
+
+
+@router.post("/import")
+async def import_syllabus(
+    file: UploadFile = File(...),
+    dry_run: bool = Form(True),
+    create_missing: bool = Form(False),
+    mode: str = Form("merge"),
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict:
+    """Load a CSV/JSON curriculum. Preview first (dry_run=true), then run it again with dry_run=false."""
+    data = await file.read(syllabus_import_service.MAX_BYTES + 1)
+    if len(data) > syllabus_import_service.MAX_BYTES:
+        from app.core.exceptions import ValidationAppError
+
+        raise ValidationAppError("That file is too large (limit 5 MB)")
+    return await syllabus_import_service.import_curriculum(
+        current, file.filename or "upload.csv", data, dry_run=dry_run, create_missing=create_missing, mode=mode
+    )
 
 
 @router.get("/documents/{document_id}/url", response_model=PresignedUrlOut)

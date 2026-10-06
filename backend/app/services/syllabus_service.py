@@ -41,7 +41,8 @@ def to_syllabus_out(doc: Syllabus, documents: dict[str, Document] | None = None)
         description=doc.description,
         status=doc.status,
         chapters=[
-            ChapterOut(id=f"{doc.id}-{i}", syllabus_id=str(doc.id), name=c.name, description=c.description, order=c.order)
+            ChapterOut(id=f"{doc.id}-{i}", syllabus_id=str(doc.id), name=c.name, description=c.description, order=c.order,
+                       topics=c.topics, content=c.content)
             for i, c in enumerate(doc.chapters)
         ],
         chapters_count=len(doc.chapters),
@@ -95,7 +96,10 @@ async def create_syllabus(current: CurrentUser, payload: SyllabusCreateRequest) 
         subject_id=payload.subject_id,
         title=payload.title,
         description=payload.description,
-        chapters=[Chapter(name=c.name, description=c.description, order=c.order) for c in payload.chapters],
+        chapters=[
+            Chapter(name=c.name, description=c.description, order=c.order, topics=c.topics, content=c.content)
+            for c in payload.chapters
+        ],
         status=payload.status,
         document_ids=payload.document_ids,
         created_by=str(current.user.id),
@@ -185,7 +189,19 @@ async def update_syllabus(current: CurrentUser, syllabus_id: str, payload: Sylla
     data = payload.model_dump(exclude_unset=True)
     for field, value in data.items():
         if field == "chapters" and value is not None:
-            syllabus.chapters = [Chapter(name=c["name"], description=c.get("description"), order=c["order"]) for c in value]
+            # The existing editor only knows name/description/order: keep the topics and notes a chapter already has.
+            previous = {c.name.strip().lower(): c for c in syllabus.chapters}
+            rebuilt = []
+            for c in value:
+                old = previous.get(c["name"].strip().lower())
+                rebuilt.append(
+                    Chapter(
+                        name=c["name"], description=c.get("description"), order=c["order"],
+                        topics=c["topics"] if "topics" in c else (old.topics if old else []),
+                        content=c["content"] if "content" in c else (old.content if old else None),
+                    )
+                )
+            syllabus.chapters = rebuilt
         elif field in ("title", "status") and value is None:
             continue
         else:
@@ -218,3 +234,37 @@ async def attach_document(current: CurrentUser, syllabus_id: str, file: UploadFi
     return SyllabusDocumentOut(
         id=doc.id, filename=doc.original_filename, content_type=doc.content_type, size_bytes=doc.size_bytes
     )
+
+
+async def get_tree(current: CurrentUser) -> dict:
+    """Class -> subject -> chapter outline the user may browse (students/parents see published syllabi of their class only)."""
+    from app.copilot.grounding import allowed_class_ids
+    from app.models.academic import Class, Subject
+
+    class_ids, _ = await allowed_class_ids(current)
+    classes = await Class.find(Class.school_id == current.school_id).sort(+Class.order).to_list()
+    if class_ids is not None:
+        classes = [c for c in classes if str(c.id) in class_ids]
+    syllabi = await Syllabus.find(Syllabus.school_id == current.school_id).to_list()
+    if current.role in (Role.STUDENT, Role.PARENT):
+        syllabi = [s for s in syllabi if s.status == SyllabusStatus.PUBLISHED]
+    subjects = {str(s.id): s for s in await Subject.find(Subject.school_id == current.school_id).to_list()}
+
+    out = []
+    for c in classes:
+        subs = []
+        for syl in sorted((s for s in syllabi if s.class_id == str(c.id)), key=lambda s: subjects[s.subject_id].name if s.subject_id in subjects else ""):
+            subject = subjects.get(syl.subject_id)
+            if subject is None:
+                continue
+            subs.append({
+                "id": syl.subject_id, "name": subject.name, "syllabus_id": str(syl.id), "title": syl.title,
+                "status": syl.status,
+                "chapters": [
+                    {"id": f"{syl.id}-{i}", "name": ch.name, "description": ch.description, "order": ch.order,
+                     "topics": ch.topics, "has_content": bool((ch.content or "").strip())}
+                    for i, ch in sorted(enumerate(syl.chapters), key=lambda p: p[1].order)
+                ],
+            })
+        out.append({"id": str(c.id), "name": c.name, "subjects": subs})
+    return {"classes": out}

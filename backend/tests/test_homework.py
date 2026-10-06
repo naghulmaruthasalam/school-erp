@@ -258,3 +258,19 @@ async def test_admin_homework_resolves_subject_teacher_or_requires_one(client):
     # An explicit teacher always wins
     r = await client.post("/api/v1/homework", json={**body, "teacher_id": "tchr-explicit"})
     assert r.status_code == 201 and r.json()["teacher_id"] == "tchr-explicit"
+
+
+@pytest.mark.asyncio
+async def test_homework_can_be_linked_to_a_syllabus_chapter(client):
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
+    override_current_user(teacher)
+    today = dt.date.today()
+    r = await client.post(
+        "/api/v1/homework",
+        json={"section_id": SECTION_A, "subject_id": "subj-1", "title": "Draw a leaf", "chapter": "Photosynthesis",
+              "assigned_date": today.isoformat(), "due_date": (today + dt.timedelta(days=2)).isoformat()},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["chapter"] == "Photosynthesis"
+    got = await client.get(f"/api/v1/homework/{r.json()['id']}")
+    assert got.json()["chapter"] == "Photosynthesis"

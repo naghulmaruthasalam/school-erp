@@ -10,7 +10,7 @@ from collections.abc import AsyncIterator
 from app.copilot import llm, safety, sessions
 from app.copilot.grounding import StudyContext, build_study_context
 from app.copilot.off_topic import inappropriate_reply, off_topic_reply
-from app.copilot.profiles import FORMAT_RULES, SAFETY_RULES, Profile
+from app.copilot.profiles import EXPLAIN_RULES, FORMAT_RULES, SAFETY_RULES, Profile
 from app.core.config import get_settings
 from app.core.deps import CurrentUser
 from app.core.enums import Role
@@ -50,7 +50,7 @@ def _system_prompt(profile: Profile, ctx: StudyContext, language: str) -> str:
     subject = f"Subject: {ctx.subject_name}\n" if ctx.subject_name else ""
     chapter = f"Chapter: {ctx.chapter}\n" if ctx.chapter else ""
     return (
-        f"{profile.persona}\n\n{SAFETY_RULES}\n\n{FORMAT_RULES}\n\n"
+        f"{profile.persona}\n\n{EXPLAIN_RULES}\n\n{SAFETY_RULES}\n\n{FORMAT_RULES}\n\n"
         f"Class: {ctx.class_name}\n{subject}{chapter}"
         f"Default reply language: {language}. Reply in {language} even if the user writes in another language, "
         "unless they explicitly ask you to translate something.\n\n" + material

@@ -10,6 +10,8 @@ class Chapter(BaseModel):
     name: str
     description: str | None = None
     order: int
+    topics: list[str] = Field(default_factory=list)  # sub-topics inside the chapter
+    content: str | None = None  # study notes / textbook text for the chapter (what the Copilot reads)
 
 
 class Syllabus(TenantDocument):

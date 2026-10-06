@@ -10,6 +10,8 @@ class ChapterIn(BaseModel):
     name: str
     description: str | None = None
     order: int
+    topics: list[str] = Field(default_factory=list)
+    content: str | None = None
 
 
 class ChapterOut(BaseModel):
@@ -18,6 +20,8 @@ class ChapterOut(BaseModel):
     name: str
     description: str | None = None
     order: int
+    topics: list[str] = Field(default_factory=list)
+    content: str | None = None
 
 
 class SyllabusDocumentOut(BaseModel):

@@ -173,6 +173,26 @@ async def _document_text(school_id: str, document_ids: list[str]) -> str:
 
 # ------------------------------------------------------------------ build
 
+def _outline_line(i: int, c) -> str:
+    line = f"{i}. {c.name}" + (f" - {c.description}" if c.description else "")
+    if c.topics:
+        line += " (topics: " + "; ".join(c.topics) + ")"
+    return line
+
+
+def _chapter_block(c, full: bool) -> str:
+    """The selected chapter in full (description, topics, notes); other chapters' notes are cut short."""
+    lines = [f"Selected chapter: {c.name}" if full else f"{c.name}:"]
+    if c.description:
+        lines.append(c.description)
+    if c.topics:
+        lines.append("Topics: " + "; ".join(c.topics))
+    if (c.content or "").strip():
+        notes = c.content.strip()
+        lines.append("Chapter notes:\n" + (notes if full else notes[:1200]))
+    return "\n".join(lines)
+
+
 async def build_study_context(
     current: CurrentUser,
     class_id: str,
@@ -211,14 +231,16 @@ async def build_study_context(
         parts.append(f"Syllabus: {syl.title}" + (f"\n{syl.description}" if syl.description else ""))
         chapters = sorted(syl.chapters, key=lambda c: c.order)
         if chapters:
-            parts.append("Chapter outline:\n" + "\n".join(
-                f"{i}. {c.name}" + (f" - {c.description}" if c.description else "") for i, c in enumerate(chapters, 1)
-            ))
+            parts.append("Chapter outline:\n" + "\n".join(_outline_line(i, c) for i, c in enumerate(chapters, 1)))
             ctx.chapters.extend(c.name for c in chapters if c.name not in ctx.chapters)
         if chapter:
             for c in chapters:
                 if c.name.strip().lower() == chapter.strip().lower():
-                    parts.append(f"Selected chapter: {c.name}" + (f"\n{c.description}" if c.description else ""))
+                    parts.append(_chapter_block(c, full=True))
+        else:  # no chapter picked: still give the model each chapter's notes, trimmed so none crowds out the rest
+            notes = [_chapter_block(c, full=False) for c in chapters if (c.content or "").strip()]
+            if notes:
+                parts.append("Chapter notes:\n\n" + "\n\n".join(notes))
         doc_ids.extend(d for d in syl.document_ids if d not in doc_ids)
 
     if chapter and ctx.chapters and chapter not in ctx.chapters:
