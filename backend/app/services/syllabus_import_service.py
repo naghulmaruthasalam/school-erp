@@ -77,6 +77,8 @@ def clean_extracted_text(text: str) -> str:
         line = re.sub(r"[ \t\u00a0]+", " ", line).strip()
         if len(line) <= 2 and not line.isalnum():
             continue
+        if line.isdigit() and len(line) <= 4:  # page numbers
+            continue
         lines.append(line)
     return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
 

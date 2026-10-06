@@ -43,6 +43,29 @@ homework always matches what the school teaches.
   Topics and notes can also be edited per chapter in the syllabus editor.
 * API: `GET /syllabus/tree`, `POST /syllabus/import` (multipart: `file`, `dry_run`, `create_missing`, `mode`).
 
+### Curriculum source: give a link, the Copilot starts using it
+
+If the curriculum lives in a bucket (for example S3), the school admin or principal opens **Syllabus -> Connect
+source**, pastes the link (a pre-signed S3 URL needs no key; otherwise add an API key and, if needed, the header
+name) and presses **Test link** (nothing is saved), then **Save and sync now**. Syncs can also run hourly or daily.
+
+* **Formats**: one JSON file, a CSV, or a ZIP of them. JSON may be a list, `{"data": [...]}` (also `chapters`,
+  `items`, `results`...) or nested `{"classes": [{"subjects": [{"chapters": [...]}]}]}`.
+* **One record per chapter or unit**, e.g. `{"class": 6, "subject": "Social Studies", "language": "en",
+  "unit_number": 2, "unit_title_en": "Oman in the Rashidun Caliphate Era", "full_text": "..."}`. Recognised names
+  include class/grade/gradeName/gradeId, subject/subjectName/subjectId, chapter/chapterName/unit_title_en/title,
+  unit_number/chapterNo/order, topics, description, content/full_text/notes. A bare number like `6` becomes
+  "Class 6". `full_text` extracted from a PDF is tidied (translator watermark, stray glyphs, page numbers).
+  When a unit arrives in several languages the English record is the one kept.
+* **Other field names, or ids only**: use *field mapping* in the dialog (`unit_title_en = chapter`, and
+  `class: <id> = Class 8` for ids). Rows that can't be understood are listed, not silently dropped.
+* **Re-syncing** updates chapters by name and is skipped when the file hasn't changed (unless forced).
+* **Safety**: the key is encrypted at rest and never returned; only https links to public addresses are fetched
+  (set `CURRICULUM_ALLOW_PRIVATE_URLS=true` for local development only); redirects aren't followed; files over
+  `CURRICULUM_FETCH_MAX_MB` (50) are refused; failures say what happened (expired link, wrong key, not found).
+* API: `GET/PUT/DELETE /syllabus/source`, `POST /syllabus/source/test`, `POST /syllabus/source/sync?force=`.
+* PDFs and images in the bucket are not read yet; only the JSON/CSV text is used.
+
 ## How it stays safe and grounded
 
 - **Access is decided on the server.** A student can only use their own class; a parent only their own child's;

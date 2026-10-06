@@ -135,6 +135,7 @@ async def test_unit_records_with_extracted_pdf_text(client, school, year, bucket
     assert "The most severe" in text and "In unity." in text  # the English text is the one kept
     assert "Machine Translated" not in text and "ÿ" not in text and "\n!\n" not in text
     assert "نص عربي" not in text
+    assert "4141" not in text.split() and "40" not in text.split()  # page numbers are dropped
 
 
 @pytest.mark.asyncio

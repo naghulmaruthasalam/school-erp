@@ -160,3 +160,47 @@ export async function downloadImportTemplate(): Promise<void> {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// ---- curriculum source (a link to the syllabus file) -------------------------------------------
+
+export interface CurriculumSource {
+  configured: boolean;
+  url?: string;
+  has_api_key?: boolean;
+  api_key_header?: string;
+  field_map?: Record<string, string>;
+  value_map?: Record<string, Record<string, string>>;
+  create_missing?: boolean;
+  mode?: "merge" | "replace";
+  auto_sync_minutes?: number;
+  last_synced_at?: string | null;
+  last_status?: "ok" | "unchanged" | "error" | null;
+  last_message?: string | null;
+}
+
+export interface SourcePayload {
+  url: string;
+  api_key?: string | null; // omitted = keep the saved key, "" = remove it
+  api_key_header: string;
+  field_map: Record<string, string>;
+  value_map: Record<string, Record<string, string>>;
+  create_missing: boolean;
+  mode: "merge" | "replace";
+  auto_sync_minutes: number;
+}
+
+export type SourceReport = ImportReport & {
+  unchanged?: boolean;
+  message?: string;
+  records_read?: number;
+  source_files?: string[];
+  skipped_files?: string[];
+};
+
+export const getCurriculumSource = async () => (await api.get<CurriculumSource>("/syllabus/source")).data;
+export const saveCurriculumSource = async (p: SourcePayload) => (await api.put<CurriculumSource>("/syllabus/source", p)).data;
+export const testCurriculumSource = async (p: SourcePayload) => (await api.post<SourceReport>("/syllabus/source/test", p)).data;
+export const syncCurriculumSource = async (force = false) => (await api.post<SourceReport>("/syllabus/source/sync", null, { params: { force } })).data;
+export const deleteCurriculumSource = async () => {
+  await api.delete("/syllabus/source");
+};

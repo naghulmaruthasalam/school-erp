@@ -4,12 +4,12 @@ import { useRef, useState } from "react";
 import { downloadImportTemplate, importSyllabus, type ImportReport } from "../pages/admin/syllabusApi";
 import { Badge, Button, ErrorText, Modal } from "./ui";
 
-function message(err: unknown): string {
+export function errMessage(err: unknown): string {
   const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
   return detail ?? "The import failed. Check the file and try again.";
 }
 
-function Summary({ report }: { report: ImportReport }) {
+export function ImportSummary({ report }: { report: ImportReport }) {
   const t = report.totals;
   return (
     <div className="space-y-2 rounded-2xl bg-surface-3 p-3 text-sm">
@@ -25,7 +25,7 @@ function Summary({ report }: { report: ImportReport }) {
       </div>
       {(report.created_classes.length > 0 || report.created_subjects.length > 0) && (
         <p className="text-xs text-ink-2">
-          Will create: {[...report.created_classes, ...report.created_subjects].join(", ")}
+          {report.dry_run ? "Will create" : "Created"}: {[...report.created_classes, ...report.created_subjects].join(", ")}
         </p>
       )}
       <ul className="max-h-40 space-y-0.5 overflow-y-auto text-xs text-ink-2">
@@ -94,8 +94,8 @@ export default function SyllabusImportDialog({ open, onClose }: { open: boolean;
           <span>Replace existing chapters<span className="block text-xs text-ink-3">Off: chapters are matched by name and updated, others are kept.</span></span>
         </label>
 
-        {run.isError && <ErrorText>{message(run.error)}</ErrorText>}
-        {report && <Summary report={report} />}
+        {run.isError && <ErrorText>{errMessage(run.error)}</ErrorText>}
+        {report && <ImportSummary report={report} />}
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={close}>{applied ? "Close" : "Cancel"}</Button>

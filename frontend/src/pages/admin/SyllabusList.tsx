@@ -6,12 +6,14 @@ import { fetchAcademicYears, fetchClasses, fetchSubjects } from "./api";
 import { listSyllabus } from "./syllabusApi";
 import SyllabusBrowser from "../../components/SyllabusBrowser";
 import SyllabusImportDialog from "../../components/SyllabusImportDialog";
+import CurriculumSourceDialog from "../../components/CurriculumSourceDialog";
 
 export default function SyllabusList() {
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [importOpen, setImportOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
 
   const yearsQuery = useQuery({ queryKey: ["academicYears"], queryFn: fetchAcademicYears });
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => fetchClasses() });
@@ -33,12 +35,14 @@ export default function SyllabusList() {
   return (
     <div className="animate-fade-in-up">
       <PageHeader title="Syllabus Management" subtitle="Manage curriculum and course content">
+        <Button variant="secondary" onClick={() => setSourceOpen(true)}>Connect source</Button>
         <Button variant="secondary" onClick={() => setImportOpen(true)}>Import</Button>
         <Link to="/admin/syllabus/new">
           <Button>Create Syllabus</Button>
         </Link>
       </PageHeader>
       <SyllabusImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
+      <CurriculumSourceDialog open={sourceOpen} onClose={() => setSourceOpen(false)} />
 
       <SyllabusBrowser role="admin" />
 
