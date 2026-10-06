@@ -13,14 +13,6 @@ MongoDB (backend) and React + TypeScript (frontend).
 - **Database**: MongoDB, shared cluster with `school_id` tenant scoping on
   every collection.
 
-## Security note
-
-⚠️ This repo's root `.env` originally contained an exposed
-`ANTHROPIC_API_KEY`. Rotate that key and never commit real secrets — the
-`.gitignore` at the repo root excludes `.env*` (except `.env.example`) and
-service-account JSON files, but a key that was already generated should still
-be rotated.
-
 ## Local development
 
 ### 1. MongoDB
