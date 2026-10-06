@@ -11,6 +11,8 @@ interface ChapterForm {
   name: string;
   description: string;
   order: number;
+  topicsText?: string;
+  content?: string;
 }
 
 export default function SyllabusForm() {
@@ -56,13 +58,21 @@ export default function SyllabusForm() {
       name: c.name,
       description: c.description,
       order: c.order,
+      topicsText: (c.topics ?? []).join("; "),
+      content: c.content ?? "",
     })));
     setDocuments(syl.documents || []);
   }
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, chapters };
+      const payload = {
+        ...form,
+        chapters: chapters.map(({ topicsText, ...c }) => ({
+          ...c,
+          topics: (topicsText ?? "").split(/[;\n]/).map((t) => t.trim()).filter(Boolean),
+        })),
+      };
       if (isEdit) {
         return updateTeacherSyllabus(id!, payload);
       }
@@ -238,6 +248,24 @@ export default function SyllabusForm() {
                         value={ch.description}
                         onChange={(e) => updateChapter(idx, "description", e.target.value)}
                         placeholder="Brief description..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Topics (separate with ;)</Label>
+                      <Input
+                        value={ch.topicsText ?? ""}
+                        onChange={(e) => updateChapter(idx, "topicsText", e.target.value)}
+                        placeholder="e.g., Push and pull; Types of force"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Study notes (used by the Copilot to explain this chapter)</Label>
+                      <textarea
+                        value={ch.content ?? ""}
+                        onChange={(e) => updateChapter(idx, "content", e.target.value)}
+                        rows={4}
+                        className="lg-field w-full"
+                        placeholder="Key points, definitions and examples from the textbook…"
                       />
                     </div>
                   </div>

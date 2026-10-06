@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BookOpen, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, History, ListChecks, Megaphone,
-  Download, MessageSquareText, Send, Sparkles, Trash2, Wrench, X, type LucideIcon,
+  BookOpen, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, History, Lightbulb, ListChecks, Megaphone,
+  NotebookPen, Download, MessageSquareText, Send, Sparkles, Trash2, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AiChatWidget from "../ai/AiChatWidget";
@@ -17,11 +17,13 @@ import ContextPicker from "./ContextPicker";
 import Markdown from "./Markdown";
 import { downloadCopilotFile, type CopilotFileInfo } from "./download";
 import ToolRunner from "./ToolRunner";
+import { OPEN_COPILOT_EVENT, type OpenCopilotDetail } from "./events";
 
 type Tab = "chat" | "tools" | "history";
 
 const TOOL_ICONS: Record<string, LucideIcon> = {
-  ListChecks, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, Megaphone, MessageSquareText,
+  ListChecks, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, Lightbulb, Megaphone,
+  MessageSquareText, NotebookPen,
 };
 
 const MODE_LABEL: Record<Mode, string> = { school: "My school", study: "Study help" };
@@ -77,6 +79,30 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["copilot", "files"] }),
   });
+
+  // Other pages (the syllabus browser, homework) can open the Copilot on a chapter with a tool or a first message.
+  useEffect(() => {
+    function onOpen(e: Event) {
+      const d = (e as CustomEvent<OpenCopilotDetail>).detail ?? {};
+      setOpen(true);
+      setSession(null);
+      setMessages([]);
+      setError(null);
+      setMode("study");
+      setCtx({ classId: d.classId, subjectId: d.subjectId, chapter: d.chapter });
+      const wanted = d.tool ? profile.tools.find((t) => t.key === d.tool) : undefined;
+      if (wanted) {
+        setTool(wanted);
+        setTab("tools");
+      } else {
+        setTool(null);
+        setTab("chat");
+        setInput(d.message ?? "");
+      }
+    }
+    window.addEventListener(OPEN_COPILOT_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_COPILOT_EVENT, onOpen);
+  }, [profile.tools]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -313,7 +339,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
               </div>
             )}
             {contextQuery.data && tool && (
-              <ToolRunner key={tool.key} tool={tool} options={contextQuery.data} language={language} initialContext={ctx} onBack={() => setTool(null)} />
+              <ToolRunner key={`${tool.key}|${ctx.classId}|${ctx.subjectId}|${ctx.chapter}`} tool={tool} options={contextQuery.data} language={language} initialContext={ctx} onBack={() => setTool(null)} />
             )}
           </div>
         )}

@@ -69,6 +69,10 @@ data, and role-specific tools (quiz, study plan, child progress summary, workshe
 Principal and admin profiles are built and switch on with `COPILOT_ENABLED_ROLES`. It needs `GEMINI_API_KEY`
 (see `backend/.env.example`). Details, API and how to add roles or tools: [docs/COPILOT.md](docs/COPILOT.md).
 
+The syllabus (class -> subject -> chapter, with topics and notes) lives in the database and drives both the
+Syllabus browser and the Copilot. Load it from the Syllabus page (Import, CSV/JSON) or with
+`python -m scripts.import_syllabus` (see the Copilot doc). Teachers can create homework straight from a chapter.
+
 ## Project layout
 
 ```

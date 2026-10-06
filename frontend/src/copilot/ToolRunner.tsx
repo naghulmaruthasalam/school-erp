@@ -1,11 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, ErrorText, Input, Label, Select } from "../components/ui";
 import { errorMessage, runTool, type CopilotContextOptions, type StudyContextSel, type ToolField, type ToolSpec } from "./api";
 import ContextPicker from "./ContextPicker";
 import type { CopilotFileInfo } from "./download";
 import GradingTool from "./GradingTool";
+import Markdown from "./Markdown";
 import QuestionPaperTool from "./QuestionPaperTool";
 import { DocumentResult, ExportPanel, QuizResult } from "./results";
 
@@ -77,10 +79,38 @@ function FieldInput({ field, value, onChange, options }: { field: ToolField; val
   }
 }
 
+interface HomeworkIdea { title: string; kind: string; minutes: number; instructions: string; what_to_check?: string }
+
+/** Homework ideas: each can be turned into real homework (opens the teacher's Homework form, prefilled). */
+function HomeworkIdeasResult({ data }: { data: Record<string, unknown> }) {
+  const navigate = useNavigate();
+  const ideas = data.ideas as HomeworkIdea[];
+  const context = (data.context ?? {}) as { class_id?: string; subject_id?: string; chapter?: string };
+  return (
+    <div className="space-y-3">
+      {ideas.map((idea, i) => (
+        <div key={i} className="space-y-2 rounded-2xl bg-surface-3 p-3">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-semibold text-ink">{idea.title}</p>
+            <span className="shrink-0 text-[11px] text-ink-3">{idea.kind} · ~{idea.minutes} min</span>
+          </div>
+          <Markdown>{idea.instructions}</Markdown>
+          {idea.what_to_check && <p className="text-xs text-ink-3"><span className="font-semibold">Check:</span> {idea.what_to_check}</p>}
+          <Button size="sm" variant="secondary" className="w-full"
+            onClick={() => navigate("/teacher/homework", { state: { prefill: { ...context, title: idea.title, description: idea.instructions } } })}>
+            Create this homework
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Renders any tool's output: quiz questions, a document (worksheet, note, plan...), with optional fact tiles. */
 function GenericResult({ data }: { data: Record<string, unknown> }) {
   const title = String(data.title ?? "Result");
   if (Array.isArray(data.questions)) return <QuizResult title={title} questions={data.questions as never} />;
+  if (Array.isArray(data.ideas)) return <HomeworkIdeasResult data={data} />;
   const facts = data.facts as Record<string, unknown> | undefined;
   return (
     <div className="space-y-3">

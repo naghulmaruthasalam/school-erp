@@ -5,6 +5,7 @@ import { Badge, Button, Card, ErrorText, PageHeader, Spinner } from "../../compo
 import { DataTable, Pagination, type Column } from "../../components/DataTable";
 import { fetchHomework, fetchHomeworkSubmissions, fetchPendingHomework, updateHomeworkSubmission } from "./api";
 import { useMyProfile, useSubjects, subjectMap } from "./hooks";
+import { openCopilot } from "../../copilot/events";
 import type { Homework, PendingHomework } from "./types";
 
 function formatDate(iso: string): string {
@@ -56,7 +57,7 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
   );
 }
 
-function PendingHomeworkCard({ hw, subjectName, studentId }: { hw: PendingHomework; subjectName: string; studentId: string }) {
+function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: PendingHomework; subjectName: string; studentId: string; classId?: string }) {
   const overdue = hw.due_date < new Date().toISOString().slice(0, 10);
   return (
     <Card>
@@ -65,12 +66,19 @@ function PendingHomeworkCard({ hw, subjectName, studentId }: { hw: PendingHomewo
           <div className="mb-1 flex items-center gap-2">
             <h3 className="text-sm font-semibold text-ink">{hw.title}</h3>
             <Badge tone="gray">{subjectName}</Badge>
+            {hw.chapter && <Badge tone="blue">{hw.chapter}</Badge>}
           </div>
           {hw.description && <p className="mb-2 text-sm text-ink-2">{hw.description}</p>}
           <p className="text-xs text-accent-fg">
             Assigned {formatDate(hw.assigned_date)} ·{" "}
             <span className={overdue ? "font-medium text-red-600" : ""}>Due {formatDate(hw.due_date)}</span>
           </p>
+          {classId && (
+            <button type="button" className="mt-2 text-xs font-medium text-accent-fg hover:underline"
+              onClick={() => openCopilot({ classId, subjectId: hw.subject_id, chapter: hw.chapter ?? undefined, message: `I need help getting started with my homework "${hw.title}". Give me a hint, not the answer.` })}>
+              Get a hint from the Copilot
+            </button>
+          )}
         </div>
         <MarkSubmittedButton homeworkId={hw.id} studentId={studentId} />
       </div>
@@ -131,6 +139,7 @@ export default function StudentHomework() {
                   hw={hw}
                   subjectName={subjects_[hw.subject_id]?.name ?? "—"}
                   studentId={hw.student_id}
+                  classId={profile?.class_id}
                 />
               ))}
           </div>

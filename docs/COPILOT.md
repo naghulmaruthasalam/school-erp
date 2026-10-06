@@ -12,12 +12,36 @@ roles keep the classic assistant until you switch their Copilot on (see "Other r
 |---|---|---|---|
 | **Study help** (chat grounded in the class's syllabus) | Explains lessons step by step, gives hints before answers, never hands over finished homework | Explains topics in plain language and suggests simple ways to help at home | Explains concepts, misconceptions, analogies, activities and teaching strategies |
 | **My school** (the user's own ERP data) | Homework due, attendance, timetable, exams and results | Own children's attendance, homework, results, fees, events | Today's classes, absentees, homework submissions, timetable |
-| **Tools** | Practice quiz, Study plan (from your homework + exams) | Child progress summary (with tips for home) | Worksheet generator, Lesson plan, Practice quiz (class test), Parent note |
+| **Tools** | Explain it, Practice quiz, Study plan (from your homework + exams) | Explain it, Child progress summary (with tips for home) | Homework ideas, Worksheet generator, Lesson plan, Practice quiz (class test), Explain it, Parent note |
 | **Picks** | Own class is automatic; chooses subject + chapter | Chooses the child (own class is automatic) | Chooses class, subject, chapter |
 
 Every chat is saved per user (History tab), can be reopened or deleted, and is visible only to its owner.
 Replies stream in live, render Markdown, tables and maths (KaTeX), and can be requested in English, Arabic,
 Hindi or Tamil (default follows the app language). Worksheets, plans and quizzes have Copy and Print / PDF.
+
+## Syllabus in the database drives everything
+
+The curriculum lives in the `syllabus` collection: **class -> subject -> chapter**, and each chapter can carry
+**topics** and **study notes**. The Copilot reads it on every message, so what it explains, quizzes and sets as
+homework always matches what the school teaches.
+
+* **Browse**: Syllabus pages (teacher, student, parent, admin) open with a Class -> Subject -> Chapter browser,
+  scoped by role (students and parents only see published syllabi of their own class; teachers see their classes).
+* **Teachers, inside a chapter**: *Create homework* (opens the Homework form with subject, chapter and class
+  filled in; homework now carries a `chapter`), *Homework ideas* (AI suggestions that avoid what the chapter
+  already has; each has a *Create this homework* button), Worksheet, Lesson plan, Class quiz.
+* **Students and parents, inside a chapter**: *Explain it to me*, *Quiz me*, *Ask the Copilot*. A pending
+  homework has *Get a hint from the Copilot*, grounded in that homework's chapter.
+* **Free explanation**: the notes are the primary source, but for clarification the Copilot may go beyond them
+  (saying so) and explain **in simple words, as a story, with an analogy, real-life examples, worked examples,
+  step by step or with memory tricks** (*Explain it* tool, or just ask in chat).
+* **Loading the syllabus**: Import on the admin/teacher Syllabus page (CSV or JSON, preview before saving,
+  re-runs update chapters by name), or `python -m scripts.import_syllabus <school_id> file.csv [--apply]
+  [--create-missing] [--replace]`. Template: `GET /api/v1/syllabus/import/template`. Columns:
+  `class, subject, chapter, topics (; separated), description, content, order`. "Class 8", "Grade 8", "8" and
+  "VIII" are the same class. Unknown classes/subjects are reported and skipped unless *create missing* is on.
+  Topics and notes can also be edited per chapter in the syllabus editor.
+* API: `GET /syllabus/tree`, `POST /syllabus/import` (multipart: `file`, `dry_run`, `create_missing`, `mode`).
 
 ## How it stays safe and grounded
 
