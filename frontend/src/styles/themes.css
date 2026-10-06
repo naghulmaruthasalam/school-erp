@@ -1,0 +1,129 @@
+/* =================================================================
+   Liquid Glass design tokens
+   -----------------------------------------------------------------
+   One source of truth for colour, material and shape. Light is the
+   default; `.dark` (set on <html> by ThemeProvider) swaps the values.
+   `[data-role]` (also set on <html>) swaps the accent tint, so every
+   role feels like its own "wallpaper" of the same system.
+   ================================================================= */
+
+:root {
+  /* ---- type ---- */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+
+  /* ---- ink (text) ---- */
+  --ink: #0b1220;
+  --ink-2: #3a4458;
+  --ink-3: #667085;
+
+  /* ---- accent (overridden per role) ---- */
+  --accent: #0a7aff;
+  --accent-2: #5e5ce6;
+  --accent-fg: color-mix(in oklab, var(--accent) 82%, black);
+  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+  --accent-glow: color-mix(in oklab, var(--accent) 38%, transparent);
+
+  /* ---- materials ---- */
+  --canvas: #e9eefa;
+  --surface: rgba(255, 255, 255, 0.66);
+  --surface-2: rgba(255, 255, 255, 0.42);
+  --surface-3: rgba(100, 116, 160, 0.10);
+  --surface-solid: #ffffff;
+  --line: rgba(15, 23, 42, 0.09);
+  --line-strong: rgba(15, 23, 42, 0.18);
+
+  --glass-fill: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46));
+  --glass-fill-strong: linear-gradient(160deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.72));
+  --glass-blur: 28px;
+  --glass-saturate: 1.8;
+  --rim-hi: rgba(255, 255, 255, 0.95);
+  --rim-lo: rgba(255, 255, 255, 0.30);
+  --glass-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 18px 44px -20px rgba(30, 48, 110, 0.30),
+    0 3px 8px -2px rgba(30, 48, 110, 0.07);
+  --glass-shadow-hover:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 26px 56px -22px rgba(30, 48, 110, 0.38),
+    0 4px 10px -2px rgba(30, 48, 110, 0.09);
+
+  /* ---- wallpaper blobs ---- */
+  --blob-1: color-mix(in oklab, var(--accent) 42%, transparent);
+  --blob-2: rgba(255, 130, 190, 0.34);
+  --blob-3: rgba(60, 210, 200, 0.30);
+  --blob-4: rgba(255, 190, 110, 0.30);
+
+  /* ---- shape ---- */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  color-scheme: light;
+}
+
+.dark {
+  --ink: #f4f6ff;
+  --ink-2: #c3cadf;
+  --ink-3: #8b94ad;
+
+  --accent: #3d9bff;
+  --accent-2: #7d7aff;
+  --accent-fg: color-mix(in oklab, var(--accent) 72%, white);
+  --accent-soft: color-mix(in oklab, var(--accent) 20%, transparent);
+  --accent-glow: color-mix(in oklab, var(--accent) 46%, transparent);
+
+  --canvas: #060813;
+  --surface: rgba(255, 255, 255, 0.075);
+  --surface-2: rgba(255, 255, 255, 0.045);
+  --surface-3: rgba(255, 255, 255, 0.085);
+  --surface-solid: #151a2c;
+  --line: rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.20);
+
+  --glass-fill: linear-gradient(160deg, rgba(255, 255, 255, 0.115), rgba(255, 255, 255, 0.045));
+  --glass-fill-strong: linear-gradient(160deg, rgba(40, 46, 74, 0.82), rgba(24, 28, 50, 0.78));
+  --glass-blur: 30px;
+  --glass-saturate: 1.6;
+  --rim-hi: rgba(255, 255, 255, 0.42);
+  --rim-lo: rgba(255, 255, 255, 0.05);
+  --glass-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 20px 50px -22px rgba(0, 0, 0, 0.7),
+    0 3px 10px -2px rgba(0, 0, 0, 0.25);
+  --glass-shadow-hover:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 28px 60px -24px rgba(0, 0, 0, 0.8),
+    0 4px 12px -2px rgba(0, 0, 0, 0.3);
+
+  --blob-1: color-mix(in oklab, var(--accent) 50%, transparent);
+  --blob-2: rgba(190, 70, 220, 0.34);
+  --blob-3: rgba(20, 170, 190, 0.30);
+  --blob-4: rgba(255, 130, 70, 0.16);
+
+  color-scheme: dark;
+}
+
+/* =================================================================
+   Role accents - one tint per audience
+   ================================================================= */
+
+[data-role="SCHOOL_ADMIN"] { --accent: #0a7aff; --accent-2: #5e5ce6; }
+[data-role="SUPER_ADMIN"]  { --accent: #5e5ce6; --accent-2: #bf5af2; }
+[data-role="PRINCIPAL"]    { --accent: #6a52f0; --accent-2: #0a84ff; }
+[data-role="TEACHER"]      { --accent: #12a8a8; --accent-2: #0a84ff; }
+[data-role="STUDENT"]      { --accent: #a64fe0; --accent-2: #ff4f8b; }
+[data-role="PARENT"]       { --accent: #22ac5c; --accent-2: #12a8a8; }
+
+.dark[data-role="SCHOOL_ADMIN"] { --accent: #3d9bff; --accent-2: #7d7aff; }
+.dark[data-role="SUPER_ADMIN"]  { --accent: #7d7aff; --accent-2: #d17dff; }
+.dark[data-role="PRINCIPAL"]    { --accent: #8f7bff; --accent-2: #3d9bff; }
+.dark[data-role="TEACHER"]      { --accent: #2fd0c8; --accent-2: #3d9bff; }
+.dark[data-role="STUDENT"]      { --accent: #c47bf5; --accent-2: #ff6fa4; }
+.dark[data-role="PARENT"]       { --accent: #3ddc84; --accent-2: #2fd0c8; }
