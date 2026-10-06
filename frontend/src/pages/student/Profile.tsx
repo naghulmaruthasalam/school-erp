@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Badge, Card, PageHeader, Spinner } from "../../components/ui";
 import { useMyAcademicYear, useMyClass, useMyProfile, useMySection } from "./hooks";
 import { api } from "../../api/client";
@@ -22,8 +22,25 @@ export default function StudentProfile() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const { data: profile, isLoading, error } = useMyProfile();
+
+  useEffect(() => {
+    async function fetchPhotoUrl() {
+      if (profile?.photo_document_id) {
+        try {
+          const res = await api.get<{ url: string }>(`/uploads/${profile.photo_document_id}/url`);
+          setPhotoUrl(res.data.url);
+        } catch {
+          setPhotoUrl(null);
+        }
+      } else {
+        setPhotoUrl(null);
+      }
+    }
+    fetchPhotoUrl();
+  }, [profile?.photo_document_id]);
   const { data: schoolClass } = useMyClass(profile?.class_id);
   const { data: section } = useMySection(profile?.section_id);
   const { data: academicYear } = useMyAcademicYear(profile?.academic_year_id);
@@ -40,10 +57,14 @@ export default function StudentProfile() {
       formData.append("linked_entity_type", "student");
       formData.append("linked_entity_id", profile.id);
 
-      const uploadRes = await api.post("/uploads", formData);
+      const uploadRes = await api.post<{ id: string }>("/uploads", formData);
       const docId = uploadRes.data.id;
 
       await api.patch("/students/me", { photo_document_id: docId });
+
+      const urlRes = await api.get<{ url: string }>(`/uploads/${docId}/url`);
+      setPhotoUrl(urlRes.data.url);
+
       queryClient.invalidateQueries({ queryKey: ["student", "my-profile"] });
     } catch (err) {
       console.error("Failed to upload photo:", err);
@@ -79,11 +100,12 @@ export default function StudentProfile() {
                   <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-4 border-white/30 overflow-hidden">
                     {uploading ? (
                       <Spinner />
-                    ) : profile.photo_document_id ? (
+                    ) : photoUrl ? (
                       <img
-                        src={`/api/v1/uploads/documents/${profile.photo_document_id}/download`}
+                        src={photoUrl}
                         alt={profile.full_name}
                         className="w-full h-full object-cover"
+                        onError={() => setPhotoUrl(null)}
                       />
                     ) : (
                       <span className="text-4xl font-bold text-white">

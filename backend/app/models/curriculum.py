@@ -36,7 +36,7 @@ class CurriculumUnit(Document):
 
     school_id: str | None = None
 
-    grade: int = Field(alias="class")
+    grade: int = Field(default=0)
     subject: str
     language: str = "en"
 
@@ -71,5 +71,3 @@ class CurriculumUnit(Document):
             [("school_id", 1), ("grade", 1), ("subject", 1)],
         ]
 
-    class Config:
-        populate_by_name = True
