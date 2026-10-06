@@ -44,7 +44,7 @@ export default function CreateSchool() {
             </div>
             <p className="text-sm font-medium text-green-700">{successMessage}</p>
           </div>
-          <p className="text-xs text-[#7C6F95] mb-4">
+          <p className="text-xs text-ink-3 mb-4">
             The school admin will receive their login credentials via email. They can then complete the school profile with address, contact details, and other information.
           </p>
           <div className="flex gap-3">
@@ -73,7 +73,7 @@ export default function CreateSchool() {
       <Card className="max-w-lg">
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-[#24113F] dark:text-white">School</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink dark:text-white">School</h2>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">School name *</Label>
@@ -88,13 +88,13 @@ export default function CreateSchool() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                 />
-                <p className="mt-1 text-xs text-[#7C6F95]">Unique identifier for the school. Used for login.</p>
+                <p className="mt-1 text-xs text-ink-3">Unique identifier for the school. Used for login.</p>
               </div>
             </div>
           </div>
 
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-[#24113F] dark:text-white">School Admin</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink dark:text-white">School Admin</h2>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="admin_full_name">Full name *</Label>
@@ -116,7 +116,7 @@ export default function CreateSchool() {
                   onChange={(e) => setAdminEmail(e.target.value)}
                   placeholder="admin@school.com"
                 />
-                <p className="mt-1 text-xs text-[#7C6F95]">Login credentials will be sent to this email.</p>
+                <p className="mt-1 text-xs text-ink-3">Login credentials will be sent to this email.</p>
               </div>
             </div>
           </div>

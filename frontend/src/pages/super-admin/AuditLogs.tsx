@@ -7,7 +7,7 @@ function getActionColor(action: string): string {
   if (action.includes("created") || action.includes("approved")) return "bg-[#16A34A]";
   if (action.includes("deleted") || action.includes("rejected") || action.includes("deactivated")) return "bg-[#DC2626]";
   if (action.includes("updated") || action.includes("reactivated")) return "bg-[#F59E0B]";
-  return "bg-[#6D28D9]";
+  return "bg-accent";
 }
 
 function getActionIcon(action: string): string {
@@ -47,8 +47,8 @@ export default function AuditLogs() {
     <div className="animate-fade-in-up">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-[#24113F] dark:text-white">Audit Logs</h1>
-          <p className="mt-1 text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+          <h1 className="text-2xl font-semibold text-ink dark:text-white">Audit Logs</h1>
+          <p className="mt-1 text-sm text-ink-2">
             Track all platform activities and system events
           </p>
         </div>
@@ -94,27 +94,27 @@ export default function AuditLogs() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="p-4 bg-white dark:bg-[#1B1230] rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E]">
-          <p className="text-2xl font-bold text-[#6D28D9] dark:text-[#8B5CF6]">{auditQuery.data?.length ?? 0}</p>
-          <p className="text-xs text-[#7C6F95]">Total Events</p>
+        <div className="p-4 bg-surface rounded-xl border border-line">
+          <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{auditQuery.data?.length ?? 0}</p>
+          <p className="text-xs text-ink-3">Total Events</p>
         </div>
-        <div className="p-4 bg-white dark:bg-[#1B1230] rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E]">
-          <p className="text-2xl font-bold text-[#16A34A]">
+        <div className="p-4 bg-surface rounded-xl border border-line">
+          <p className="text-2xl font-bold text-emerald-600">
             {(auditQuery.data ?? []).filter(l => l.action.includes("created")).length}
           </p>
-          <p className="text-xs text-[#7C6F95]">Create Events</p>
+          <p className="text-xs text-ink-3">Create Events</p>
         </div>
-        <div className="p-4 bg-white dark:bg-[#1B1230] rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E]">
-          <p className="text-2xl font-bold text-[#F59E0B]">
+        <div className="p-4 bg-surface rounded-xl border border-line">
+          <p className="text-2xl font-bold text-amber-500">
             {(auditQuery.data ?? []).filter(l => l.action.includes("updated")).length}
           </p>
-          <p className="text-xs text-[#7C6F95]">Update Events</p>
+          <p className="text-xs text-ink-3">Update Events</p>
         </div>
-        <div className="p-4 bg-white dark:bg-[#1B1230] rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E]">
-          <p className="text-2xl font-bold text-[#DC2626]">
+        <div className="p-4 bg-surface rounded-xl border border-line">
+          <p className="text-2xl font-bold text-red-600">
             {(auditQuery.data ?? []).filter(l => l.action.includes("deleted") || l.action.includes("deactivated")).length}
           </p>
-          <p className="text-xs text-[#7C6F95]">Delete/Deactivate</p>
+          <p className="text-xs text-ink-3">Delete/Deactivate</p>
         </div>
       </div>
 
@@ -127,7 +127,7 @@ export default function AuditLogs() {
             {filteredLogs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-4 p-4 bg-[#F7F5FF] dark:bg-[#1B1230]/50 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#6D28D9]/30 transition-colors"
+                className="flex items-start gap-4 p-4 bg-surface-3 dark:bg-surface-2 rounded-xl border border-line hover:border-[#6D28D9]/30 transition-colors"
               >
                 <div className={`w-10 h-10 rounded-lg ${getActionColor(log.action)} flex items-center justify-center text-white text-lg shrink-0`}>
                   {getActionIcon(log.action)}
@@ -135,22 +135,22 @@ export default function AuditLogs() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-medium text-[#24113F] dark:text-white">{log.action}</p>
-                      <p className="text-sm text-[#7C6F95] mt-0.5">
-                        by <span className="font-medium text-[#4B4260] dark:text-[#D8CCEA]">{log.actor_name}</span>
-                        {log.actor_email && <span className="text-[#7C6F95]"> ({log.actor_email})</span>}
+                      <p className="font-medium text-ink dark:text-white">{log.action}</p>
+                      <p className="text-sm text-ink-3 mt-0.5">
+                        by <span className="font-medium text-ink-2">{log.actor_name}</span>
+                        {log.actor_email && <span className="text-ink-3"> ({log.actor_email})</span>}
                       </p>
                     </div>
-                    <span className="text-xs text-[#7C6F95] whitespace-nowrap">
+                    <span className="text-xs text-ink-3 whitespace-nowrap">
                       {log.created_at ? new Date(log.created_at).toLocaleString() : "—"}
                     </span>
                   </div>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className="text-xs px-2 py-1 bg-[#6D28D9]/10 text-[#6D28D9] rounded-full">
+                    <span className="text-xs px-2 py-1 bg-accent/10 text-accent-fg rounded-full">
                       {log.school_name}
                     </span>
                     {log.entity_type && (
-                      <span className="text-xs px-2 py-1 bg-[#E5DDF5] dark:bg-[#2D1B4E] text-[#4B4260] dark:text-[#D8CCEA] rounded-full">
+                      <span className="text-xs px-2 py-1 bg-[#E5DDF5] dark:bg-surface-3 text-ink-2 rounded-full">
                         {log.entity_type}
                       </span>
                     )}
@@ -161,11 +161,11 @@ export default function AuditLogs() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#F0E9FF] dark:bg-[#2D1B4E] flex items-center justify-center text-3xl">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-3 flex items-center justify-center text-3xl">
               📋
             </div>
-            <p className="text-[#7C6F95]">No audit logs available yet.</p>
-            <p className="text-xs text-[#7C6F95] mt-1">Logs will appear here as platform activities occur.</p>
+            <p className="text-ink-3">No audit logs available yet.</p>
+            <p className="text-xs text-ink-3 mt-1">Logs will appear here as platform activities occur.</p>
           </div>
         )}
       </Card>

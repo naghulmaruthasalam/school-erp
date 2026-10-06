@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge, Modal } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
+import { fetchClasses } from "./api";
 import {
-  Bus, MapPin, Users, Plus, Wrench, UserPlus, Route, Phone, User,
-  Fuel, Shield, Calendar, Trash2, Edit3, ChevronRight, Navigation
+  Bus, MapPin, Users, Plus, UserPlus, Route, Phone, User,
+  Shield, Calendar, Trash2, ChevronRight, Navigation
 } from "lucide-react";
 
 interface Vehicle {
@@ -56,7 +57,7 @@ interface Student {
   id: string;
   full_name: string;
   admission_no: string;
-  class_name?: string;
+  class_id?: string;
 }
 
 interface AcademicYear {
@@ -130,10 +131,12 @@ export default function TransportList() {
     },
   });
 
+  const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => fetchClasses() });
+
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => {
-      const { data } = await api.get<PageResponse<AcademicYear>>("/academics/years");
+      const { data } = await api.get<AcademicYear[]>("/academics/years");
       return data;
     },
   });
@@ -236,7 +239,7 @@ export default function TransportList() {
         ...assignForm,
         student_id: student.id,
         student_name: student.full_name,
-        student_class: student.class_name || ""
+        student_class: classesQuery.data?.find((c) => c.id === student.class_id)?.name ?? ""
       });
     }
   };
@@ -283,8 +286,8 @@ export default function TransportList() {
             <div className={`absolute top-3 right-3 w-10 h-10 rounded-xl bg-${stat.color}-500/20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
               <stat.icon className={`w-5 h-5 text-${stat.color}-600`} />
             </div>
-            <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">
+            <p className="text-sm font-medium text-ink-3">{stat.label}</p>
+            <p className="text-2xl font-bold text-ink mt-1">
               {statsQuery.isLoading ? <Spinner /> : stat.value}
             </p>
           </div>
@@ -304,13 +307,13 @@ export default function TransportList() {
             className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
               activeTab === tab.id
                 ? "bg-violet-600 text-white shadow-lg shadow-violet-500/30"
-                : "bg-white text-slate-600 hover:bg-violet-50"
+                : "bg-surface text-ink-2 hover:bg-violet-50"
             }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
             {tab.count !== undefined && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === tab.id ? "bg-white/20" : "bg-slate-100"}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === tab.id ? "bg-white/20" : "bg-surface-3"}`}>
                 {tab.count}
               </span>
             )}
@@ -331,40 +334,40 @@ export default function TransportList() {
                     <Bus className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800">{vehicle.vehicle_no}</h3>
-                    <p className="text-sm text-slate-500">{vehicle.vehicle_type} · {vehicle.capacity} seats</p>
+                    <h3 className="font-bold text-ink">{vehicle.vehicle_no}</h3>
+                    <p className="text-sm text-ink-3">{vehicle.vehicle_type} · {vehicle.capacity} seats</p>
                   </div>
                 </div>
                 <Badge tone={getStatusColor(vehicle.status)}>{vehicle.status}</Badge>
               </div>
 
               <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <User className="w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-2 text-ink-2">
+                  <User className="w-4 h-4 text-ink-3" />
                   <span>{vehicle.driver_name}</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Phone className="w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-2 text-ink-2">
+                  <Phone className="w-4 h-4 text-ink-3" />
                   <span>{vehicle.driver_phone}</span>
                 </div>
                 {vehicle.helper_name && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Users className="w-4 h-4 text-slate-400" />
+                  <div className="flex items-center gap-2 text-ink-2">
+                    <Users className="w-4 h-4 text-ink-3" />
                     <span>Helper: {vehicle.helper_name}</span>
                   </div>
                 )}
               </div>
 
               {(vehicle.insurance_expiry || vehicle.fitness_expiry) && (
-                <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                <div className="mt-4 pt-4 border-t border-line grid grid-cols-2 gap-2 text-xs">
                   {vehicle.insurance_expiry && (
-                    <div className="flex items-center gap-1 text-slate-500">
+                    <div className="flex items-center gap-1 text-ink-3">
                       <Shield className="w-3 h-3" />
                       <span>Ins: {new Date(vehicle.insurance_expiry).toLocaleDateString()}</span>
                     </div>
                   )}
                   {vehicle.fitness_expiry && (
-                    <div className="flex items-center gap-1 text-slate-500">
+                    <div className="flex items-center gap-1 text-ink-3">
                       <Calendar className="w-3 h-3" />
                       <span>Fit: {new Date(vehicle.fitness_expiry).toLocaleDateString()}</span>
                     </div>
@@ -374,7 +377,7 @@ export default function TransportList() {
             </Card>
           ))}
           {vehiclesQuery.data?.items.length === 0 && (
-            <div className="col-span-full text-center text-slate-400 py-12">
+            <div className="col-span-full text-center text-ink-3 py-12">
               No vehicles added yet. Add your first vehicle!
             </div>
           )}
@@ -394,8 +397,8 @@ export default function TransportList() {
                     <MapPin className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800">{route.route_name}</h3>
-                    <p className="text-sm text-slate-500">Code: {route.route_code}</p>
+                    <h3 className="font-bold text-ink">{route.route_name}</h3>
+                    <p className="text-sm text-ink-3">Code: {route.route_code}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -411,15 +414,15 @@ export default function TransportList() {
               </div>
 
               {route.stops.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <p className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-1">
+                <div className="mt-4 pt-4 border-t border-line">
+                  <p className="text-sm font-medium text-ink-2 mb-2 flex items-center gap-1">
                     <Navigation className="w-4 h-4" /> Stops ({route.stops.length})
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {route.stops.map((stop, i) => (
                       <div key={i} className="flex items-center text-sm">
-                        <span className="px-2 py-1 bg-violet-50 text-violet-700 rounded-lg">{stop.name}</span>
-                        {i < route.stops.length - 1 && <ChevronRight className="w-4 h-4 text-slate-300 mx-1" />}
+                        <span className="px-2 py-1 bg-violet-50 text-ink-2 rounded-lg">{stop.name}</span>
+                        {i < route.stops.length - 1 && <ChevronRight className="w-4 h-4 text-ink-2 mx-1" />}
                       </div>
                     ))}
                   </div>
@@ -428,7 +431,7 @@ export default function TransportList() {
             </Card>
           ))}
           {routesQuery.data?.items.length === 0 && (
-            <Card className="text-center text-slate-400 py-12">
+            <Card className="text-center text-ink-3 py-12">
               No routes added yet. Create your first route!
             </Card>
           )}
@@ -438,7 +441,7 @@ export default function TransportList() {
       {/* Assignments Tab */}
       {activeTab === "assignments" && (
         <Card>
-          <h3 className="font-semibold text-violet-900 flex items-center gap-2 mb-4">
+          <h3 className="font-semibold text-ink flex items-center gap-2 mb-4">
             <Users className="w-5 h-5" /> Student Transport Assignments
           </h3>
           {assignmentsQuery.isLoading ? (
@@ -447,7 +450,7 @@ export default function TransportList() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-sm text-slate-500 border-b border-slate-100">
+                  <tr className="text-left text-sm text-ink-3 border-b border-line">
                     <th className="pb-3 font-medium">Student</th>
                     <th className="pb-3 font-medium">Class</th>
                     <th className="pb-3 font-medium">Route</th>
@@ -458,12 +461,12 @@ export default function TransportList() {
                 </thead>
                 <tbody>
                   {assignmentsQuery.data?.items.map((assignment) => (
-                    <tr key={assignment.id} className="border-b border-slate-50 hover:bg-violet-50/50 transition-colors">
-                      <td className="py-4 font-medium text-slate-800">{assignment.student_name}</td>
-                      <td className="py-4 text-slate-600">{assignment.student_class}</td>
-                      <td className="py-4 text-slate-600">{assignment.route_name}</td>
-                      <td className="py-4 text-slate-600">{assignment.stop_name}</td>
-                      <td className="py-4 text-slate-600">₹{assignment.monthly_fee}</td>
+                    <tr key={assignment.id} className="border-b border-line hover:bg-violet-50/50 transition-colors">
+                      <td className="py-4 font-medium text-ink">{assignment.student_name}</td>
+                      <td className="py-4 text-ink-2">{assignment.student_class}</td>
+                      <td className="py-4 text-ink-2">{assignment.route_name}</td>
+                      <td className="py-4 text-ink-2">{assignment.stop_name}</td>
+                      <td className="py-4 text-ink-2">₹{assignment.monthly_fee}</td>
                       <td className="py-4 text-center">
                         <Badge tone={assignment.is_active ? "green" : "gray"}>
                           {assignment.is_active ? "Active" : "Inactive"}
@@ -474,7 +477,7 @@ export default function TransportList() {
                 </tbody>
               </table>
               {assignmentsQuery.data?.items.length === 0 && (
-                <p className="text-center text-slate-400 py-12">No students assigned yet.</p>
+                <p className="text-center text-ink-3 py-12">No students assigned yet.</p>
               )}
             </div>
           )}
@@ -486,58 +489,58 @@ export default function TransportList() {
         <form onSubmit={(e) => { e.preventDefault(); addVehicleMutation.mutate(vehicleForm); }} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Vehicle No *</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Vehicle No *</label>
               <input type="text" value={vehicleForm.vehicle_no} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicle_no: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Type</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Type</label>
               <select value={vehicleForm.vehicle_type} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicle_type: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500">
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500">
                 <option value="BUS">Bus</option>
                 <option value="VAN">Van</option>
                 <option value="MINI_BUS">Mini Bus</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Capacity</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Capacity</label>
               <input type="number" min={1} value={vehicleForm.capacity} onChange={(e) => setVehicleForm({ ...vehicleForm, capacity: parseInt(e.target.value) || 1 })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Driver Name *</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Driver Name *</label>
               <input type="text" value={vehicleForm.driver_name} onChange={(e) => setVehicleForm({ ...vehicleForm, driver_name: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Driver Phone *</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Driver Phone *</label>
               <input type="text" value={vehicleForm.driver_phone} onChange={(e) => setVehicleForm({ ...vehicleForm, driver_phone: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Driver License</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Driver License</label>
               <input type="text" value={vehicleForm.driver_license} onChange={(e) => setVehicleForm({ ...vehicleForm, driver_license: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Helper Name</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Helper Name</label>
               <input type="text" value={vehicleForm.helper_name} onChange={(e) => setVehicleForm({ ...vehicleForm, helper_name: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Helper Phone</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Helper Phone</label>
               <input type="text" value={vehicleForm.helper_phone} onChange={(e) => setVehicleForm({ ...vehicleForm, helper_phone: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Insurance Expiry</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Insurance Expiry</label>
               <input type="date" value={vehicleForm.insurance_expiry} onChange={(e) => setVehicleForm({ ...vehicleForm, insurance_expiry: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Fitness Expiry</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Fitness Expiry</label>
               <input type="date" value={vehicleForm.fitness_expiry} onChange={(e) => setVehicleForm({ ...vehicleForm, fitness_expiry: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-4">
@@ -554,20 +557,20 @@ export default function TransportList() {
         <form onSubmit={(e) => { e.preventDefault(); addRouteMutation.mutate(routeForm); }} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Route Name *</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Route Name *</label>
               <input type="text" value={routeForm.route_name} onChange={(e) => setRouteForm({ ...routeForm, route_name: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required placeholder="e.g., North Route" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required placeholder="e.g., North Route" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Route Code *</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Route Code *</label>
               <input type="text" value={routeForm.route_code} onChange={(e) => setRouteForm({ ...routeForm, route_code: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required placeholder="e.g., R001" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required placeholder="e.g., R001" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Assign Vehicle</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Assign Vehicle</label>
             <select value={routeForm.vehicle_id} onChange={(e) => setRouteForm({ ...routeForm, vehicle_id: e.target.value })}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500">
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500">
               <option value="">-- No Vehicle --</option>
               {vehiclesQuery.data?.items.filter(v => v.status === "ACTIVE").map(v => (
                 <option key={v.id} value={v.id}>{v.vehicle_no} ({v.vehicle_type})</option>
@@ -577,21 +580,21 @@ export default function TransportList() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-violet-700">Stops</label>
+              <label className="block text-sm font-medium text-ink-2">Stops</label>
               <Button type="button" variant="secondary" size="sm" onClick={addStop}>
                 <Plus className="w-3 h-3 mr-1" /> Add Stop
               </Button>
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {routeForm.stops.map((stop, i) => (
-                <div key={i} className="flex gap-2 items-center p-2 bg-slate-50 rounded-lg">
-                  <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold">{i + 1}</span>
+                <div key={i} className="flex gap-2 items-center p-2 bg-surface-3 rounded-lg">
+                  <span className="w-6 h-6 rounded-full bg-violet-100 text-accent-fg flex items-center justify-center text-xs font-bold">{i + 1}</span>
                   <input type="text" placeholder="Stop Name" value={stop.name} onChange={(e) => updateStop(i, "name", e.target.value)}
-                    className="flex-1 rounded border border-slate-200 px-2 py-1 text-sm" />
+                    className="flex-1 rounded border border-line px-2 py-1 text-sm" />
                   <input type="time" value={stop.pickup_time} onChange={(e) => updateStop(i, "pickup_time", e.target.value)}
-                    className="w-24 rounded border border-slate-200 px-2 py-1 text-sm" title="Pickup Time" />
+                    className="w-24 rounded border border-line px-2 py-1 text-sm" title="Pickup Time" />
                   <input type="number" placeholder="Fare" value={stop.fare || ""} onChange={(e) => updateStop(i, "fare", parseFloat(e.target.value) || 0)}
-                    className="w-20 rounded border border-slate-200 px-2 py-1 text-sm" />
+                    className="w-20 rounded border border-line px-2 py-1 text-sm" />
                   {routeForm.stops.length > 1 && (
                     <button type="button" onClick={() => removeStop(i)} className="text-red-500 hover:text-red-700">
                       <Trash2 className="w-4 h-4" />
@@ -615,19 +618,19 @@ export default function TransportList() {
       <Modal open={showAssignStudent} onClose={() => { setShowAssignStudent(false); resetAssignForm(); }} title="Assign Student to Transport">
         <form onSubmit={(e) => { e.preventDefault(); assignStudentMutation.mutate(); }} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Academic Year *</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Academic Year *</label>
             <select value={assignForm.academic_year_id} onChange={(e) => setAssignForm({ ...assignForm, academic_year_id: e.target.value })}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required>
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required>
               <option value="">-- Select Year --</option>
-              {yearsQuery.data?.items.map(y => (
+              {yearsQuery.data?.map(y => (
                 <option key={y.id} value={y.id}>{y.name} {y.is_current && "(Current)"}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Student *</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Student *</label>
             <select value={assignForm.student_id} onChange={(e) => handleStudentSelect(e.target.value)}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required>
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required>
               <option value="">-- Select Student --</option>
               {studentsQuery.data?.items.map(s => (
                 <option key={s.id} value={s.id}>{s.full_name} ({s.admission_no})</option>
@@ -635,9 +638,9 @@ export default function TransportList() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Route *</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Route *</label>
             <select value={assignForm.route_id} onChange={(e) => handleRouteSelect(e.target.value)}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required>
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required>
               <option value="">-- Select Route --</option>
               {routesQuery.data?.items.filter(r => r.is_active).map(r => (
                 <option key={r.id} value={r.id}>{r.route_name} ({r.route_code})</option>
@@ -646,9 +649,12 @@ export default function TransportList() {
           </div>
           {selectedRoute && selectedRoute.stops.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Stop *</label>
-              <select value={assignForm.stop_name} onChange={(e) => setAssignForm({ ...assignForm, stop_name: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" required>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Stop *</label>
+              <select value={assignForm.stop_name} onChange={(e) => {
+                const stop = selectedRoute.stops.find((st) => st.name === e.target.value);
+                setAssignForm({ ...assignForm, stop_name: e.target.value, monthly_fee: stop?.fare || assignForm.monthly_fee });
+              }}
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" required>
                 <option value="">-- Select Stop --</option>
                 {selectedRoute.stops.map((s, i) => (
                   <option key={i} value={s.name}>{s.name} {s.fare ? `(₹${s.fare})` : ""}</option>
@@ -657,9 +663,9 @@ export default function TransportList() {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Monthly Fee</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Monthly Fee</label>
             <input type="number" min={0} value={assignForm.monthly_fee} onChange={(e) => setAssignForm({ ...assignForm, monthly_fee: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500" />
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500" />
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="secondary" onClick={() => { setShowAssignStudent(false); resetAssignForm(); }}>Cancel</Button>

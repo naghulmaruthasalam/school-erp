@@ -27,7 +27,7 @@ export function Skeleton({
 
 export function SkeletonCard({ dark = false }: { dark?: boolean }) {
   return (
-    <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="p-4 rounded-lg border border-line">
       <div className="flex items-center gap-3 mb-4">
         <Skeleton width={40} height={40} circle dark={dark} />
         <div className="flex-1">
@@ -45,7 +45,7 @@ export function SkeletonCard({ dark = false }: { dark?: boolean }) {
 export function SkeletonTable({ rows = 5, cols = 4, dark = false }: { rows?: number; cols?: number; dark?: boolean }) {
   return (
     <div className="w-full">
-      <div className="flex gap-4 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex gap-4 mb-4 pb-2 border-b border-line">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} width={`${100 / cols}%`} height={14} dark={dark} />
         ))}

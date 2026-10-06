@@ -20,8 +20,9 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { useTheme } from "../../theme/ThemeContext";
 import { Spinner } from "../../components/ui";
+import { api } from "../../api/client";
+import { timeAgo } from "../../lib/time";
 import { AttendanceLineChart, FeeCollectionBarChart } from "../../components/Charts";
 import { fetchAttendanceTrend, fetchFeeCollection, fetchLeaveStats, fetchPendingFees, listAdmissions, listStudents, listTeachers } from "./api";
 
@@ -100,15 +101,9 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, trend, icon, color, bgColor, to, miniIllustration }: StatCardProps) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
 
   const content = (
-    <div className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group ${
-      isDark
-        ? "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-slate-700/50 hover:shadow-slate-900/50 hover:border-slate-600/50"
-        : "bg-white/70 backdrop-blur-xl border border-white/50 hover:shadow-slate-200/50 hover:bg-white/90"
-    }`}>
+    <div className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group glass`}>
       {/* Glass reflection effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
@@ -116,11 +111,11 @@ function StatCard({ label, value, trend, icon, color, bgColor, to, miniIllustrat
         <div className={`p-3 rounded-xl shadow-lg ${bgColor} transition-transform duration-300 group-hover:scale-110`}>
           <div className={color}>{icon}</div>
         </div>
-        <ChevronRight size={18} className={`transition-all duration-300 group-hover:translate-x-1 ${isDark ? "text-slate-600 group-hover:text-slate-400" : "text-slate-300 group-hover:text-slate-500"}`} />
+        <ChevronRight size={18} className={`transition-all duration-300 group-hover:translate-x-1 text-ink-2 group-hover:text-ink-3`} />
       </div>
       <div className="mt-4 relative z-10">
-        <p className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
-        <p className={`text-3xl font-bold mt-1 ${isDark ? "text-white" : "text-slate-800"}`}>{value}</p>
+        <p className={`text-sm font-medium text-ink-3`}>{label}</p>
+        <p className={`text-3xl font-bold mt-1 text-ink`}>{value}</p>
         {trend && (
           <div className={`flex items-center gap-1.5 mt-2 text-xs font-semibold ${
             trend.up ? "text-emerald-500" : "text-rose-500"
@@ -129,7 +124,7 @@ function StatCard({ label, value, trend, icon, color, bgColor, to, miniIllustrat
               {trend.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
             </span>
             <span>{trend.value}</span>
-            <span className={isDark ? "text-slate-500 font-normal" : "text-slate-400 font-normal"}>vs last month</span>
+            <span className={"text-ink-3 font-normal"}>vs last month</span>
           </div>
         )}
       </div>
@@ -155,27 +150,19 @@ interface QuickActionProps {
 }
 
 function QuickAction({ label, icon, to, color }: QuickActionProps) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
 
   return (
     <Link
       to={to}
-      className={`flex items-center gap-3 p-3.5 rounded-xl transition-all duration-200 group ${
-        isDark
-          ? "hover:bg-slate-700/50 active:bg-slate-700"
-          : "hover:bg-slate-50 active:bg-slate-100"
-      }`}
+      className={`flex items-center gap-3 p-3.5 rounded-xl transition-all duration-200 group hover:bg-surface-3 active:bg-surface-3`}
     >
       <div className={`p-2.5 rounded-xl shadow-md transition-transform duration-200 group-hover:scale-105 ${color}`}>
         {icon}
       </div>
-      <span className={`flex-1 text-sm font-medium ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+      <span className={`flex-1 text-sm font-medium text-ink-2`}>
         {label}
       </span>
-      <div className={`p-1 rounded-full transition-all duration-200 group-hover:translate-x-1 ${
-        isDark ? "bg-slate-700 text-slate-400" : "bg-slate-100 text-slate-500"
-      }`}>
+      <div className={`p-1 rounded-full transition-all duration-200 group-hover:translate-x-1 bg-surface-3 text-ink-3`}>
         <ChevronRight size={14} />
       </div>
     </Link>
@@ -191,8 +178,6 @@ interface ActivityItemProps {
 }
 
 function ActivityItem({ title, description, time, icon, color }: ActivityItemProps) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
 
   return (
     <div className="flex items-start gap-3 py-3.5 group">
@@ -200,19 +185,29 @@ function ActivityItem({ title, description, time, icon, color }: ActivityItemPro
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-slate-800"}`}>{title}</p>
-        <p className={`text-xs truncate mt-0.5 ${isDark ? "text-slate-500" : "text-slate-500"}`}>{description}</p>
+        <p className={`text-sm font-medium text-ink`}>{title}</p>
+        <p className={`text-xs truncate mt-0.5 text-ink-3`}>{description}</p>
       </div>
-      <span className={`text-xs shrink-0 px-2 py-1 rounded-full ${
-        isDark ? "text-slate-500 bg-slate-800" : "text-slate-400 bg-slate-100"
-      }`}>{time}</span>
+      <span className={`text-xs shrink-0 px-2 py-1 rounded-full text-ink-3 bg-surface-3`}>{time}</span>
     </div>
   );
 }
 
+interface ActivityEvent {
+  type: "admission" | "leave" | "payment" | "attendance";
+  title: string;
+  description: string;
+  time: string;
+}
+
+const ACTIVITY_LOOK: Record<string, { Icon: typeof UserPlus; color: string }> = {
+  admission: { Icon: UserPlus, color: "bg-gradient-to-br from-blue-500 to-blue-600" },
+  leave: { Icon: Calendar, color: "bg-gradient-to-br from-amber-500 to-amber-600" },
+  payment: { Icon: IndianRupee, color: "bg-gradient-to-br from-emerald-500 to-emerald-600" },
+  attendance: { Icon: ClipboardList, color: "bg-gradient-to-br from-violet-500 to-violet-600" },
+};
+
 export default function AdminDashboard() {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
   const [greeting, setGreeting] = useState(getGreeting());
 
   useEffect(() => {
@@ -252,6 +247,11 @@ export default function AdminDashboard() {
     queryFn: () => fetchFeeCollection(6),
   });
 
+  const activityQuery = useQuery({
+    queryKey: ["admin", "recent-activity"],
+    queryFn: async () => (await api.get<ActivityEvent[]>("/analytics/recent-activity", { params: { limit: 8 } })).data,
+  });
+
   const pendingFeesQuery = useQuery({
     queryKey: ["admin", "pending-fees"],
     queryFn: fetchPendingFees,
@@ -277,31 +277,25 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Welcome Banner with Sparkles */}
-      <div className={`relative overflow-hidden rounded-3xl p-8 ${
-        isDark
-          ? "bg-gradient-to-r from-indigo-900 via-blue-800 to-violet-900"
-          : "bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600"
-      }`}>
+      <div className={`relative overflow-hidden rounded-3xl p-8 lg-hero`}>
         <AnimatedSparkles />
 
         <div className="relative z-10 flex items-center justify-between">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Sparkles size={20} className="text-yellow-300 animate-pulse" />
-              <p className="text-blue-100 text-sm font-medium tracking-wide uppercase">
+              <Sparkles size={20} className="text-[#ffd60a] animate-pulse" />
+              <p className="text-white/90 text-sm font-medium tracking-wide uppercase">
                 {greeting}
               </p>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white">
               Welcome to School ERP
             </h1>
-            <p className="text-blue-100/80 text-sm max-w-md">
+            <p className="text-white/80 text-sm max-w-md">
               Manage your school efficiently with real-time insights and quick actions.
               Here's what's happening today.
             </p>
-            <div className={`inline-flex items-center gap-2 mt-2 px-4 py-2.5 rounded-full text-sm font-medium backdrop-blur-sm ${
-              isDark ? "bg-white/10 text-white border border-white/10" : "bg-white/20 text-white border border-white/20"
-            }`}>
+            <div className={`inline-flex items-center gap-2 mt-2 px-4 py-2.5 rounded-full text-sm font-medium backdrop-blur-sm bg-white/20 text-white border border-white/25`}>
               <CalendarDays size={16} />
               {today}
             </div>
@@ -329,7 +323,7 @@ export default function AdminDashboard() {
               trend={{ value: "12%", up: true }}
               icon={<Users size={20} />}
               color="text-blue-500"
-              bgColor={isDark ? "bg-gradient-to-br from-blue-500/20 to-blue-600/20" : "bg-gradient-to-br from-blue-50 to-blue-100"}
+              bgColor={"bg-gradient-to-br from-blue-500/15 to-blue-600/15"}
               to="/admin/students"
             />
             <StatCard
@@ -338,7 +332,7 @@ export default function AdminDashboard() {
               trend={{ value: "6%", up: true }}
               icon={<GraduationCap size={20} />}
               color="text-emerald-500"
-              bgColor={isDark ? "bg-gradient-to-br from-emerald-500/20 to-emerald-600/20" : "bg-gradient-to-br from-emerald-50 to-emerald-100"}
+              bgColor={"bg-gradient-to-br from-emerald-500/15 to-emerald-600/15"}
               to="/admin/teachers"
             />
             <StatCard
@@ -347,7 +341,7 @@ export default function AdminDashboard() {
               trend={{ value: "3%", up: true }}
               icon={<FileText size={20} />}
               color="text-amber-500"
-              bgColor={isDark ? "bg-gradient-to-br from-amber-500/20 to-amber-600/20" : "bg-gradient-to-br from-amber-50 to-amber-100"}
+              bgColor={"bg-gradient-to-br from-amber-500/15 to-amber-600/15"}
               to="/admin/admissions"
             />
             <StatCard
@@ -356,7 +350,7 @@ export default function AdminDashboard() {
               trend={{ value: "8%", up: false }}
               icon={<IndianRupee size={20} />}
               color="text-rose-500"
-              bgColor={isDark ? "bg-gradient-to-br from-rose-500/20 to-rose-600/20" : "bg-gradient-to-br from-rose-50 to-rose-100"}
+              bgColor={"bg-gradient-to-br from-rose-500/15 to-rose-600/15"}
               to="/admin/fees"
             />
             <StatCard
@@ -364,8 +358,8 @@ export default function AdminDashboard() {
               value={leaveStatsQuery.isLoading ? "..." : leaveStatsQuery.data?.pending ?? 0}
               trend={{ value: "2%", up: true }}
               icon={<Calendar size={20} />}
-              color="text-violet-500"
-              bgColor={isDark ? "bg-gradient-to-br from-violet-500/20 to-violet-600/20" : "bg-gradient-to-br from-violet-50 to-violet-100"}
+              color="text-accent-fg"
+              bgColor={"bg-gradient-to-br from-violet-500/15 to-violet-600/15"}
               to="/admin/leave"
             />
           </div>
@@ -373,17 +367,13 @@ export default function AdminDashboard() {
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Attendance Chart */}
-            <div className={`rounded-2xl p-6 transition-all duration-300 hover:shadow-lg ${
-              isDark
-                ? "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-slate-700/50"
-                : "bg-white/70 backdrop-blur-xl border border-white/50"
-            }`}>
+            <div className={`rounded-2xl p-6 transition-all duration-300 hover:shadow-lg glass`}>
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className={`font-semibold text-lg ${isDark ? "text-white" : "text-slate-800"}`}>
+                  <h3 className={`font-semibold text-lg text-ink`}>
                     Attendance Overview
                   </h3>
-                  <p className={`text-xs mt-1 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                  <p className={`text-xs mt-1 text-ink-3`}>
                     Last 14 days trend
                   </p>
                 </div>
@@ -399,24 +389,20 @@ export default function AdminDashboard() {
               ) : attendanceTrendQuery.data && attendanceTrendQuery.data.length > 0 ? (
                 <AttendanceLineChart data={attendanceTrendQuery.data} height={200} />
               ) : (
-                <div className={`h-[200px] flex items-center justify-center text-sm ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                <div className={`h-[200px] flex items-center justify-center text-sm text-ink-3`}>
                   No data available
                 </div>
               )}
             </div>
 
             {/* Fee Collection Chart */}
-            <div className={`rounded-2xl p-6 transition-all duration-300 hover:shadow-lg ${
-              isDark
-                ? "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-slate-700/50"
-                : "bg-white/70 backdrop-blur-xl border border-white/50"
-            }`}>
+            <div className={`rounded-2xl p-6 transition-all duration-300 hover:shadow-lg glass`}>
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className={`font-semibold text-lg ${isDark ? "text-white" : "text-slate-800"}`}>
+                  <h3 className={`font-semibold text-lg text-ink`}>
                     Fee Collection
                   </h3>
-                  <p className={`text-xs mt-1 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                  <p className={`text-xs mt-1 text-ink-3`}>
                     Last 6 months
                   </p>
                 </div>
@@ -432,18 +418,18 @@ export default function AdminDashboard() {
               ) : feeCollectionQuery.data && feeCollectionQuery.data.length > 0 ? (
                 <FeeCollectionBarChart data={feeCollectionQuery.data} height={200} />
               ) : (
-                <div className={`h-[200px] flex items-center justify-center text-sm ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                <div className={`h-[200px] flex items-center justify-center text-sm text-ink-3`}>
                   No data available
                 </div>
               )}
               {/* Summary Stats */}
               {pendingFeesQuery.data && (
-                <div className={`flex gap-6 mt-5 pt-5 border-t ${isDark ? "border-slate-700/50" : "border-slate-100"}`}>
+                <div className={`flex gap-6 mt-5 pt-5 border-t border-line`}>
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/30" />
                     <div>
-                      <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>Collected</p>
-                      <p className={`text-sm font-bold ${isDark ? "text-white" : "text-slate-800"}`}>
+                      <p className={`text-xs text-ink-3`}>Collected</p>
+                      <p className={`text-sm font-bold text-ink`}>
                         ₹{((pendingFeesQuery.data.total_paid ?? 0) / 1000).toFixed(1)}K
                       </p>
                     </div>
@@ -451,8 +437,8 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/30" />
                     <div>
-                      <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>Pending</p>
-                      <p className={`text-sm font-bold ${isDark ? "text-white" : "text-slate-800"}`}>
+                      <p className={`text-xs text-ink-3`}>Pending</p>
+                      <p className={`text-sm font-bold text-ink`}>
                         ₹{((pendingFeesQuery.data.total_pending ?? 0) / 1000).toFixed(1)}K
                       </p>
                     </div>
@@ -465,24 +451,20 @@ export default function AdminDashboard() {
           {/* Quick Links */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Academic Calendar", desc: "View events", icon: <CalendarDays size={20} className="text-blue-500" />, to: "/admin/calendar", bg: isDark ? "bg-blue-500/10" : "bg-blue-50" },
-              { label: "Timetable", desc: "Class schedule", icon: <Clock size={20} className="text-violet-500" />, to: "/admin/timetable", bg: isDark ? "bg-violet-500/10" : "bg-violet-50" },
-              { label: "Circulars", desc: "Announcements", icon: <Bell size={20} className="text-amber-500" />, to: "/admin/notifications", bg: isDark ? "bg-amber-500/10" : "bg-amber-50" },
-              { label: "Reports", desc: "Performance", icon: <FileBarChart size={20} className="text-emerald-500" />, to: "/admin/report-cards", bg: isDark ? "bg-emerald-500/10" : "bg-emerald-50" },
+              { label: "Academic Calendar", desc: "View events", icon: <CalendarDays size={20} className="text-blue-500" />, to: "/admin/calendar", bg: "bg-blue-500/10" },
+              { label: "Timetable", desc: "Class schedule", icon: <Clock size={20} className="text-accent-fg" />, to: "/admin/timetable", bg: "bg-violet-500/10" },
+              { label: "Circulars", desc: "Announcements", icon: <Bell size={20} className="text-amber-500" />, to: "/admin/notifications", bg: "bg-amber-500/10" },
+              { label: "Reports", desc: "Performance", icon: <FileBarChart size={20} className="text-emerald-500" />, to: "/admin/report-cards", bg: "bg-emerald-500/10" },
             ].map((item) => (
               <Link
                 key={item.label}
                 to={item.to}
-                className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group ${
-                  isDark
-                    ? "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-slate-700/50 hover:border-slate-600/50"
-                    : "bg-white/70 backdrop-blur-xl border border-white/50 hover:bg-white/90"
-                }`}
+                className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group glass`}
               >
                 <div className={`p-2.5 rounded-xl transition-transform duration-200 group-hover:scale-110 ${item.bg}`}>{item.icon}</div>
                 <div>
-                  <p className={`text-sm font-medium ${isDark ? "text-white" : "text-slate-800"}`}>{item.label}</p>
-                  <p className={`text-xs ${isDark ? "text-slate-500" : "text-slate-400"}`}>{item.desc}</p>
+                  <p className={`text-sm font-medium text-ink`}>{item.label}</p>
+                  <p className={`text-xs text-ink-3`}>{item.desc}</p>
                 </div>
               </Link>
             ))}
@@ -492,12 +474,8 @@ export default function AdminDashboard() {
         {/* Right Sidebar */}
         <div className="col-span-12 xl:col-span-3 space-y-6">
           {/* Quick Actions */}
-          <div className={`rounded-2xl p-5 ${
-            isDark
-              ? "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-slate-700/50"
-              : "bg-white/70 backdrop-blur-xl border border-white/50"
-          }`}>
-            <h3 className={`font-semibold mb-4 flex items-center gap-2 ${isDark ? "text-white" : "text-slate-800"}`}>
+          <div className={`rounded-2xl p-5 glass`}>
+            <h3 className={`font-semibold mb-4 flex items-center gap-2 text-ink`}>
               <span className="p-1.5 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">
                 <Sparkles size={14} className="text-white" />
               </span>
@@ -538,14 +516,10 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Activity */}
-          <div className={`rounded-2xl p-5 ${
-            isDark
-              ? "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-slate-700/50"
-              : "bg-white/70 backdrop-blur-xl border border-white/50"
-          }`}>
+          <div className={`rounded-2xl p-5 glass`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className={`font-semibold flex items-center gap-2 ${isDark ? "text-white" : "text-slate-800"}`}>
-                <Clock size={18} className="text-slate-400" /> Recent Activity
+              <h3 className={`font-semibold flex items-center gap-2 text-ink`}>
+                <Clock size={18} className="text-ink-3" /> Recent Activity
               </h3>
               <Link
                 to="/admin/notifications"
@@ -554,35 +528,26 @@ export default function AdminDashboard() {
                 View All <ArrowRight size={12} />
               </Link>
             </div>
-            <div className={`divide-y ${isDark ? "divide-slate-700/50" : "divide-slate-100"}`}>
-              <ActivityItem
-                title="New Admission"
-                description="Priya Sharma admitted to Grade 6"
-                time="2h ago"
-                icon={<UserPlus size={14} className="text-white" />}
-                color="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <ActivityItem
-                title="Leave Request"
-                description="Teacher Mrs. S. Priya applied for leave"
-                time="4h ago"
-                icon={<Calendar size={14} className="text-white" />}
-                color="bg-gradient-to-br from-amber-500 to-amber-600"
-              />
-              <ActivityItem
-                title="Fee Payment"
-                description="Rahul Verma paid ₹5,000"
-                time="5h ago"
-                icon={<IndianRupee size={14} className="text-white" />}
-                color="bg-gradient-to-br from-emerald-500 to-emerald-600"
-              />
-              <ActivityItem
-                title="Attendance Updated"
-                description="Class 8 - A (28 students marked)"
-                time="6h ago"
-                icon={<ClipboardList size={14} className="text-white" />}
-                color="bg-gradient-to-br from-violet-500 to-violet-600"
-              />
+            <div className="divide-y divide-line">
+              {activityQuery.isLoading ? (
+                <div className="flex justify-center py-6"><Spinner /></div>
+              ) : activityQuery.data && activityQuery.data.length > 0 ? (
+                activityQuery.data.slice(0, 5).map((a, i) => {
+                  const look = ACTIVITY_LOOK[a.type] ?? ACTIVITY_LOOK.attendance;
+                  return (
+                    <ActivityItem
+                      key={`${a.type}-${a.time}-${i}`}
+                      title={a.title}
+                      description={a.description}
+                      time={timeAgo(a.time)}
+                      icon={<look.Icon size={14} className="text-white" />}
+                      color={look.color}
+                    />
+                  );
+                })
+              ) : (
+                <p className="py-6 text-center text-sm text-ink-3">Nothing has happened yet.</p>
+              )}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, ErrorText, Input, Label, Select } from "../../components/ui";
+import { api } from "../../api/client";
 import { createAdmission } from "./api";
 import { useAcademicYears, useClasses } from "./hooks";
 import type { AdmissionCreateRequest } from "./types";
@@ -48,9 +49,9 @@ const emptyForm: AdmissionCreateRequest = {
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="border-b border-[#E5DDF5] dark:border-[#2D1B4E] pb-3 mb-4">
-      <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">{title}</h3>
-      {subtitle && <p className="text-sm text-[#7C6F95] dark:text-[#7C6F95]">{subtitle}</p>}
+    <div className="border-b border-line pb-3 mb-4">
+      <h3 className="text-lg font-semibold text-ink dark:text-white">{title}</h3>
+      {subtitle && <p className="text-sm text-ink-3">{subtitle}</p>}
     </div>
   );
 }
@@ -61,6 +62,7 @@ export default function AdmissionForm() {
   const [form, setForm] = useState<AdmissionCreateRequest>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState(0);
+  const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<{ name: string; file: File | null }[]>([
     { name: "Birth Certificate", file: null },
     { name: "Previous School/Transfer Certificate", file: null },
@@ -193,7 +195,15 @@ export default function AdmissionForm() {
     });
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function uploadFile(file: File, module: string): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("module", module);
+    const { data } = await api.post("/uploads", formData);
+    return data.id;
+  }
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -206,12 +216,37 @@ export default function AdmissionForm() {
       return;
     }
 
+    // Upload the selected documents first; the application stores their ids.
+    let studentPhotoId: string | undefined;
+    const documentIds: string[] = [];
+    setUploading(true);
+    try {
+      for (const doc of documents) {
+        if (!doc.file) continue;
+        if (doc.name === "Student Photo") {
+          studentPhotoId = await uploadFile(doc.file, "STUDENT_PHOTO");
+        } else {
+          documentIds.push(await uploadFile(doc.file, "ADMISSION_DOCUMENT"));
+        }
+      }
+    } catch {
+      setError("Failed to upload documents. Please try again.");
+      return;
+    } finally {
+      setUploading(false);
+    }
+
     const payload: AdmissionCreateRequest = {
       ...form,
       dob: form.dob || null,
       gender: form.gender || null,
+      academic_year_id: form.academic_year_id || null,
       applicant_email: form.applicant_email || null,
+      father_email: form.father_email || null,
+      mother_email: form.mother_email || null,
       guardian_email: form.guardian_email || null,
+      student_photo_id: studentPhotoId,
+      document_ids: documentIds,
     };
     mutation.mutate(payload);
   }
@@ -228,8 +263,8 @@ export default function AdmissionForm() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-[#24113F] dark:text-white">New Admission Application</h1>
-        <p className="mt-1 text-sm text-[#4B4260] dark:text-[#D8CCEA]">Fill out the admission form with all required details.</p>
+        <h1 className="text-2xl font-semibold text-ink dark:text-white">New Admission Application</h1>
+        <p className="mt-1 text-sm text-ink-2">Fill out the admission form with all required details.</p>
       </div>
 
       {/* Section Navigation */}
@@ -243,12 +278,12 @@ export default function AdmissionForm() {
               onClick={() => setActiveSection(idx)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                 activeSection === idx
-                  ? "bg-[#6D28D9] text-white"
+                  ? "bg-accent text-white"
                   : status === "error"
                   ? "bg-red-50 text-red-700 border border-red-300"
                   : status === "complete"
                   ? "bg-green-50 text-green-700 border border-green-300"
-                  : "bg-white text-[#4B4260] border border-[#E5DDF5] hover:bg-[#F0E9FF] dark:bg-[#2D1B4E] dark:text-[#D8CCEA] dark:border-[#2D1B4E]"
+                  : "bg-surface text-ink-2 border border-line hover:bg-surface-3 dark:text-ink-2 dark:border-line"
               }`}
             >
               {status === "error" && <span>⚠</span>}
@@ -371,8 +406,8 @@ export default function AdmissionForm() {
                   <Input type="email" value={form.mother_email ?? ""} onChange={(e) => update("mother_email", e.target.value)} />
                 </div>
               </div>
-              <div className="border-t border-[#E5DDF5] dark:border-[#2D1B4E] pt-4 mt-4">
-                <p className="text-sm font-medium text-[#24113F] dark:text-white mb-3">Primary Guardian Details</p>
+              <div className="border-t border-line pt-4 mt-4">
+                <p className="text-sm font-medium text-ink dark:text-white mb-3">Primary Guardian Details</p>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label>Primary Guardian *</Label>
@@ -410,8 +445,8 @@ export default function AdmissionForm() {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-4 p-3 bg-[#F0E9FF] dark:bg-[#2D1B4E] rounded-lg">
-                    <p className="text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+                  <div className="mt-4 p-3 bg-surface-3 rounded-lg">
+                    <p className="text-sm text-ink-2">
                       Guardian details will be auto-filled from {form.primary_guardian}'s information above.
                     </p>
                   </div>
@@ -505,24 +540,24 @@ export default function AdmissionForm() {
               <SectionHeader title="Documents" subtitle="Upload required documents for admission" />
               <div className="space-y-4">
                 {documents.map((doc, idx) => (
-                  <div key={doc.name} className="flex items-center gap-4 p-4 border border-[#E5DDF5] dark:border-[#2D1B4E] rounded-lg bg-[#F7F5FF] dark:bg-[#1B1230]/50">
+                  <div key={doc.name} className="flex items-center gap-4 p-4 border border-line rounded-lg bg-surface-3 dark:bg-surface-2">
                     <div className="flex-1">
                       <Label>{doc.name}</Label>
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(idx, e)}
-                        className="w-full text-sm text-[#4B4260] dark:text-[#D8CCEA] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#6D28D9] file:text-white hover:file:bg-[#5B21B6]"
+                        className="w-full text-sm text-ink-2 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent file:text-white hover:file:bg-[#5B21B6]"
                       />
                     </div>
                     {doc.file && (
-                      <span className="text-sm text-[#16A34A] font-medium">✓ Uploaded</span>
+                      <span className="text-sm text-emerald-600 font-medium">✓ Selected</span>
                     )}
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-4 bg-[#F0E9FF] dark:bg-[#2D1B4E] rounded-lg">
-                <p className="text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+              <div className="mt-4 p-4 bg-surface-3 rounded-lg">
+                <p className="text-sm text-ink-2">
                   <strong>Note:</strong> Accepted formats: PDF, JPG, JPEG, PNG. Maximum file size: 5MB per document.
                 </p>
               </div>
@@ -534,13 +569,13 @@ export default function AdmissionForm() {
             <div className="space-y-4">
               <SectionHeader title="Admission Details" subtitle="Administrative information" />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="p-4 bg-[#F7F5FF] dark:bg-[#1B1230]/50 rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E]">
+                <div className="p-4 bg-surface-3 dark:bg-surface-2 rounded-lg border border-line">
                   <Label>Application Number</Label>
-                  <p className="text-sm text-[#7C6F95] italic">Auto-generated on submission</p>
+                  <p className="text-sm text-ink-3 italic">Auto-generated on submission</p>
                 </div>
-                <div className="p-4 bg-[#F7F5FF] dark:bg-[#1B1230]/50 rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E]">
+                <div className="p-4 bg-surface-3 dark:bg-surface-2 rounded-lg border border-line">
                   <Label>Application Date</Label>
-                  <p className="text-sm text-[#7C6F95]">{new Date().toLocaleDateString()}</p>
+                  <p className="text-sm text-ink-3">{new Date().toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -552,9 +587,9 @@ export default function AdmissionForm() {
                     ))}
                   </Select>
                 </div>
-                <div className="p-4 bg-[#F7F5FF] dark:bg-[#1B1230]/50 rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E]">
+                <div className="p-4 bg-surface-3 dark:bg-surface-2 rounded-lg border border-line">
                   <Label>Status</Label>
-                  <p className="text-sm font-medium text-[#F59E0B]">Pending</p>
+                  <p className="text-sm font-medium text-amber-500">Pending</p>
                 </div>
               </div>
             </div>
@@ -562,7 +597,7 @@ export default function AdmissionForm() {
 
           <ErrorText>{error}</ErrorText>
 
-          <div className="flex justify-between gap-3 mt-6 pt-6 border-t border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <div className="flex justify-between gap-3 mt-6 pt-6 border-t border-line">
             <div>
               {activeSection > 0 && (
                 <Button type="button" variant="secondary" onClick={() => setActiveSection(activeSection - 1)}>
@@ -579,8 +614,8 @@ export default function AdmissionForm() {
                   Next →
                 </Button>
               ) : (
-                <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending ? "Submitting..." : "Submit Application"}
+                <Button type="submit" disabled={mutation.isPending || uploading}>
+                  {uploading ? "Uploading..." : mutation.isPending ? "Submitting..." : "Submit Application"}
                 </Button>
               )}
             </div>

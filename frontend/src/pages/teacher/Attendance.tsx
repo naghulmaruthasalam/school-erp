@@ -15,6 +15,7 @@ const statusConfig: Record<AttendanceStatus, { icon: typeof CheckCircle; color: 
   PRESENT: { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100 dark:bg-green-500/20" },
   ABSENT: { icon: XCircle, color: "text-red-600", bg: "bg-red-100 dark:bg-red-500/20" },
   LATE: { icon: Clock, color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-500/20" },
+  HALF_DAY: { icon: Clock, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-500/20" },
   EXCUSED: { icon: AlertCircle, color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-500/20" },
 };
 
@@ -115,12 +116,12 @@ export default function TeacherAttendance() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="section" className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-[#6D28D9]" />
+              <Users className="w-4 h-4 text-accent-fg" />
               {t("attendance.selectSection")}
             </Label>
             <select
               id="section"
-              className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm text-[#24113F] dark:text-white focus:border-[#6D28D9] focus:outline-none focus:ring-2 focus:ring-[#6D28D9]/20 transition-all"
+              className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
               value={sectionId}
               onChange={(e) => setSectionId(e.target.value)}
             >
@@ -136,13 +137,13 @@ export default function TeacherAttendance() {
           </div>
           <div>
             <Label htmlFor="date" className="flex items-center gap-2 mb-2">
-              <Calendar className="w-4 h-4 text-[#6D28D9]" />
+              <Calendar className="w-4 h-4 text-accent-fg" />
               {t("attendance.date")}
             </Label>
             <input
               id="date"
               type="date"
-              className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm text-[#24113F] dark:text-white focus:border-[#6D28D9] focus:outline-none focus:ring-2 focus:ring-[#6D28D9]/20 transition-all"
+              className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
@@ -152,10 +153,10 @@ export default function TeacherAttendance() {
 
       {!sectionId ? (
         <Card className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#6D28D9]/10 to-[#EC4899]/10 flex items-center justify-center">
-            <Users className="w-8 h-8 text-[#6D28D9]" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10 flex items-center justify-center">
+            <Users className="w-8 h-8 text-accent-fg" />
           </div>
-          <p className="text-[#7C6F95] dark:text-[#D8CCEA]">
+          <p className="text-ink-3 dark:text-ink-2">
             {sectionIds.length === 0
               ? "No sections found — you have no timetable slots assigned yet."
               : "Select a section to mark attendance."}
@@ -170,7 +171,7 @@ export default function TeacherAttendance() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center">
             <AlertCircle className="w-8 h-8 text-amber-500" />
           </div>
-          <p className="text-[#7C6F95]">No active students in this section.</p>
+          <p className="text-ink-3">No active students in this section.</p>
         </Card>
       ) : (
         <>
@@ -184,14 +185,14 @@ export default function TeacherAttendance() {
             ].map((stat, i) => (
               <div
                 key={stat.label}
-                className="p-4 rounded-2xl bg-white dark:bg-[#1B1230] border border-[#E5DDF5] dark:border-[#2D1B4E] hover:shadow-lg transition-all"
+                className="p-4 rounded-2xl bg-surface border border-line hover:shadow-lg transition-all"
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-2`}>
                   <stat.icon className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-2xl font-bold text-[#24113F] dark:text-white">{stat.count}</p>
-                <p className="text-sm text-[#7C6F95]">{stat.label}</p>
+                <p className="text-2xl font-bold text-ink dark:text-white">{stat.count}</p>
+                <p className="text-sm text-ink-3">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -201,37 +202,36 @@ export default function TeacherAttendance() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#7C6F95]">
+                  <tr className="border-b border-line">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-3">
                       Student
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#7C6F95]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-3">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#7C6F95]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-3">
                       Remarks
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E5DDF5] dark:divide-[#2D1B4E]">
+                <tbody className="divide-y divide-line dark:divide-line">
                   {roster.map((student, i) => {
                     const currentStatus = statuses[student.id] ?? "PRESENT";
-                    const config = statusConfig[currentStatus];
                     return (
                       <tr
                         key={student.id}
-                        className="hover:bg-[#F7F5FF] dark:hover:bg-[#2D1B4E] transition-colors"
+                        className="hover:bg-surface-3 dark:hover:bg-surface-3 transition-colors"
                         style={{ animationDelay: `${i * 0.05}s` }}
                       >
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center text-white font-semibold">
                               {student.full_name?.charAt(0)?.toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium text-[#24113F] dark:text-white">{student.full_name}</p>
+                              <p className="font-medium text-ink dark:text-white">{student.full_name}</p>
                               {student.roll_number && (
-                                <p className="text-xs text-[#7C6F95]">Roll #{student.roll_number}</p>
+                                <p className="text-xs text-ink-3">Roll #{student.roll_number}</p>
                               )}
                             </div>
                           </div>
@@ -248,7 +248,7 @@ export default function TeacherAttendance() {
                                   className={`p-2 rounded-xl transition-all ${
                                     isActive
                                       ? `${cfg.bg} ${cfg.color} ring-2 ring-offset-2 ring-current scale-110`
-                                      : "bg-gray-100 dark:bg-[#2D1B4E] text-gray-400 hover:scale-105"
+                                      : "bg-surface-3 text-ink-3 hover:scale-105"
                                   }`}
                                   title={status}
                                 >
@@ -260,7 +260,7 @@ export default function TeacherAttendance() {
                         </td>
                         <td className="px-4 py-4">
                           <input
-                            className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-3 py-2 text-sm text-[#24113F] dark:text-white focus:border-[#6D28D9] focus:outline-none focus:ring-2 focus:ring-[#6D28D9]/20 transition-all"
+                            className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
                             value={remarks[student.id] ?? ""}
                             onChange={(e) => setRemark(student.id, e.target.value)}
                             placeholder="Add remarks..."
@@ -273,7 +273,7 @@ export default function TeacherAttendance() {
               </table>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-[#E5DDF5] dark:border-[#2D1B4E] flex items-center gap-4">
+            <div className="mt-6 pt-4 border-t border-line flex items-center gap-4">
               <Button onClick={handleSave} disabled={saveMutation.isPending} glow>
                 {saveMutation.isPending ? (
                   <>

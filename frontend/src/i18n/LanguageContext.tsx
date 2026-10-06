@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { readStored, writeStored } from "../lib/safeStorage";
 import en from "./en.json";
 import ar from "./ar.json";
 
@@ -18,13 +19,13 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem("language");
+    const saved = readStored("language");
     return (saved === "ar" ? "ar" : "en") as Language;
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("language", lang);
+    writeStored("language", lang);
   };
 
   const t = (key: string): string => {

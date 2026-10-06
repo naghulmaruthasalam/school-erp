@@ -4,8 +4,8 @@ import { useAuthStore } from "../../auth/store";
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="animate-fade-in-up">
-      <p className="text-xs font-medium uppercase tracking-wide text-[#6D28D9] dark:text-[#A78BFA]">{label}</p>
-      <p className="mt-0.5 text-sm text-[#24113F] dark:text-white">{value || "—"}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
     </div>
   );
 }
@@ -37,14 +37,14 @@ export default function PrincipalProfile() {
         </Card>
 
         <Card className="!p-0 overflow-hidden">
-          <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+          <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#059669]/10 dark:bg-[#059669]/20 rounded-xl">
-                <svg className="w-5 h-5 text-[#059669]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl">
+                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Contact Information</h3>
+              <h3 className="text-lg font-semibold text-ink dark:text-white">Contact Information</h3>
             </div>
           </div>
           <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">

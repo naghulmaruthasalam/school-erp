@@ -28,28 +28,28 @@ export default function StudentTimetable() {
         <Spinner />
       ) : slots.length === 0 ? (
         <Card>
-          <p className="text-sm text-violet-400">No timetable has been published for your section yet.</p>
+          <p className="text-sm text-accent-fg">No timetable has been published for your section yet.</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {DAY_LABELS.map((label, dayIndex) => (
             <Card key={label}>
-              <h3 className="mb-3 text-sm font-semibold text-violet-900">{label}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-ink">{label}</h3>
               {dayIndex === 6 ? (
                 <div className="flex items-center gap-2 text-emerald-600">
                   <span className="text-lg">🌴</span>
                   <p className="text-xs font-medium">Holiday</p>
                 </div>
               ) : slotsByDay[dayIndex].length === 0 ? (
-                <p className="text-xs text-violet-400">No periods scheduled.</p>
+                <p className="text-xs text-accent-fg">No periods scheduled.</p>
               ) : (
                 <ul className="space-y-2">
                   {slotsByDay[dayIndex].map((slot) => (
-                    <li key={slot.id} className="rounded-md border border-violet-100 bg-violet-50 px-3 py-2 text-xs">
-                      <p className="font-medium text-violet-900">
+                    <li key={slot.id} className="rounded-md border border-line bg-violet-50 px-3 py-2 text-xs">
+                      <p className="font-medium text-ink">
                         Period {slot.period_number} · {slot.start_time}–{slot.end_time}
                       </p>
-                      <p className="text-violet-600">{subjects_[slot.subject_id]?.name ?? "—"}</p>
+                      <p className="text-accent-fg">{subjects_[slot.subject_id]?.name ?? "—"}</p>
                     </li>
                   ))}
                 </ul>

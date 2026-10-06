@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { authStore } from "../auth/store";
 import { getDemoResponse } from "./demoData";
+import { demoMutation, overlayDemoList } from "./demoMutations";
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -12,8 +13,15 @@ api.interceptors.request.use((config) => {
   if (isDemo && config.method === "get") {
     const demoData = getDemoResponse(config.url || "");
     if (demoData) {
-      return Promise.reject({ __isDemo: true, data: demoData, config });
+      const url = config.url || "";
+      return Promise.reject({ __isDemo: true, data: overlayDemoList(url, demoData), config });
     }
+  }
+
+  // Standalone demo build: there is no server, so writes are answered locally.
+  if (isDemo && import.meta.env.VITE_STANDALONE_DEMO && config.method && config.method !== "get") {
+    const result = demoMutation(config.method, config.url || "", config.data);
+    if (result !== null) return Promise.reject({ __isDemo: true, data: result, config });
   }
 
   if (accessToken) {
@@ -57,6 +65,24 @@ api.interceptors.response.use(
   async (error: AxiosError & { __isDemo?: boolean; data?: unknown }) => {
     if (error.__isDemo) {
       return { data: error.data, status: 200, statusText: "OK", headers: {}, config: error.config };
+    }
+
+    // FastAPI returns validation errors (422) as an array of objects; every form renders
+    // `detail` directly as text, so flatten it to a readable string here.
+    const data = error.response?.data as { detail?: unknown } | undefined;
+    if (data && Array.isArray(data.detail)) {
+      data.detail = data.detail
+        .map((d: { loc?: unknown[]; msg?: string }) => {
+          const field = Array.isArray(d?.loc) ? d.loc.filter((p) => p !== "body").join(".") : "";
+          return field ? `${field}: ${d?.msg ?? "invalid"}` : (d?.msg ?? "invalid");
+        })
+        .join("; ");
+    }
+
+    // Surface the server's explanation (instead of "Request failed with status code 4xx") to
+    // forms that display `err.message`.
+    if (typeof data?.detail === "string" && data.detail && error.response && error.response.status !== 401) {
+      error.message = data.detail;
     }
 
     const config = error.config as RetriableConfig | undefined;

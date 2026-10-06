@@ -62,16 +62,12 @@ export default function RegisterSchoolPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-auth-gradient flex items-center justify-center px-4 py-12">
-      <div className="absolute inset-0 bg-grid-pattern" />
-      <div className="glow-orb glow-orb-1" />
-      <div className="glow-orb glow-orb-2" />
-      <div className="glow-orb glow-orb-3" />
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
 
       <div className="relative z-10 w-full max-w-lg">
         <Link
           to="/login"
-          className="inline-flex items-center text-slate-400 hover:text-white text-sm mb-6 transition-colors group"
+          className="inline-flex items-center text-ink-3 hover:text-ink text-sm mb-6 transition-colors group"
         >
           <svg className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -80,36 +76,36 @@ export default function RegisterSchoolPage() {
         </Link>
 
         <div className="animated-border">
-          <div className="glass-card p-8">
+          <div className="glass-strong !rounded-[32px] p-8">
             {mutation.isSuccess ? (
               <div className="text-center animate-scale-in">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-green-500/15 mb-6">
                   <svg className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">School Registered!</h2>
-                <p className="text-slate-300 mb-4">
-                  <span className="font-semibold text-white">{mutation.data.school.name}</span> has been registered successfully.
+                <h2 className="text-2xl font-semibold tracking-tight text-ink mb-2">School Registered!</h2>
+                <p className="text-ink-2 mb-4">
+                  <span className="font-semibold text-ink">{mutation.data.school.name}</span> has been registered successfully.
                 </p>
 
-                <div className="bg-slate-800/50 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-slate-400 text-sm mb-2">Your School Code:</p>
-                  <p className="text-2xl font-mono font-bold text-violet-400 tracking-wider">
+                <div className="bg-surface-3 rounded-xl p-4 mb-6 text-left">
+                  <p className="text-ink-3 text-sm mb-2">Your School Code:</p>
+                  <p className="text-2xl font-mono font-bold text-accent-fg tracking-wider">
                     {mutation.data.school.code}
                   </p>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-ink-3 mt-2">
                     Save this code! You'll need it to sign in.
                   </p>
                 </div>
 
-                <p className="text-slate-400 text-sm mb-6">
-                  You can now sign in with your email <span className="text-white">{mutation.data.admin_email}</span> and the password you created.
+                <p className="text-ink-3 text-sm mb-6">
+                  You can now sign in with your email <span className="text-ink">{mutation.data.admin_email}</span> and the password you created.
                 </p>
 
                 <Link
                   to="/login/admin"
-                  className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl glow-button font-medium"
+                  className="inline-flex items-center justify-center w-full py-3 px-4 lg-btn lg-btn-primary font-medium"
                 >
                   <span className="relative z-10">Go to Sign In</span>
                 </Link>
@@ -117,154 +113,154 @@ export default function RegisterSchoolPage() {
             ) : (
               <>
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 text-4xl mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-soft text-4xl mb-4">
                     🏫
                   </div>
-                  <h1 className="text-2xl font-bold text-white">Register Your School</h1>
-                  <p className="text-slate-400 text-sm mt-1">Set up your school on Cogniitec in under a minute</p>
+                  <h1 className="text-2xl font-semibold tracking-tight text-ink">Register Your School</h1>
+                  <p className="text-ink-3 text-sm mt-1">Set up your school on Cogniitec in under a minute</p>
                 </div>
 
                 <form className="space-y-5" onSubmit={handleSubmit}>
-                  <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
-                    <p className="text-xs font-medium text-violet-400 mb-3 uppercase tracking-wider">School Details</p>
+                  <div className="p-4 rounded-xl bg-surface-2 border border-line">
+                    <p className="text-xs font-medium text-accent-fg mb-3 uppercase tracking-wider">School Details</p>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">School Name *</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">School Name *</label>
                         <input
                           required
                           value={schoolName}
                           onChange={(e) => setSchoolName(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl glow-input"
+                          className="w-full px-4 py-3 lg-field"
                           placeholder="e.g. Green Hills Academy"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Address</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">Address</label>
                         <input
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl glow-input"
+                          className="w-full px-4 py-3 lg-field"
                           placeholder="e.g. 123 Main Street"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">City</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">City</label>
                           <input
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl glow-input"
+                            className="w-full px-4 py-3 lg-field"
                             placeholder="e.g. Mumbai"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">State</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">State</label>
                           <input
                             value={state}
                             onChange={(e) => setState(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl glow-input"
+                            className="w-full px-4 py-3 lg-field"
                             placeholder="e.g. Maharashtra"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Country</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">Country</label>
                           <input
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl glow-input"
+                            className="w-full px-4 py-3 lg-field"
                             placeholder="e.g. India"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">PIN Code</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">PIN Code</label>
                           <input
                             value={postalCode}
                             onChange={(e) => setPostalCode(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl glow-input"
+                            className="w-full px-4 py-3 lg-field"
                             placeholder="e.g. 400001"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">School Phone</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">School Phone</label>
                           <input
                             value={schoolPhone}
                             onChange={(e) => setSchoolPhone(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl glow-input"
+                            className="w-full px-4 py-3 lg-field"
                             placeholder="+91 22 12345678"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">School Email</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">School Email</label>
                           <input
                             type="email"
                             value={schoolEmail}
                             onChange={(e) => setSchoolEmail(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl glow-input"
+                            className="w-full px-4 py-3 lg-field"
                             placeholder="info@school.com"
                           />
                         </div>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                      <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <p className="text-xs text-ink-3 mt-3 flex items-center gap-1">
+                      <svg className="w-4 h-4 text-accent-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       School code will be auto-generated
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                  <div className="p-4 rounded-xl bg-surface-2 border border-line">
                     <p className="text-xs font-medium text-cyan-400 mb-3 uppercase tracking-wider">Admin Account</p>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Your Name</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">Your Name</label>
                         <input
                           required
                           value={adminName}
                           onChange={(e) => setAdminName(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl glow-input"
+                          className="w-full px-4 py-3 lg-field"
                           placeholder="Full name"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">Email Address</label>
                         <input
                           type="email"
                           required
                           value={adminEmail}
                           onChange={(e) => setAdminEmail(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl glow-input"
+                          className="w-full px-4 py-3 lg-field"
                           placeholder="you@example.com"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Phone (optional)</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">Phone (optional)</label>
                         <input
                           value={adminPhone}
                           onChange={(e) => setAdminPhone(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl glow-input"
+                          className="w-full px-4 py-3 lg-field"
                           placeholder="+91 9876543210"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Password *</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">Password *</label>
                         <div className="relative">
                           <input
                             type={showPassword ? "text" : "password"}
                             required
                             value={adminPassword}
                             onChange={(e) => setAdminPassword(e.target.value)}
-                            className="w-full px-4 py-3 pr-12 rounded-xl glow-input"
+                            className="w-full px-4 py-3 pr-12 lg-field"
                             placeholder="Minimum 8 characters"
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-400 transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent-fg transition-colors"
                           >
                             {showPassword ? (
                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -280,20 +276,20 @@ export default function RegisterSchoolPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password *</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">Confirm Password *</label>
                         <div className="relative">
                           <input
                             type={showConfirmPassword ? "text" : "password"}
                             required
                             value={adminConfirmPassword}
                             onChange={(e) => setAdminConfirmPassword(e.target.value)}
-                            className="w-full px-4 py-3 pr-12 rounded-xl glow-input"
+                            className="w-full px-4 py-3 pr-12 lg-field"
                             placeholder="Re-enter your password"
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-400 transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent-fg transition-colors"
                           >
                             {showConfirmPassword ? (
                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -320,7 +316,7 @@ export default function RegisterSchoolPage() {
                   <button
                     type="submit"
                     disabled={mutation.isPending}
-                    className="w-full py-3 px-4 rounded-xl glow-button font-medium relative z-10 disabled:opacity-50"
+                    className="w-full py-3 px-4 lg-btn lg-btn-primary font-medium relative z-10 disabled:opacity-50"
                   >
                     <span className="relative z-10">
                       {mutation.isPending ? (
@@ -339,9 +335,9 @@ export default function RegisterSchoolPage() {
                 </form>
 
                 <div className="mt-6 pt-6 border-t border-slate-700/50 text-center">
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-ink-3 text-sm">
                     Already registered?{" "}
-                    <Link to="/login" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                    <Link to="/login" className="text-accent-fg hover:text-ink-2 font-medium transition-colors">
                       Sign in
                     </Link>
                   </p>
@@ -351,7 +347,7 @@ export default function RegisterSchoolPage() {
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-3 text-slate-500">
+        <div className="mt-8 flex items-center justify-center gap-3 text-ink-3">
           <Logo size={24} showWordmark={false} />
           <span className="text-xs">Cogniitec AI School ERP</span>
         </div>

@@ -5,20 +5,30 @@ import { api } from "../../api/client";
 import { fetchClasses, fetchSections, listStudents } from "./api";
 import type { PageResponse } from "../../types/common";
 
-interface Mark {
-  id: string;
-  student_id: string;
-  exam_id: string;
+interface ResultSubject {
+  exam_subject_id: string;
   subject_id: string;
-  marks_obtained: number;
   max_marks: number;
-  grade: string;
+  pass_marks: number;
+  marks_obtained: number | null;
+  grade: string | null;
+}
+
+interface ExamResult {
+  exam_id: string;
+  student_id: string;
+  student_name: string;
+  subjects: ResultSubject[];
+  total_marks_obtained: number;
+  total_max_marks: number;
+  percentage: number;
+  overall_grade: string;
 }
 
 interface Exam {
   id: string;
   name: string;
-  exam_type: string;
+  term?: string | null;
 }
 
 export default function ReportCards() {
@@ -43,16 +53,24 @@ export default function ReportCards() {
     },
   });
 
-  const marksQuery = useQuery({
-    queryKey: ["marks", selectedStudent, selectedExam],
+  const subjectsQuery = useQuery({
+    queryKey: ["subjects"],
     queryFn: async () => {
-      const { data } = await api.get<Mark[]>("/exams/marks", {
-        params: { student_id: selectedStudent, exam_id: selectedExam },
-      });
+      const { data } = await api.get<{ id: string; name: string }[]>("/academics/subjects");
+      return data;
+    },
+  });
+
+  const resultQuery = useQuery({
+    queryKey: ["exam-result", selectedStudent, selectedExam],
+    queryFn: async () => {
+      const { data } = await api.get<ExamResult>(`/exams/${selectedExam}/students/${selectedStudent}/result`);
       return data;
     },
     enabled: !!selectedStudent && !!selectedExam,
   });
+
+  const subjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name ?? id;
 
   const getSectionName = (id: string) => {
     const section = sectionsQuery.data?.find((s) => s.id === id);
@@ -68,9 +86,20 @@ export default function ReportCards() {
     return "red";
   };
 
-  const totalMarks = marksQuery.data?.reduce((sum, m) => sum + m.marks_obtained, 0) || 0;
-  const maxMarks = marksQuery.data?.reduce((sum, m) => sum + m.max_marks, 0) || 0;
-  const percentage = maxMarks > 0 ? ((totalMarks / maxMarks) * 100).toFixed(1) : 0;
+  const result = resultQuery.data;
+  const rows = (result?.subjects ?? []).filter((r) => r.marks_obtained !== null);
+  const totalMarks = result?.total_marks_obtained ?? 0;
+  const maxMarks = result?.total_max_marks ?? 0;
+  const percentage = (result?.percentage ?? 0).toFixed(1);
+
+  async function downloadPdf() {
+    const { data } = await api.get<Blob>(`/exams/${selectedExam}/students/${selectedStudent}/report-card`, {
+      responseType: "blob",
+    });
+    const url = URL.createObjectURL(data);
+    window.open(url, "_blank", "noopener");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
 
   const selectedStudentData = studentsQuery.data?.items.find((s) => s.id === selectedStudent);
 
@@ -81,11 +110,11 @@ export default function ReportCards() {
       <Card className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Section</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Section</label>
             <select
               value={selectedSection}
               onChange={(e) => { setSelectedSection(e.target.value); setSelectedStudent(""); }}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2"
+              className="w-full rounded-lg border border-line px-3 py-2"
             >
               <option value="">-- Select Section --</option>
               {sectionsQuery.data?.map((s) => (
@@ -94,11 +123,11 @@ export default function ReportCards() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Student</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Student</label>
             <select
               value={selectedStudent}
               onChange={(e) => setSelectedStudent(e.target.value)}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2"
+              className="w-full rounded-lg border border-line px-3 py-2"
               disabled={!selectedSection}
             >
               <option value="">-- Select Student --</option>
@@ -108,15 +137,15 @@ export default function ReportCards() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Exam</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Exam</label>
             <select
               value={selectedExam}
               onChange={(e) => setSelectedExam(e.target.value)}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2"
+              className="w-full rounded-lg border border-line px-3 py-2"
             >
               <option value="">-- Select Exam --</option>
               {examsQuery.data?.items.map((e) => (
-                <option key={e.id} value={e.id}>{e.name} ({e.exam_type})</option>
+                <option key={e.id} value={e.id}>{e.name}{e.term ? ` (${e.term})` : ""}</option>
               ))}
             </select>
           </div>
@@ -124,28 +153,28 @@ export default function ReportCards() {
       </Card>
 
       {selectedStudent && selectedExam && (
-        marksQuery.isLoading ? (
+        resultQuery.isLoading ? (
           <div className="flex justify-center py-12"><Spinner /></div>
-        ) : marksQuery.data && marksQuery.data.length > 0 ? (
+        ) : result && rows.length > 0 ? (
           <Card>
-            <div className="border-b border-violet-200 pb-4 mb-4">
+            <div className="border-b border-line pb-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-violet-900">{selectedStudentData?.full_name}</h2>
-                  <p className="text-sm text-violet-600">
+                  <h2 className="text-xl font-bold text-ink">{selectedStudentData?.full_name}</h2>
+                  <p className="text-sm text-accent-fg">
                     {selectedStudentData?.admission_no} · {getSectionName(selectedSection)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-violet-600">{percentage}%</p>
-                  <p className="text-sm text-violet-500">{totalMarks}/{maxMarks} marks</p>
+                  <p className="text-2xl font-bold text-accent-fg">{percentage}%</p>
+                  <p className="text-sm text-accent-fg">{totalMarks}/{maxMarks} marks</p>
                 </div>
               </div>
             </div>
 
             <table className="w-full">
               <thead>
-                <tr className="text-left text-sm text-violet-600 border-b border-violet-100">
+                <tr className="text-left text-sm text-accent-fg border-b border-line">
                   <th className="pb-2">Subject</th>
                   <th className="pb-2 text-center">Marks</th>
                   <th className="pb-2 text-center">Max</th>
@@ -154,16 +183,16 @@ export default function ReportCards() {
                 </tr>
               </thead>
               <tbody>
-                {marksQuery.data.map((mark) => (
-                  <tr key={mark.id} className="border-b border-violet-50">
-                    <td className="py-3 font-medium text-violet-900">{mark.subject_id}</td>
+                {rows.map((mark) => (
+                  <tr key={mark.exam_subject_id} className="border-b border-line">
+                    <td className="py-3 font-medium text-ink">{subjectName(mark.subject_id)}</td>
                     <td className="py-3 text-center">{mark.marks_obtained}</td>
-                    <td className="py-3 text-center text-violet-500">{mark.max_marks}</td>
+                    <td className="py-3 text-center text-accent-fg">{mark.max_marks}</td>
                     <td className="py-3 text-center">
-                      {((mark.marks_obtained / mark.max_marks) * 100).toFixed(0)}%
+                      {(((mark.marks_obtained ?? 0) / mark.max_marks) * 100).toFixed(0)}%
                     </td>
                     <td className="py-3 text-center">
-                      <Badge tone={getGradeTone(mark.grade)}>{mark.grade}</Badge>
+                      <Badge tone={getGradeTone(mark.grade ?? "")}>{mark.grade ?? "-"}</Badge>
                     </td>
                   </tr>
                 ))}
@@ -171,16 +200,16 @@ export default function ReportCards() {
             </table>
 
             <div className="mt-4 flex justify-end">
-              <Button variant="secondary" onClick={() => window.print()}>Print Report Card</Button>
+              <Button variant="secondary" onClick={downloadPdf}>Download Report Card (PDF)</Button>
             </div>
           </Card>
         ) : (
-          <Card><p className="text-center text-violet-400 py-8">No marks found for this student/exam.</p></Card>
+          <Card><p className="text-center text-accent-fg py-8">No marks found for this student/exam.</p></Card>
         )
       )}
 
       {(!selectedStudent || !selectedExam) && (
-        <Card><p className="text-center text-violet-400 py-8">Select a section, student, and exam to view report card.</p></Card>
+        <Card><p className="text-center text-accent-fg py-8">Select a section, student, and exam to view report card.</p></Card>
       )}
     </div>
   );

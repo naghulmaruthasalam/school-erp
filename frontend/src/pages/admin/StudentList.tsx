@@ -59,7 +59,7 @@ export default function StudentList() {
     {
       header: "Name",
       cell: (s) => (
-        <Link to={`/admin/students/${s.id}`} className="font-medium text-violet-600 hover:underline">
+        <Link to={`/admin/students/${s.id}`} className="font-medium text-accent-fg hover:underline">
           {s.full_name}
         </Link>
       ),
@@ -96,7 +96,7 @@ export default function StudentList() {
         <div>
           <Label>Class</Label>
           <select
-            className="w-full rounded-md border border-violet-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={classId}
             onChange={(e) => {
               setPage(1);
@@ -115,7 +115,7 @@ export default function StudentList() {
         <div>
           <Label>Section</Label>
           <select
-            className="w-full rounded-md border border-violet-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={sectionId}
             onChange={(e) => {
               setPage(1);
@@ -134,7 +134,7 @@ export default function StudentList() {
         <div>
           <Label>Status</Label>
           <select
-            className="w-full rounded-md border border-violet-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={status}
             onChange={(e) => {
               setPage(1);

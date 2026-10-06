@@ -52,7 +52,17 @@ export default function TeacherHomework() {
   const myHomework = (homeworkQuery.data?.items ?? []).filter((h) => h.teacher_id === teacherId);
 
   const createMutation = useMutation({
-    mutationFn: createHomework,
+    mutationFn: async (payload: HomeworkCreateRequest) => {
+      const attachment_document_ids: string[] = [];
+      for (const file of attachments) {
+        const body = new FormData();
+        body.append("file", file);
+        body.append("module", "HOMEWORK_ATTACHMENT");
+        const { data } = await api.post<{ id: string }>("/uploads", body);
+        attachment_document_ids.push(data.id);
+      }
+      return createHomework({ ...payload, attachment_document_ids });
+    },
     onSuccess: () => {
       setFormError(null); setForm(emptyForm); setAttachments([]); setGeneratedContent("");
       void queryClient.invalidateQueries({ queryKey: ["teacher", "homework"] });
@@ -154,7 +164,7 @@ export default function TeacherHomework() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card className="mb-6" gradient>
-            <h2 className="mb-4 font-bold text-[#24113F] dark:text-white flex items-center gap-2">
+            <h2 className="mb-4 font-bold text-ink dark:text-white flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
                 <Wand2 className="w-4 h-4 text-white" />
               </div>
@@ -162,47 +172,47 @@ export default function TeacherHomework() {
             </h2>
             <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Section</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Section</label>
                 <select value={form.section_id} onChange={(e) => setForm((f) => ({ ...f, section_id: e.target.value }))}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20">
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30">
                   <option value="">Select a section</option>
                   {sectionIds.map((id) => <option key={id} value={id}>{sectionLabel(id, sections, classes)}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Subject</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Subject</label>
                 <select value={form.subject_id} onChange={(e) => setForm((f) => ({ ...f, subject_id: e.target.value }))}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20">
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30">
                   <option value="">Select a subject</option>
                   {subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Title</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Title</label>
                 <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" placeholder="e.g. Algebra worksheet" />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="e.g. Algebra worksheet" />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Description / Instructions</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Description / Instructions</label>
                 <textarea rows={5} value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm min-h-[120px]"
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm min-h-[120px]"
                   placeholder="Enter homework instructions or use AI Copilot to generate..." />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Attachments</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Attachments</label>
                 <div className="flex items-center gap-3">
                   <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png" />
                   <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
                     <FileUp className="w-4 h-4" /> Upload Files
                   </Button>
-                  <span className="text-xs text-[#7C6F95]">PDF, DOC, PPT, Excel, Images</span>
+                  <span className="text-xs text-ink-3">PDF, DOC, PPT, Excel, Images</span>
                 </div>
                 {attachments.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {attachments.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between px-4 py-2 bg-[#F7F5FF] dark:bg-[#2D1B4E] rounded-xl">
-                        <span className="text-sm text-[#24113F] dark:text-white truncate">{file.name}</span>
-                        <button type="button" onClick={() => removeAttachment(idx)} className="text-[#7C6F95] hover:text-red-500">
+                      <div key={idx} className="flex items-center justify-between px-4 py-2 bg-surface-3 rounded-xl">
+                        <span className="text-sm text-ink dark:text-white truncate">{file.name}</span>
+                        <button type="button" onClick={() => removeAttachment(idx)} className="text-ink-3 hover:text-red-500">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -211,14 +221,14 @@ export default function TeacherHomework() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Assigned Date</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Assigned Date</label>
                 <input type="date" value={form.assigned_date} onChange={(e) => setForm((f) => ({ ...f, assigned_date: e.target.value }))}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Due Date</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Due Date</label>
                 <input type="date" value={form.due_date} onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
               <div className="sm:col-span-2 flex items-center gap-3">
                 <Button type="submit" disabled={createMutation.isPending} glow>
@@ -231,15 +241,15 @@ export default function TeacherHomework() {
           </Card>
 
           {/* Homework List */}
-          <h2 className="mb-4 font-bold text-[#24113F] dark:text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#6D28D9]" /> Assigned Homework
+          <h2 className="mb-4 font-bold text-ink dark:text-white flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-accent-fg" /> Assigned Homework
           </h2>
           {homeworkQuery.isLoading ? (
             <Card className="py-12 flex justify-center"><Spinner size="lg" /></Card>
           ) : myHomework.length === 0 ? (
             <Card className="text-center py-12">
-              <BookOpen className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-              <p className="text-[#7C6F95]">No homework assigned yet.</p>
+              <BookOpen className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+              <p className="text-ink-3">No homework assigned yet.</p>
             </Card>
           ) : (
             <div className="space-y-3">
@@ -251,10 +261,10 @@ export default function TeacherHomework() {
                         <BookOpen className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <Link to={`/teacher/homework/${hw.id}`} className="font-bold text-[#24113F] dark:text-white hover:text-[#6D28D9]">
+                        <Link to={`/teacher/homework/${hw.id}`} className="font-bold text-ink dark:text-white hover:text-accent-fg">
                           {hw.title}
                         </Link>
-                        <p className="text-sm text-[#7C6F95]">
+                        <p className="text-sm text-ink-3">
                           {sectionLabel(hw.section_id, sections, classes)} • {subjects?.find((s) => s.id === hw.subject_id)?.name}
                         </p>
                       </div>
@@ -274,27 +284,27 @@ export default function TeacherHomework() {
           {showCopilot ? (
             <Card className="sticky top-4" gradient>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[#24113F] dark:text-white flex items-center gap-2">
+                <h3 className="font-bold text-ink dark:text-white flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                   AI Homework Generator
                 </h3>
-                <button onClick={() => setShowCopilot(false)} className="text-[#7C6F95] hover:text-[#6D28D9]">
+                <button onClick={() => setShowCopilot(false)} className="text-ink-3 hover:text-accent-fg">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Topic / Chapter</label>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Topic / Chapter</label>
                   <input type="text" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)}
-                    className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" placeholder="e.g. Quadratic Equations" />
+                    className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="e.g. Quadratic Equations" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Difficulty Level</label>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Difficulty Level</label>
                   <select value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value)}
-                    className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm">
+                    className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm">
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>
                     <option value="hard">Hard</option>
@@ -307,13 +317,13 @@ export default function TeacherHomework() {
                 {generatedContent && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-[#24113F] dark:text-white">Generated Content</label>
-                      <button onClick={copyToClipboard} className="text-xs text-[#6D28D9] hover:text-[#8B5CF6] flex items-center gap-1">
+                      <label className="text-sm font-medium text-ink dark:text-white">Generated Content</label>
+                      <button onClick={copyToClipboard} className="text-xs text-accent-fg hover:text-accent-fg flex items-center gap-1">
                         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         {copied ? "Copied" : "Copy"}
                       </button>
                     </div>
-                    <div className="max-h-64 overflow-y-auto p-4 bg-[#F7F5FF] dark:bg-[#2D1B4E] rounded-xl text-sm text-[#24113F] dark:text-white whitespace-pre-wrap">
+                    <div className="max-h-64 overflow-y-auto p-4 bg-surface-3 rounded-xl text-sm text-ink dark:text-white whitespace-pre-wrap">
                       {generatedContent}
                     </div>
                     <Button onClick={useGeneratedContent} variant="secondary" className="w-full mt-3">Use This Content</Button>
@@ -322,25 +332,25 @@ export default function TeacherHomework() {
               </div>
 
               {/* Mini Chat */}
-              <div className="mt-6 pt-4 border-t border-[#E5DDF5] dark:border-[#2D1B4E]">
-                <h4 className="text-sm font-bold text-[#24113F] dark:text-white flex items-center gap-2 mb-3">
-                  <MessageCircle className="w-4 h-4 text-[#6D28D9]" /> Ask AI Assistant
+              <div className="mt-6 pt-4 border-t border-line">
+                <h4 className="text-sm font-bold text-ink dark:text-white flex items-center gap-2 mb-3">
+                  <MessageCircle className="w-4 h-4 text-accent-fg" /> Ask AI Assistant
                 </h4>
                 <div className="max-h-48 overflow-y-auto space-y-2 mb-3">
                   {chatMessages.map((msg, idx) => (
-                    <div key={idx} className={`text-xs p-3 rounded-xl ${msg.role === "user" ? "bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white ml-4" : "bg-[#F7F5FF] dark:bg-[#2D1B4E] text-[#24113F] dark:text-white mr-4"}`}>
+                    <div key={idx} className={`text-xs p-3 rounded-xl ${msg.role === "user" ? "bg-gradient-to-r from-accent to-accent-2 text-white ml-4" : "bg-surface-3 text-ink dark:text-white mr-4"}`}>
                       {msg.content}
                     </div>
                   ))}
                   {isChatting && (
-                    <div className="text-xs p-3 rounded-xl bg-[#F7F5FF] dark:bg-[#2D1B4E] text-[#7C6F95] mr-4 flex items-center gap-2">
+                    <div className="text-xs p-3 rounded-xl bg-surface-3 text-ink-3 mr-4 flex items-center gap-2">
                       <Loader2 className="w-3 h-3 animate-spin" /> Thinking...
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
                   <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask anything..."
-                    className="flex-1 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-3 py-2 text-xs"
+                    className="flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-xs"
                     onKeyDown={(e) => e.key === "Enter" && sendChatMessage()} />
                   <Button onClick={sendChatMessage} disabled={isChatting} className="px-3"><Send className="w-3 h-3" /></Button>
                 </div>
@@ -351,8 +361,8 @@ export default function TeacherHomework() {
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
                 <Bot className="w-8 h-8 text-white" />
               </div>
-              <p className="text-[#24113F] dark:text-white font-bold mb-2">AI Homework Generator</p>
-              <p className="text-sm text-[#7C6F95] mb-4">Need help creating homework? Use AI to generate questions and instructions.</p>
+              <p className="text-ink dark:text-white font-bold mb-2">AI Homework Generator</p>
+              <p className="text-sm text-ink-3 mb-4">Need help creating homework? Use AI to generate questions and instructions.</p>
               <Button onClick={() => setShowCopilot(true)} glow>
                 <Sparkles className="w-4 h-4" /> Open AI Copilot
               </Button>

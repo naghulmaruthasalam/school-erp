@@ -2,7 +2,8 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { fetchClasses, fetchSubjects } from "./api";
-import { getTeacherSyllabus, getSyllabusDocumentUrl } from "./syllabusApi";
+import { openDocument } from "../../api/files";
+import { getTeacherSyllabus } from "./syllabusApi";
 
 export default function SyllabusDetail() {
   const { id } = useParams<{ id: string }>();
@@ -27,7 +28,7 @@ export default function SyllabusDetail() {
     return (
       <div className="animate-fade-in-up">
         <PageHeader title="Syllabus Not Found" />
-        <Card><p className="text-center text-violet-400 py-8">Not found.</p></Card>
+        <Card><p className="text-center text-accent-fg py-8">Not found.</p></Card>
       </div>
     );
   }
@@ -45,65 +46,67 @@ export default function SyllabusDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <h2 className="text-lg font-semibold text-violet-900 mb-4">Overview</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">Overview</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <p className="text-xs text-violet-500 uppercase">Class</p>
-                <p className="font-medium text-violet-900">{getClassName(syl.class_id)}</p>
+                <p className="text-xs text-accent-fg uppercase">Class</p>
+                <p className="font-medium text-ink">{getClassName(syl.class_id)}</p>
               </div>
               <div>
-                <p className="text-xs text-violet-500 uppercase">Subject</p>
-                <p className="font-medium text-violet-900">{getSubjectName(syl.subject_id)}</p>
+                <p className="text-xs text-accent-fg uppercase">Subject</p>
+                <p className="font-medium text-ink">{getSubjectName(syl.subject_id)}</p>
               </div>
               <div>
-                <p className="text-xs text-violet-500 uppercase">Status</p>
+                <p className="text-xs text-accent-fg uppercase">Status</p>
                 <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{syl.status}</Badge>
               </div>
             </div>
             {syl.description && (
               <div>
-                <p className="text-xs text-violet-500 uppercase mb-1">Description</p>
-                <p className="text-violet-700">{syl.description}</p>
+                <p className="text-xs text-accent-fg uppercase mb-1">Description</p>
+                <p className="text-ink-2">{syl.description}</p>
               </div>
             )}
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-violet-900 mb-4">Chapters ({syl.chapters?.length || 0})</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">Chapters ({syl.chapters?.length || 0})</h2>
             {syl.chapters && syl.chapters.length > 0 ? (
               <div className="space-y-3">
                 {syl.chapters.sort((a, b) => a.order - b.order).map((ch, idx) => (
-                  <div key={ch.id} className="border border-violet-100 rounded-lg p-4 hover:bg-violet-50/50">
+                  <div key={ch.id} className="border border-line rounded-lg p-4 hover:bg-violet-50/50">
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-700 rounded-full flex items-center justify-center text-sm font-semibold">
+                      <div className="flex-shrink-0 w-8 h-8 bg-violet-100 text-ink-2 rounded-full flex items-center justify-center text-sm font-semibold">
                         {idx + 1}
                       </div>
                       <div>
-                        <h3 className="font-medium text-violet-900">{ch.name}</h3>
-                        {ch.description && <p className="text-sm text-violet-600 mt-1">{ch.description}</p>}
+                        <h3 className="font-medium text-ink">{ch.name}</h3>
+                        {ch.description && <p className="text-sm text-accent-fg mt-1">{ch.description}</p>}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-violet-400 py-4">No chapters defined.</p>
+              <p className="text-center text-accent-fg py-4">No chapters defined.</p>
             )}
           </Card>
         </div>
 
         <div className="space-y-6">
           <Card>
-            <h2 className="text-lg font-semibold text-violet-900 mb-4">Documents</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">Documents</h2>
             {syl.documents && syl.documents.length > 0 ? (
               <ul className="space-y-2">
                 {syl.documents.map((doc) => (
                   <li key={doc.id}>
                     <a
-                      href={getSyllabusDocumentUrl(doc.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-violet-700 hover:text-violet-900 hover:underline"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void openDocument(doc.id);
+                      }}
+                      className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink hover:underline"
                     >
                       <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -114,7 +117,7 @@ export default function SyllabusDetail() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-violet-400">No documents uploaded.</p>
+              <p className="text-sm text-accent-fg">No documents uploaded.</p>
             )}
           </Card>
         </div>

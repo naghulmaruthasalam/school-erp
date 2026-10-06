@@ -52,15 +52,15 @@ export default function TeacherNotifications() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className={`font-semibold ${!n.is_read ? "text-violet-900" : "text-violet-700"}`}>
+                      <h3 className={`font-semibold ${!n.is_read ? "text-ink" : "text-ink-2"}`}>
                         {n.title}
                       </h3>
                       <Badge tone={n.notification_type === "ALERT" ? "red" : n.notification_type === "REMINDER" ? "yellow" : n.notification_type === "EVENT" ? "green" : "violet"}>{n.notification_type}</Badge>
                       <Badge tone={n.priority === "URGENT" ? "red" : n.priority === "HIGH" ? "yellow" : n.priority === "LOW" ? "gray" : "violet"}>{n.priority}</Badge>
                       {!n.is_read && <Badge tone="violet">New</Badge>}
                     </div>
-                    <p className="text-violet-700 mb-2">{n.content}</p>
-                    <p className="text-xs text-violet-400">
+                    <p className="text-ink-2 mb-2">{n.content}</p>
+                    <p className="text-xs text-accent-fg">
                       By {n.created_by_name} · {new Date(n.created_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -70,7 +70,7 @@ export default function TeacherNotifications() {
           ))}
           {data?.items.length === 0 && (
             <Card>
-              <p className="text-center text-violet-400 py-8">No notifications.</p>
+              <p className="text-center text-accent-fg py-8">No notifications.</p>
             </Card>
           )}
         </div>

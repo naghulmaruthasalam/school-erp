@@ -70,8 +70,8 @@ export default function UserList() {
     <div className="animate-fade-in-up">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-[#24113F] dark:text-white">User Directory</h1>
-          <p className="mt-1 text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+          <h1 className="text-2xl font-semibold text-ink dark:text-white">User Directory</h1>
+          <p className="mt-1 text-sm text-ink-2">
             View all users registered across the platform
           </p>
         </div>
@@ -138,8 +138,8 @@ export default function UserList() {
                   header: "User",
                   cell: (row) => (
                     <div>
-                      <p className="font-medium text-[#24113F] dark:text-white">{row.full_name}</p>
-                      <p className="text-xs text-[#7C6F95]">{row.email}</p>
+                      <p className="font-medium text-ink dark:text-white">{row.full_name}</p>
+                      <p className="text-xs text-ink-3">{row.email}</p>
                     </div>
                   ),
                 },
@@ -154,8 +154,8 @@ export default function UserList() {
                 {
                   header: "School",
                   cell: (row) => (
-                    <span className="text-sm text-[#4B4260] dark:text-[#D8CCEA]">
-                      {row.school_name || <span className="text-[#6D28D9]">Platform</span>}
+                    <span className="text-sm text-ink-2">
+                      {row.school_name || <span className="text-accent-fg">Platform</span>}
                     </span>
                   ),
                 },
@@ -170,7 +170,7 @@ export default function UserList() {
                 {
                   header: "Last Login",
                   cell: (row) => (
-                    <span className="text-sm text-[#7C6F95]">
+                    <span className="text-sm text-ink-3">
                       {row.last_login_at
                         ? new Date(row.last_login_at).toLocaleDateString()
                         : "Never"}
@@ -180,7 +180,7 @@ export default function UserList() {
                 {
                   header: "Joined",
                   cell: (row) => (
-                    <span className="text-sm text-[#7C6F95]">
+                    <span className="text-sm text-ink-3">
                       {row.created_at
                         ? new Date(row.created_at).toLocaleDateString()
                         : "—"}
@@ -193,7 +193,7 @@ export default function UserList() {
               emptyLabel="No users found."
             />
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-[#7C6F95]">
+              <p className="text-sm text-ink-3">
                 Showing {((page - 1) * PAGE_SIZE) + 1} - {Math.min(page * PAGE_SIZE, data?.total ?? 0)} of {data?.total ?? 0} users
               </p>
               <Pagination

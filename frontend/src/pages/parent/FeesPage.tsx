@@ -88,7 +88,7 @@ export default function FeesPage() {
     return (
       <div>
         <PageHeader title="Fees" />
-        <p className="text-sm text-violet-600">Select a child above to view fees.</p>
+        <p className="text-sm text-accent-fg">Select a child above to view fees.</p>
       </div>
     );
   }

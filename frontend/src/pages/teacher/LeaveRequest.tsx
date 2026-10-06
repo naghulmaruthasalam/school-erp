@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { Badge, Button, Card, ErrorText, Input, Label, PageHeader, Select, Spinner } from "../../components/ui";
+import { Button, Card, ErrorText, Input, Label, PageHeader, Select, Spinner } from "../../components/ui";
 import { api } from "../../api/client";
 import {
   Calendar,
@@ -74,7 +74,7 @@ const statusConfig: Record<string, { icon: typeof CheckCircle; color: string; bg
   APPROVED: { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100 dark:bg-green-500/20" },
   REJECTED: { icon: XCircle, color: "text-red-600", bg: "bg-red-100 dark:bg-red-500/20" },
   PENDING: { icon: Clock, color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-500/20" },
-  CANCELLED: { icon: X, color: "text-gray-600", bg: "bg-gray-100 dark:bg-gray-500/20" },
+  CANCELLED: { icon: X, color: "text-ink-2", bg: "bg-surface-3 dark:bg-gray-500/20" },
 };
 
 export default function TeacherLeaveRequest() {
@@ -156,14 +156,14 @@ export default function TeacherLeaveRequest() {
           ].map((stat, i) => (
             <div
               key={stat.label}
-              className="p-5 rounded-2xl bg-white dark:bg-[#1B1230] border border-[#E5DDF5] dark:border-[#2D1B4E] hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              className="p-5 rounded-2xl bg-surface border border-line hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-3`}>
                 <stat.icon className="w-6 h-6 text-white" />
               </div>
-              <p className="text-3xl font-bold text-[#24113F] dark:text-white">{stat.value}</p>
-              <p className="text-sm text-[#7C6F95]">{stat.label}</p>
+              <p className="text-3xl font-bold text-ink dark:text-white">{stat.value}</p>
+              <p className="text-sm text-ink-3">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -172,10 +172,10 @@ export default function TeacherLeaveRequest() {
       {/* Leave Request Form */}
       {showForm && (
         <Card className="mb-6 relative overflow-hidden" gradient>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#6D28D9]/10 to-[#EC4899]/10 rounded-full -mr-16 -mt-16" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent/10 to-accent-2/10 rounded-full -mr-16 -mt-16" />
 
-          <h3 className="text-xl font-bold text-[#24113F] dark:text-white mb-6 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] flex items-center justify-center">
+          <h3 className="text-xl font-bold text-ink dark:text-white mb-6 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
             New Leave Request
@@ -185,7 +185,7 @@ export default function TeacherLeaveRequest() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <Label className="flex items-center gap-2 mb-2">
-                  <FileText className="w-4 h-4 text-[#6D28D9]" />
+                  <FileText className="w-4 h-4 text-accent-fg" />
                   Leave Type
                 </Label>
                 <Select
@@ -200,7 +200,7 @@ export default function TeacherLeaveRequest() {
               </div>
               <div>
                 <Label className="flex items-center gap-2 mb-2">
-                  <Calendar className="w-4 h-4 text-[#6D28D9]" />
+                  <Calendar className="w-4 h-4 text-accent-fg" />
                   Start Date
                 </Label>
                 <Input
@@ -213,7 +213,7 @@ export default function TeacherLeaveRequest() {
               </div>
               <div>
                 <Label className="flex items-center gap-2 mb-2">
-                  <Calendar className="w-4 h-4 text-[#6D28D9]" />
+                  <Calendar className="w-4 h-4 text-accent-fg" />
                   End Date
                 </Label>
                 <Input
@@ -227,7 +227,7 @@ export default function TeacherLeaveRequest() {
             </div>
             <div>
               <Label className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-4 h-4 text-[#6D28D9]" />
+                <AlertCircle className="w-4 h-4 text-accent-fg" />
                 Reason
               </Label>
               <textarea
@@ -236,7 +236,7 @@ export default function TeacherLeaveRequest() {
                 placeholder="Briefly describe your reason for leave"
                 required
                 rows={3}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm text-[#24113F] dark:text-white focus:border-[#6D28D9] focus:outline-none focus:ring-2 focus:ring-[#6D28D9]/20 transition-all resize-none"
+                className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all resize-none"
               />
             </div>
             {error && <ErrorText>{error}</ErrorText>}
@@ -269,11 +269,11 @@ export default function TeacherLeaveRequest() {
         </Card>
       ) : !leaves?.items?.length ? (
         <Card className="text-center py-16">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#6D28D9]/10 to-[#EC4899]/10 flex items-center justify-center animate-float">
-            <Calendar className="w-10 h-10 text-[#6D28D9]" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10 flex items-center justify-center animate-float">
+            <Calendar className="w-10 h-10 text-accent-fg" />
           </div>
-          <h3 className="text-xl font-bold text-[#24113F] dark:text-white mb-2">No Leave Requests</h3>
-          <p className="text-[#7C6F95] max-w-md mx-auto mb-6">
+          <h3 className="text-xl font-bold text-ink dark:text-white mb-2">No Leave Requests</h3>
+          <p className="text-ink-3 max-w-md mx-auto mb-6">
             You haven't submitted any leave requests yet.
           </p>
           <Button onClick={() => setShowForm(true)} glow>
@@ -283,7 +283,7 @@ export default function TeacherLeaveRequest() {
         </Card>
       ) : (
         <Card>
-          <h3 className="text-lg font-bold text-[#24113F] dark:text-white mb-4">Leave History</h3>
+          <h3 className="text-lg font-bold text-ink dark:text-white mb-4">Leave History</h3>
           <div className="space-y-4">
             {leaves.items.map((leave, i) => {
               const typeConfig = leaveTypeConfig[leave.leave_type] || leaveTypeConfig.OTHER;
@@ -293,7 +293,7 @@ export default function TeacherLeaveRequest() {
               return (
                 <div
                   key={leave.id}
-                  className="p-4 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:bg-[#F7F5FF] dark:hover:bg-[#2D1B4E] transition-all flex items-center gap-4"
+                  className="p-4 rounded-xl border border-line hover:bg-surface-3 dark:hover:bg-surface-3 transition-all flex items-center gap-4"
                   style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   {/* Type Badge */}
@@ -304,18 +304,18 @@ export default function TeacherLeaveRequest() {
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-[#24113F] dark:text-white">{typeConfig.label}</p>
+                      <p className="font-semibold text-ink dark:text-white">{typeConfig.label}</p>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.bg} ${status.color}`}>
                         <StatusIcon className="w-3 h-3" />
                         {leave.status}
                       </span>
                     </div>
-                    <p className="text-sm text-[#7C6F95]">
+                    <p className="text-sm text-ink-3">
                       {new Date(leave.start_date).toLocaleDateString()} - {new Date(leave.end_date).toLocaleDateString()}
                     </p>
-                    <p className="text-sm text-[#4B4260] dark:text-[#D8CCEA] mt-1 truncate">{leave.reason}</p>
+                    <p className="text-sm text-ink-2 mt-1 truncate">{leave.reason}</p>
                     {leave.review_notes && (
-                      <p className="text-xs text-[#7C6F95] mt-1 italic">Note: {leave.review_notes}</p>
+                      <p className="text-xs text-ink-3 mt-1 italic">Note: {leave.review_notes}</p>
                     )}
                   </div>
 

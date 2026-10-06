@@ -21,18 +21,18 @@ function CredentialsModal({ credentials, onClose, studentId }: { credentials: { 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <h2 className="text-xl font-bold text-violet-900 mb-2">Student Login Credentials</h2>
-        <p className="text-sm text-violet-600 mb-4">Share these credentials with the student. They will be asked to change password on first login.</p>
+      <div className="bg-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+        <h2 className="text-xl font-bold text-ink mb-2">Student Login Credentials</h2>
+        <p className="text-sm text-accent-fg mb-4">Share these credentials with the student. They will be asked to change password on first login.</p>
 
         <div className="bg-violet-50 rounded-lg p-4 mb-4 font-mono text-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-violet-600">Login ID:</span>
-            <span className="text-violet-900 font-medium">{loginId}</span>
+            <span className="text-accent-fg">Login ID:</span>
+            <span className="text-ink font-medium">{loginId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-violet-600">Password:</span>
-            <span className="text-violet-900 font-medium">{credentials.password}</span>
+            <span className="text-accent-fg">Password:</span>
+            <span className="text-ink font-medium">{credentials.password}</span>
           </div>
         </div>
 
@@ -66,7 +66,7 @@ const emptyForm: StudentCreateRequest = {
 };
 
 function selectClass(className = "") {
-  return `w-full rounded-md border border-violet-200 dark:border-slate-600 bg-violet-50/50 dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed ${className}`;
+  return `w-full rounded-md border border-line bg-violet-50/50 dark:bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 focus:bg-surface dark:focus:bg-surface-3 disabled:opacity-50 disabled:cursor-not-allowed ${className}`;
 }
 
 export default function StudentForm() {
@@ -153,6 +153,11 @@ export default function StudentForm() {
         photoDocumentId = await uploadFile(photoFile, "STUDENT_PHOTO");
       }
 
+      const documentIds: string[] = [];
+      for (const doc of documents) {
+        if (doc.file) documentIds.push(await uploadFile(doc.file, "STUDENT_DOCUMENT"));
+      }
+
       const payload: StudentCreateRequest = {
         ...form,
         dob: form.dob || null,
@@ -164,6 +169,7 @@ export default function StudentForm() {
         phone: form.phone || null,
         email: form.email || null,
         photo_document_id: photoDocumentId,
+        document_ids: documentIds,
       };
       mutation.mutate(payload);
     } catch {
@@ -311,14 +317,14 @@ export default function StudentForm() {
           </div>
 
           {/* Photo Upload */}
-          <div className="border-t border-violet-100 pt-4">
+          <div className="border-t border-line pt-4">
             <Label>Student Photo</Label>
             <div className="flex items-center gap-4 mt-2">
-              <div className="w-24 h-24 rounded-xl bg-violet-50 border-2 border-dashed border-violet-200 flex items-center justify-center overflow-hidden">
+              <div className="w-24 h-24 rounded-xl bg-violet-50 border-2 border-dashed border-line flex items-center justify-center overflow-hidden">
                 {photoPreview ? (
                   <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-violet-300 text-3xl">👤</span>
+                  <span className="text-ink-2 text-3xl">👤</span>
                 )}
               </div>
               <div>
@@ -326,25 +332,25 @@ export default function StudentForm() {
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoChange}
-                  className="text-sm text-violet-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-violet-100 file:text-violet-700 hover:file:bg-violet-200"
+                  className="text-sm text-accent-fg file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-violet-100 file:text-ink-2 hover:file:bg-violet-200"
                 />
-                <p className="text-xs text-violet-400 mt-1">JPG, PNG up to 5MB</p>
+                <p className="text-xs text-accent-fg mt-1">JPG, PNG up to 5MB</p>
               </div>
             </div>
           </div>
 
           {/* Documents Upload */}
-          <div className="border-t border-violet-100 pt-4">
+          <div className="border-t border-line pt-4">
             <Label>Documents</Label>
             <div className="space-y-3 mt-2">
               {documents.map((doc, idx) => (
                 <div key={doc.name} className="flex items-center gap-3 p-3 bg-violet-50/50 rounded-lg">
-                  <span className="text-sm font-medium text-violet-700 w-40">{doc.name}</span>
+                  <span className="text-sm font-medium text-ink-2 w-40">{doc.name}</span>
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => handleDocChange(idx, e)}
-                    className="flex-1 text-sm text-violet-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-violet-100 file:text-violet-700"
+                    className="flex-1 text-sm text-accent-fg file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-violet-100 file:text-ink-2"
                   />
                   {doc.file && <span className="text-green-600 text-sm">✓</span>}
                 </div>

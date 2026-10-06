@@ -1,3 +1,4 @@
+import { openDocument } from "../../api/files";
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
@@ -93,11 +94,11 @@ export default function DocumentList() {
       <Card className="mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Filter by Category</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Filter by Category</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+              className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
               <option value="">All Categories</option>
               {CATEGORIES.map((c) => (
@@ -107,11 +108,11 @@ export default function DocumentList() {
           </div>
           <div className="flex-1" />
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Upload Category</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Upload Category</label>
             <select
               value={uploadCategory}
               onChange={(e) => setUploadCategory(e.target.value)}
-              className="rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+              className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -145,28 +146,27 @@ export default function DocumentList() {
               <div className="flex items-start gap-3">
                 <div className="text-3xl">{getFileIcon(doc.content_type)}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-violet-900 truncate" title={doc.original_filename}>
+                  <p className="font-medium text-ink truncate" title={doc.original_filename}>
                     {doc.original_filename}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge tone="violet">{doc.category}</Badge>
-                    <span className="text-xs text-violet-500">{formatSize(doc.size)}</span>
+                    <span className="text-xs text-accent-fg">{formatSize(doc.size)}</span>
                   </div>
-                  <p className="text-xs text-violet-400 mt-2">
+                  <p className="text-xs text-accent-fg mt-2">
                     By {doc.uploaded_by_name} · {new Date(doc.created_at).toLocaleDateString()}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-violet-100">
-                <a
-                  href={`${api.defaults.baseURL}/uploads/documents/${doc.id}/download`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-violet-600 hover:underline"
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => openDocument(doc.id)}
+                  className="text-sm text-accent-fg hover:underline"
                 >
                   Download
-                </a>
-                <span className="text-violet-300">|</span>
+                </button>
+                <span className="text-ink-2">|</span>
                 <button
                   onClick={() => {
                     if (confirm("Delete this document?")) {
@@ -182,7 +182,7 @@ export default function DocumentList() {
           ))}
           {documentsQuery.data?.items.length === 0 && (
             <Card className="col-span-full">
-              <p className="text-center text-violet-400 py-8">No documents uploaded.</p>
+              <p className="text-center text-accent-fg py-8">No documents uploaded.</p>
             </Card>
           )}
         </div>

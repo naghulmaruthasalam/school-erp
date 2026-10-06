@@ -91,12 +91,12 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-violet-500/10 transition-colors"
+        className="glass-icon-btn relative"
         aria-label="Notifications"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-violet-600"
+          className="h-[18px] w-[18px] text-ink-2"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -104,23 +104,23 @@ export default function NotificationBell() {
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={2}
+            strokeWidth={1.8}
             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
           />
         </svg>
         {(countQuery.data?.unread ?? 0) > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+          <span className="absolute -end-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-pink-500 px-1 text-[10px] font-bold text-white shadow-[0_2px_8px_rgba(255,69,58,0.5)]">
             {countQuery.data!.unread > 9 ? "9+" : countQuery.data!.unread}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-xl border border-violet-100 z-50 overflow-hidden animate-fade-in-up">
-          <div className="px-4 py-3 border-b border-violet-100 flex items-center justify-between">
-            <h3 className="font-semibold text-violet-900">Notifications</h3>
+        <div className="glass-strong absolute end-0 top-full z-50 mt-3 w-[min(20rem,calc(100vw-2rem))] overflow-hidden !rounded-[24px] animate-pop-in origin-top-right">
+          <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
+            <h3 className="font-semibold text-ink">Notifications</h3>
             {(countQuery.data?.unread ?? 0) > 0 && (
-              <span className="text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded-full">
+              <span className="lg-chip">
                 {countQuery.data?.unread} new
               </span>
             )}
@@ -128,15 +128,15 @@ export default function NotificationBell() {
 
           <div className="max-h-80 overflow-y-auto">
             {notificationsQuery.isLoading ? (
-              <div className="p-4 text-center text-violet-400">Loading...</div>
+              <div className="p-4 text-center text-ink-3">Loading...</div>
             ) : notificationsQuery.data?.items.length === 0 ? (
-              <div className="p-8 text-center text-violet-400">No notifications</div>
+              <div className="p-8 text-center text-ink-3">No notifications</div>
             ) : (
               notificationsQuery.data?.items.map((n) => (
                 <div
                   key={n.id}
-                  className={`px-4 py-3 border-b border-violet-50 hover:bg-violet-50 cursor-pointer transition-colors ${
-                    !n.is_read ? "bg-violet-50/50" : ""
+                  className={`px-4 py-3 border-b border-line hover:bg-accent-soft cursor-pointer transition-colors ${
+                    !n.is_read ? "bg-accent-soft/60" : ""
                   }`}
                   onClick={() => {
                     if (!n.is_read) markReadMutation.mutate(n.id);
@@ -145,11 +145,11 @@ export default function NotificationBell() {
                   <div className="flex items-start gap-3">
                     <div className={`w-2 h-2 rounded-full mt-2 ${priorityColors[n.priority]}`} />
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate ${!n.is_read ? "text-violet-900" : "text-violet-700"}`}>
+                      <p className={`text-sm font-medium truncate ${!n.is_read ? "text-ink" : "text-ink-2"}`}>
                         {n.title}
                       </p>
-                      <p className="text-xs text-violet-500 truncate">{n.content}</p>
-                      <p className="text-xs text-violet-400 mt-1">
+                      <p className="text-xs text-ink-3 truncate">{n.content}</p>
+                      <p className="text-[11px] text-ink-3 mt-1">
                         {new Date(n.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -159,13 +159,13 @@ export default function NotificationBell() {
             )}
           </div>
 
-          <div className="px-4 py-3 border-t border-violet-100">
+          <div className="px-4 py-3 border-t border-line">
             <button
               onClick={() => {
                 setIsOpen(false);
                 navigate(getNotificationPath());
               }}
-              className="w-full text-center text-sm text-violet-600 hover:text-violet-800 font-medium"
+              className="w-full text-center text-sm text-accent-fg hover:opacity-80 font-semibold"
             >
               View all notifications
             </button>

@@ -22,32 +22,32 @@ function ResultPanel({ examId, studentId }: { examId: string; studentId: string 
   if (!result) return null;
 
   return (
-    <div className="mt-3 overflow-x-auto rounded-md border border-violet-200">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
+    <div className="mt-3 overflow-x-auto rounded-md border border-line">
+      <table className="min-w-full divide-y divide-line text-sm">
         <thead className="bg-violet-50">
           <tr>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-violet-600">Subject</th>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-violet-600">Max Marks</th>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-violet-600">Obtained</th>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-violet-600">Grade</th>
+            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Subject</th>
+            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Max Marks</th>
+            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Obtained</th>
+            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Grade</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-line">
           {result.subjects.map((s) => (
             <tr key={s.exam_subject_id}>
-              <td className="px-3 py-2 text-violet-700">{subjectName(s.subject_id)}</td>
-              <td className="px-3 py-2 text-violet-700">{s.max_marks}</td>
-              <td className="px-3 py-2 text-violet-700">{s.marks_obtained ?? "—"}</td>
-              <td className="px-3 py-2 text-violet-700">{s.grade ?? "—"}</td>
+              <td className="px-3 py-2 text-ink-2">{subjectName(s.subject_id)}</td>
+              <td className="px-3 py-2 text-ink-2">{s.max_marks}</td>
+              <td className="px-3 py-2 text-ink-2">{s.marks_obtained ?? "—"}</td>
+              <td className="px-3 py-2 text-ink-2">{s.grade ?? "—"}</td>
             </tr>
           ))}
         </tbody>
         <tfoot className="bg-violet-50 font-medium">
           <tr>
-            <td className="px-3 py-2 text-violet-900">Total</td>
-            <td className="px-3 py-2 text-violet-900">{result.total_max_marks}</td>
-            <td className="px-3 py-2 text-violet-900">{result.total_marks_obtained}</td>
-            <td className="px-3 py-2 text-violet-900">
+            <td className="px-3 py-2 text-ink">Total</td>
+            <td className="px-3 py-2 text-ink">{result.total_max_marks}</td>
+            <td className="px-3 py-2 text-ink">{result.total_marks_obtained}</td>
+            <td className="px-3 py-2 text-ink">
               {result.overall_grade} ({result.percentage.toFixed(1)}%)
             </td>
           </tr>
@@ -73,7 +73,7 @@ export default function ExamsPage() {
     return (
       <div>
         <PageHeader title="Exams" />
-        <p className="text-sm text-violet-600">Select a child above to view exams.</p>
+        <p className="text-sm text-accent-fg">Select a child above to view exams.</p>
       </div>
     );
   }
@@ -117,7 +117,7 @@ export default function ExamsPage() {
         <Spinner />
       ) : exams.length === 0 ? (
         <Card>
-          <p className="text-sm text-violet-400">No exams scheduled yet.</p>
+          <p className="text-sm text-accent-fg">No exams scheduled yet.</p>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -128,8 +128,8 @@ export default function ExamsPage() {
               <Card key={exam.id}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-violet-900">{exam.name}</p>
-                    <p className="text-xs text-violet-600">
+                    <p className="text-sm font-semibold text-ink">{exam.name}</p>
+                    <p className="text-xs text-accent-fg">
                       {exam.term ? `${exam.term} — ` : ""}
                       {formatDisplayDate(exam.start_date)} to {formatDisplayDate(exam.end_date)}
                     </p>

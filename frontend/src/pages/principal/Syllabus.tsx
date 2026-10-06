@@ -2,14 +2,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, Card } from "../../components/ui";
 import { SyllabusViewer } from "../../components/SyllabusViewer";
-import { useTheme } from "../../theme/ThemeContext";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
 import { Filter } from "lucide-react";
 
 export default function PrincipalSyllabus() {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
 
@@ -36,21 +33,17 @@ export default function PrincipalSyllabus() {
         subtitle="Review all course curricula across the school"
       />
 
-      <Card className={`mb-6 ${isDark ? "bg-slate-800/50 border-slate-700" : ""}`}>
+      <Card className={`mb-6 `}>
         <div className="flex flex-wrap items-center gap-4">
-          <Filter size={18} className={isDark ? "text-slate-400" : "text-slate-500"} />
+          <Filter size={18} className={"text-ink-3"} />
           <div>
-            <label className={`block text-sm font-medium mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+            <label className={`block text-sm font-medium mb-1 text-ink-2`}>
               Class
             </label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className={`rounded-lg border px-3 py-2 ${
-                isDark
-                  ? "bg-slate-700 border-slate-600 text-white"
-                  : "border-slate-200 focus:border-violet-500"
-              }`}
+              className={`rounded-lg border px-3 py-2 border-line focus:border-violet-500`}
             >
               <option value="">All Classes</option>
               {classesQuery.data?.map((c) => (
@@ -59,17 +52,13 @@ export default function PrincipalSyllabus() {
             </select>
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+            <label className={`block text-sm font-medium mb-1 text-ink-2`}>
               Subject
             </label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className={`rounded-lg border px-3 py-2 ${
-                isDark
-                  ? "bg-slate-700 border-slate-600 text-white"
-                  : "border-slate-200 focus:border-violet-500"
-              }`}
+              className={`rounded-lg border px-3 py-2 border-line focus:border-violet-500`}
             >
               <option value="">All Subjects</option>
               {subjectsQuery.data?.map((s) => (

@@ -169,10 +169,10 @@ export const DEMO_DATA: Record<string, unknown> = {
   // Fee invoices for student
   "/fees/invoices": {
     items: [
-      { id: "inv1", invoice_no: "INV-2026-001", total_amount: 35000, amount_paid: 35000, outstanding_amount: 0, status: "PAID", due_date: "2026-04-15", description: "Q1 - Tuition Fee + Lab Fee", created_at: "2026-04-01" },
-      { id: "inv2", invoice_no: "INV-2026-002", total_amount: 35000, amount_paid: 35000, outstanding_amount: 0, status: "PAID", due_date: "2026-07-15", description: "Q2 - Tuition Fee + Lab Fee", created_at: "2026-07-01" },
-      { id: "inv3", invoice_no: "INV-2026-003", total_amount: 35000, amount_paid: 20000, outstanding_amount: 15000, status: "PARTIALLY_PAID", due_date: "2026-10-15", description: "Q3 - Tuition Fee + Lab Fee", created_at: "2026-10-01" },
-      { id: "inv4", invoice_no: "INV-2026-004", total_amount: 35000, amount_paid: 0, outstanding_amount: 35000, status: "PENDING", due_date: "2027-01-15", description: "Q4 - Tuition Fee + Lab Fee", created_at: "2026-12-01" },
+      { id: "inv1", invoice_no: "INV-2026-001", invoice_number: "INV-2026-001", student_name: "Aarav Sharma", paid_amount: 35000, total_amount: 35000, amount_paid: 35000, outstanding_amount: 0, status: "PAID", due_date: "2026-04-15", description: "Q1 - Tuition Fee + Lab Fee", created_at: "2026-04-01" },
+      { id: "inv2", invoice_no: "INV-2026-002", invoice_number: "INV-2026-002", student_name: "Aarav Sharma", paid_amount: 35000, total_amount: 35000, amount_paid: 35000, outstanding_amount: 0, status: "PAID", due_date: "2026-07-15", description: "Q2 - Tuition Fee + Lab Fee", created_at: "2026-07-01" },
+      { id: "inv3", invoice_no: "INV-2026-003", invoice_number: "INV-2026-003", student_name: "Aarav Sharma", paid_amount: 20000, total_amount: 35000, amount_paid: 20000, outstanding_amount: 15000, status: "PARTIALLY_PAID", due_date: "2026-10-15", description: "Q3 - Tuition Fee + Lab Fee", created_at: "2026-10-01" },
+      { id: "inv4", invoice_no: "INV-2026-004", invoice_number: "INV-2026-004", student_name: "Aarav Sharma", paid_amount: 0, total_amount: 35000, amount_paid: 0, outstanding_amount: 35000, status: "PENDING", due_date: "2027-01-15", description: "Q4 - Tuition Fee + Lab Fee", created_at: "2026-12-01" },
     ],
     total: 4,
     page: 1,
@@ -193,6 +193,7 @@ export const DEMO_DATA: Record<string, unknown> = {
   ],
 
   "/fees/stats": {
+    total_expected: 8500000,
     total_collected: 7000000,
     total_pending: 1500000,
     collection_percentage: 82.4,
@@ -229,6 +230,21 @@ export const DEMO_DATA: Record<string, unknown> = {
     { month: "Jul", amount: 1100000 },
     { month: "Aug", amount: 980000 },
     { month: "Sep", amount: 1050000 },
+  ],
+
+  "/analytics/fee-by-class": [
+    { name: "Class 6", billed: 1400000, collected: 1210000, pending: 190000 },
+    { name: "Class 7", billed: 1500000, collected: 1260000, pending: 240000 },
+    { name: "Class 8", billed: 1550000, collected: 1300000, pending: 250000 },
+    { name: "Class 9", billed: 1900000, collected: 1550000, pending: 350000 },
+    { name: "Class 10", billed: 2150000, collected: 1680000, pending: 470000 },
+  ],
+
+  "/analytics/recent-activity": [
+    { type: "payment", title: "Fee Payment", description: "Aarav Sharma paid ₹12,500", time: new Date(Date.now() - 12 * 60000).toISOString() },
+    { type: "admission", title: "New Admission", description: "Diya Nair applied for admission", time: new Date(Date.now() - 95 * 60000).toISOString() },
+    { type: "attendance", title: "Attendance Marked", description: "Class 8-A: 38 students marked", time: new Date(Date.now() - 4 * 3600000).toISOString() },
+    { type: "leave", title: "Leave Request", description: "Ravi Menon requested casual leave (pending)", time: new Date(Date.now() - 26 * 3600000).toISOString() },
   ],
 
   "/analytics/student-distribution": [
@@ -412,10 +428,10 @@ export const DEMO_DATA: Record<string, unknown> = {
   // Exams
   "/exams": {
     items: [
-      { id: "e1", name: "Mid-Term Examination", exam_type: "MID_TERM", class_id: "c1", start_date: "2026-10-15", end_date: "2026-10-25", status: "upcoming", academic_year_id: "ay1" },
-      { id: "e2", name: "Unit Test 3", exam_type: "UNIT_TEST", class_id: "c1", start_date: "2026-10-05", end_date: "2026-10-06", status: "upcoming", academic_year_id: "ay1" },
-      { id: "e3", name: "Unit Test 2", exam_type: "UNIT_TEST", class_id: "c1", start_date: "2026-08-20", end_date: "2026-08-21", status: "completed", academic_year_id: "ay1" },
-      { id: "e4", name: "Unit Test 1", exam_type: "UNIT_TEST", class_id: "c2", start_date: "2026-06-15", end_date: "2026-06-16", status: "completed", academic_year_id: "ay1" },
+      { id: "e1", name: "Mid-Term Examination", exam_type: "MID_TERM", class_id: "c1", class_ids: ["c1"], term: "UNIT_TEST", start_date: "2026-10-15", end_date: "2026-10-25", status: "upcoming", academic_year_id: "ay1" },
+      { id: "e2", name: "Unit Test 3", exam_type: "UNIT_TEST", class_id: "c1", class_ids: ["c1"], term: "UNIT_TEST", start_date: "2026-10-05", end_date: "2026-10-06", status: "upcoming", academic_year_id: "ay1" },
+      { id: "e3", name: "Unit Test 2", exam_type: "UNIT_TEST", class_id: "c1", class_ids: ["c1"], term: "UNIT_TEST", start_date: "2026-08-20", end_date: "2026-08-21", status: "completed", academic_year_id: "ay1" },
+      { id: "e4", name: "Unit Test 1", exam_type: "UNIT_TEST", class_id: "c2", class_ids: ["c2"], term: "UNIT_TEST", start_date: "2026-06-15", end_date: "2026-06-16", status: "completed", academic_year_id: "ay1" },
     ],
     total: 4,
     page: 1,
@@ -645,11 +661,87 @@ export const DEMO_DATA: Record<string, unknown> = {
     { id: "c3", name: "Class 6", academic_year_id: "ay1", order: 6 },
     { id: "c4", name: "Class 1", academic_year_id: "ay1", order: 1 },
   ],
+  // ---- Additional demo endpoints so every admin / platform screen renders ----
+  "/payments": {
+    items: [
+      { id: "pay1", amount: 35000, payment_method: "UPI", transaction_id: "TXN-884201", payment_date: "2026-04-10" },
+      { id: "pay2", amount: 35000, payment_method: "CARD", transaction_id: "TXN-884977", payment_date: "2026-07-12" },
+      { id: "pay3", amount: 20000, payment_method: "NET_BANKING", transaction_id: "TXN-885530", payment_date: "2026-10-02" },
+    ],
+    total: 3, page: 1, page_size: 20,
+  },
+
+  "/academics/calendar": [
+    { id: "ev1", school_id: "demo-school", academic_year_id: "ay1", title: "Parent-Teacher Meeting", description: "Term review with parents", event_date: tomorrow, event_type: "EVENT" },
+    { id: "ev2", school_id: "demo-school", academic_year_id: "ay1", title: "Mid-Term Exams", description: "Classes 6 to 10", event_date: "2026-10-15", event_type: "EXAM" },
+    { id: "ev3", school_id: "demo-school", academic_year_id: "ay1", title: "Diwali Break", description: null, event_date: "2026-10-28", event_type: "HOLIDAY" },
+    { id: "ev4", school_id: "demo-school", academic_year_id: "ay1", title: "Sports Day", description: "Annual sports meet", event_date: "2026-11-12", event_type: "EVENT" },
+  ],
+
+  "/transport/stats": { total_vehicles: 4, active_vehicles: 3, total_routes: 3, students_using_transport: 86 },
+  "/transport/vehicles": {
+    items: [
+      { id: "v1", vehicle_no: "KA-01-AB-1234", vehicle_type: "BUS", capacity: 40, driver_name: "Ramesh Kumar", driver_phone: "9876500011", driver_license: "DL-0420110012345", helper_name: "Suresh", helper_phone: "9876500012", status: "ACTIVE", insurance_expiry: "2027-03-31", fitness_expiry: "2027-01-15" },
+      { id: "v2", vehicle_no: "KA-01-CD-5678", vehicle_type: "BUS", capacity: 32, driver_name: "Mahesh Gowda", driver_phone: "9876500021", driver_license: null, helper_name: null, helper_phone: null, status: "ACTIVE", insurance_expiry: "2026-12-20", fitness_expiry: "2026-11-05" },
+      { id: "v3", vehicle_no: "KA-05-EF-9012", vehicle_type: "VAN", capacity: 14, driver_name: "Irfan Pasha", driver_phone: "9876500031", driver_license: null, helper_name: null, helper_phone: null, status: "MAINTENANCE", insurance_expiry: null, fitness_expiry: null },
+    ],
+    total: 3, page: 1, page_size: 100,
+  },
+  "/transport/routes": {
+    items: [
+      { id: "r1", route_name: "North Loop", route_code: "R-01", vehicle_id: "v1", vehicle_no: "KA-01-AB-1234", stops: [{ name: "Lake View", pickup_time: "07:00", drop_time: "15:30", fare: 900 }, { name: "Market Road", pickup_time: "07:15", drop_time: "15:15", fare: 800 }], is_active: true },
+      { id: "r2", route_name: "East Side", route_code: "R-02", vehicle_id: "v2", vehicle_no: "KA-01-CD-5678", stops: [{ name: "Park Avenue", pickup_time: "07:05", drop_time: "15:25", fare: 1000 }], is_active: true },
+    ],
+    total: 2, page: 1, page_size: 100,
+  },
+  "/transport/assignments": {
+    items: [
+      { id: "a1", student_id: "s1", student_name: "Aarav Sharma", student_class: "Class 10 - A", route_id: "r1", route_name: "North Loop", stop_name: "Lake View", monthly_fee: 900, is_active: true },
+      { id: "a2", student_id: "s2", student_name: "Priya Patel", student_class: "Class 10 - A", route_id: "r2", route_name: "East Side", stop_name: "Park Avenue", monthly_fee: 1000, is_active: true },
+    ],
+    total: 2, page: 1, page_size: 200,
+  },
+
+  "/schools/stats/overview": { total_schools: 12, active_schools: 10, inactive_schools: 2, total_users: 5840, active_users: 5312 },
+  "/schools/stats/users": [
+    { role: "STUDENT", count: 4120 }, { role: "PARENT", count: 3890 }, { role: "TEACHER", count: 412 },
+    { role: "SCHOOL_ADMIN", count: 24 }, { role: "PRINCIPAL", count: 12 },
+  ],
+  "/schools/stats/audit-logs": [
+    { id: "al1", school_name: "Bright Path School", actor_name: "Anita Rao", actor_email: "anita@bps.edu", action: "CREATE_STUDENT", entity_type: "student", entity_id: "s-1001", details: {}, created_at: new Date(Date.now() - 3600e3).toISOString() },
+    { id: "al2", school_name: "Lakeview Academy", actor_name: "Ravi Menon", actor_email: "ravi@lakeview.edu", action: "UPDATE_FEE_STRUCTURE", entity_type: "fee_structure", entity_id: "fs-22", details: {}, created_at: new Date(Date.now() - 7200e3).toISOString() },
+    { id: "al3", school_name: "Bright Path School", actor_name: "Meera Iyer", actor_email: "meera@bps.edu", action: "MARK_ATTENDANCE", entity_type: "attendance", entity_id: null, details: {}, created_at: new Date(Date.now() - 10800e3).toISOString() },
+  ],
+  "/schools": {
+    items: [
+      { id: "sc1", name: "Bright Path School", code: "SCH-2024-BPS001", address: "12 Lake Road", city: "Bengaluru", state: "Karnataka", country: "India", postal_code: "560001", phone: "9876500100", email: "office@bps.edu", logo_document_id: null, academic_year_start_month: 4, is_active: true, created_at: "2024-04-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" },
+      { id: "sc2", name: "Lakeview Academy", code: "SCH-2024-LVA002", address: "8 Park Street", city: "Mysuru", state: "Karnataka", country: "India", postal_code: "570001", phone: "9876500200", email: "hello@lakeview.edu", logo_document_id: null, academic_year_start_month: 6, is_active: true, created_at: "2024-06-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" },
+    ],
+    total: 2, page: 1, page_size: 5,
+  },
 };
+
+// Some screens read years as a plain array, others as a page ({ items }); serve both shapes.
+{
+  const years = DEMO_DATA["/academics/years"] as unknown[];
+  Object.assign(years, { items: years, total: years.length, page: 1, page_size: years.length });
+}
 
 export function getDemoResponse(url: string): unknown | null {
   const cleanUrl = url.replace(/\?.*$/, "");
   const queryParams = new URLSearchParams(url.split("?")[1] || "");
+
+  // Endpoints added for full-screen demo coverage (most specific first)
+  if (cleanUrl.endsWith("/schools/stats/overview")) return DEMO_DATA["/schools/stats/overview"];
+  if (cleanUrl.endsWith("/schools/stats/users")) return DEMO_DATA["/schools/stats/users"];
+  if (cleanUrl.endsWith("/schools/stats/audit-logs")) return DEMO_DATA["/schools/stats/audit-logs"];
+  if (cleanUrl.endsWith("/schools")) return DEMO_DATA["/schools"];
+  if (cleanUrl.endsWith("/transport/stats")) return DEMO_DATA["/transport/stats"];
+  if (cleanUrl.endsWith("/transport/vehicles")) return DEMO_DATA["/transport/vehicles"];
+  if (cleanUrl.endsWith("/transport/routes")) return DEMO_DATA["/transport/routes"];
+  if (cleanUrl.endsWith("/transport/assignments")) return DEMO_DATA["/transport/assignments"];
+  if (cleanUrl.endsWith("/academics/calendar")) return DEMO_DATA["/academics/calendar"];
+  if (cleanUrl.endsWith("/payments")) return DEMO_DATA["/payments"];
 
   // Handle students with section_id filter (for attendance roster)
   if (cleanUrl.endsWith("/students") && queryParams.get("section_id")) {
@@ -677,6 +769,8 @@ export function getDemoResponse(url: string): unknown | null {
   if (cleanUrl.endsWith("/analytics/pending-fees")) return DEMO_DATA["/analytics/pending-fees"];
   if (cleanUrl.includes("/analytics/attendance-trend")) return DEMO_DATA["/analytics/attendance-trend"];
   if (cleanUrl.includes("/analytics/fee-collection")) return DEMO_DATA["/analytics/fee-collection"];
+  if (cleanUrl.includes("/analytics/fee-by-class")) return DEMO_DATA["/analytics/fee-by-class"];
+  if (cleanUrl.includes("/analytics/recent-activity")) return DEMO_DATA["/analytics/recent-activity"];
   if (cleanUrl.endsWith("/analytics/student-distribution")) return DEMO_DATA["/analytics/student-distribution"];
   if (cleanUrl.includes("/analytics/attendance-daily")) return DEMO_DATA["/analytics/attendance-daily"];
   if (cleanUrl.includes("/attendance/staff")) return DEMO_DATA["/attendance/staff"];

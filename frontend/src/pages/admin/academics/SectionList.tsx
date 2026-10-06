@@ -88,7 +88,7 @@ export default function SectionList() {
             <Label htmlFor="sec-year">Academic Year</Label>
             <select
               id="sec-year"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={academicYearId}
               onChange={(e) => setAcademicYearId(e.target.value)}
             >
@@ -106,7 +106,7 @@ export default function SectionList() {
             <Label htmlFor="sec-class">Class</Label>
             <select
               id="sec-class"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
             >
@@ -122,7 +122,7 @@ export default function SectionList() {
           </div>
         </div>
 
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Create Section</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Create Section</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
           <div>
             <Label htmlFor="sec-name">Name</Label>
@@ -136,7 +136,7 @@ export default function SectionList() {
             <Label htmlFor="sec-teacher">Class Teacher</Label>
             <select
               id="sec-teacher"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={classTeacherId}
               onChange={(e) => setClassTeacherId(e.target.value)}
             >

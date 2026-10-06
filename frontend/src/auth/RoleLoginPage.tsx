@@ -6,18 +6,13 @@ import { LOGIN_SLUG_TO_ROLE, ROLE_THEMES } from "../theme/roles";
 import { demoLoginRequest, fetchMe, loginRequest } from "./api";
 import { ROLE_HOME, useAuthStore } from "./store";
 import { useLanguage } from "../i18n/LanguageContext";
+import { ThemeToggle, useRoleAccent } from "../theme/ThemeContext";
 import {
   Sparkles,
   CheckCircle2,
-  BookOpen,
-  GraduationCap,
-  Award,
-  BarChart3,
   Eye,
   EyeOff,
   ArrowLeft,
-  Globe,
-  ChevronDown,
 } from "lucide-react";
 
 const FEATURE_KEYS = [
@@ -27,17 +22,10 @@ const FEATURE_KEYS = [
   "login.features.cloudStorage",
 ];
 
-const FLOATING_ELEMENTS = [
-  { Icon: BookOpen, top: "15%", left: "10%", delay: "0s", size: 28 },
-  { Icon: GraduationCap, top: "25%", right: "15%", delay: "1.5s", size: 32 },
-  { Icon: Award, bottom: "30%", left: "15%", delay: "2s", size: 24 },
-  { Icon: BarChart3, bottom: "20%", right: "10%", delay: "0.5s", size: 26 },
-  { Icon: Sparkles, top: "50%", left: "5%", delay: "3s", size: 20 },
-];
-
 export default function RoleLoginPage() {
   const { role: roleSlug } = useParams<{ role: string }>();
   const role = roleSlug ? LOGIN_SLUG_TO_ROLE[roleSlug] : undefined;
+  useRoleAccent(role);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -104,165 +92,94 @@ export default function RoleLoginPage() {
   const roleLabel = roleLabels[role]?.[language] || theme.label;
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row" dir={dir}>
-      {/* Left side - Illustration & Info */}
-      <div className="login-split-left hidden lg:flex lg:w-1/2 xl:w-[55%] relative p-12 flex-col justify-between overflow-hidden">
-        {/* Background elements */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-30" />
-        <div className="glow-orb glow-orb-1" style={{ width: "300px", height: "300px" }} />
-        <div className="glow-orb glow-orb-2" style={{ width: "250px", height: "250px" }} />
+    <div className="relative flex min-h-screen flex-col lg:flex-row" dir={dir}>
+      {/* Showcase panel */}
+      <div className="hidden p-4 lg:flex lg:w-1/2 xl:w-[55%]">
+        <div className="glass relative flex w-full flex-col justify-between overflow-hidden !rounded-[36px] p-12">
+          <div className="pointer-events-none absolute -end-24 -top-24 h-80 w-80 rounded-full bg-accent/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -start-20 h-80 w-80 rounded-full bg-accent-2/20 blur-3xl" />
 
-        {/* Morphing blob */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-br from-violet-500/20 to-pink-500/20 morphing-blob blur-3xl" />
-
-        {/* Top wavy lines */}
-        <svg className="absolute top-0 left-0 w-full h-[150px] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 800 150">
-          <defs>
-            <linearGradient id="topWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.1" />
-              <stop offset="50%" stopColor="#ec4899" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.1" />
-            </linearGradient>
-            <filter id="topGlow">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-          </defs>
-          <path d="M0,80 Q200,20 400,60 T800,40" stroke="url(#topWaveGrad)" strokeWidth="2" fill="none" filter="url(#topGlow)" className="animate-glow-pulse" />
-          <path d="M0,100 Q200,50 400,80 T800,60" stroke="url(#topWaveGrad)" strokeWidth="1.5" fill="none" filter="url(#topGlow)" opacity="0.6" />
-        </svg>
-
-        {/* Bottom wavy lines */}
-        <svg className="absolute bottom-0 left-0 w-full h-[150px] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 800 150">
-          <path d="M0,50 Q200,100 400,70 T800,90" stroke="url(#topWaveGrad)" strokeWidth="2" fill="none" filter="url(#topGlow)" className="animate-glow-pulse" />
-          <path d="M0,70 Q200,120 400,90 T800,110" stroke="url(#topWaveGrad)" strokeWidth="1.5" fill="none" filter="url(#topGlow)" opacity="0.6" />
-        </svg>
-
-        {/* Side wavy line */}
-        <svg className="absolute top-0 right-0 w-[100px] h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 600">
-          <path d="M80,0 Q40,150 70,300 T50,600" stroke="url(#topWaveGrad)" strokeWidth="2" fill="none" filter="url(#topGlow)" className="animate-glow-pulse" />
-        </svg>
-
-        {/* Floating icons */}
-        {FLOATING_ELEMENTS.map(({ Icon, top, left, right, bottom, delay, size }, i) => (
-          <div
-            key={i}
-            className="absolute pointer-events-none opacity-30 animate-float-around"
-            style={{ top, left, right, bottom, animationDelay: delay }}
-          >
-            <Icon className="text-violet-300" size={size} strokeWidth={1} />
-          </div>
-        ))}
-
-        {/* Content */}
-        <div className="relative z-10">
-          <Link
-            to="/login"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            {t("login.backToRoles")}
-          </Link>
-        </div>
-
-        <div className="relative z-10 flex-1 flex flex-col justify-center max-w-lg">
-          {/* Role badge */}
-          <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-full bg-gradient-to-r ${theme.from}/20 ${theme.to}/20 border border-violet-500/20 w-fit mb-8`}>
-            <theme.Icon className="w-5 h-5 text-violet-400" strokeWidth={1.5} />
-            <span className="text-violet-300 font-medium">{roleLabel} {t("login.portal")}</span>
+          <div className="relative z-10">
+            <Link
+              to="/login"
+              className="group inline-flex items-center gap-2 rounded-full bg-surface-3 px-4 py-2 text-sm font-medium text-ink-2 transition-colors hover:text-ink"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              {t("login.backToRoles")}
+            </Link>
           </div>
 
-          {/* Main heading */}
-          <h1 className="text-4xl xl:text-5xl font-bold text-white mb-4 leading-tight">
-            {t("login.welcomeTo")}
-            <br />
-            <span className="text-gradient">Cogniitec AI</span>
-          </h1>
+          <div className="relative z-10 flex max-w-lg flex-1 flex-col justify-center">
+            <div className="mb-8 inline-flex w-fit items-center gap-3 rounded-full bg-accent-soft px-4 py-2">
+              <theme.Icon className="h-5 w-5 text-accent" strokeWidth={1.7} />
+              <span className="text-sm font-semibold text-accent-fg">
+                {roleLabel} {t("login.portal")}
+              </span>
+            </div>
 
-          <p className="text-slate-400 text-lg mb-8">
-            {theme.tagline}
-          </p>
+            <h1 className="mb-4 text-4xl font-semibold leading-[1.1] tracking-tight text-ink xl:text-[3.4rem]">
+              {t("login.welcomeTo")}
+              <br />
+              <span className="text-gradient">Cogniitec AI</span>
+            </h1>
 
-          {/* Feature list */}
-          <div className="space-y-4">
-            {FEATURE_KEYS.map((key, i) => (
-              <div
-                key={key}
-                className="flex items-center gap-3 animate-fade-in-up"
-                style={{ animationDelay: `${i * 0.1}s` }}
-              >
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4 text-violet-400" />
+            <p className="mb-9 text-lg text-ink-3">{theme.tagline}</p>
+
+            <div className="space-y-3">
+              {FEATURE_KEYS.map((key, i) => (
+                <div
+                  key={key}
+                  className="glass-row animate-fade-in-up"
+                  style={{ animationDelay: `${i * 0.08}s` }}
+                >
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft">
+                    <CheckCircle2 className="h-[18px] w-[18px] text-accent" />
+                  </div>
+                  <span className="text-sm font-medium text-ink-2">{t(key)}</span>
                 </div>
-                <span className="text-slate-300 text-sm">{t(key)}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-slate-500">
-            <Sparkles className="w-4 h-4" />
+          <div className="relative z-10 flex items-center gap-2 text-ink-3">
+            <Sparkles className="h-4 w-4" />
             <span className="text-xs">{t("login.tagline")}</span>
           </div>
         </div>
       </div>
 
-      {/* Right side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 md:p-12 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen lg:min-h-0 relative">
-        {/* Mobile back link */}
-        <div className="absolute top-6 left-6 lg:hidden">
+      {/* Sign-in panel */}
+      <div className="relative flex min-h-screen flex-1 items-center justify-center p-6 md:p-12 lg:min-h-0">
+        <div className="absolute start-6 top-6 lg:hidden">
           <Link
             to="/login"
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-surface-3 px-3.5 py-2 text-sm text-ink-2 transition-colors hover:text-ink"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="h-4 w-4" />
             {t("login.backToRoles")}
           </Link>
         </div>
 
-        {/* Language Toggle */}
-        <div className="absolute top-6 right-6 flex items-center gap-2">
-          <button
-            onClick={() => setLanguage("en")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              language === "en"
-                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            {language === "en" && <Globe className="w-4 h-4" />}
-            EN
-            {language === "en" && <ChevronDown className="w-3 h-3" />}
-          </button>
-          <button
-            onClick={() => setLanguage("ar")}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              language === "ar"
-                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            عربي
-          </button>
+        <div className="absolute end-6 top-6 flex items-center gap-2">
+          <div className="lg-seg">
+            <button aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
+            <button aria-pressed={language === "ar"} onClick={() => setLanguage("ar")}>عربي</button>
+          </div>
+          <ThemeToggle />
         </div>
 
-        <div className="w-full max-w-md animate-fade-in-up">
-          {/* Logo and header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 mb-4 shadow-lg shadow-violet-500/30 p-2">
-              <img src="/logo.png" alt="Cognitec" className="w-full h-full object-contain" />
+        <div className="mt-12 w-full max-w-md animate-fade-in-up lg:mt-0">
+          <div className="mb-7 text-center">
+            <div className="glass relative mx-auto mb-5 grid h-[76px] w-[76px] place-items-center !rounded-[24px] p-3">
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Cognitec" className="h-full w-full object-contain" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-1">
+            <h2 className="mb-1 text-[1.65rem] font-semibold tracking-tight text-ink">
               {t("login.signIn")} - {roleLabel}
             </h2>
-            <p className="text-slate-500 text-sm">
-              {t("login.enterCredentials")}
-            </p>
+            <p className="text-sm text-ink-3">{t("login.enterCredentials")}</p>
           </div>
 
-          {/* Login form card */}
-          <div className="login-glass p-8">
+          <div className="glass-strong !rounded-[32px] p-7 sm:p-8">
             <form
               className="space-y-5"
               onSubmit={(e) => {
@@ -272,7 +189,7 @@ export default function RoleLoginPage() {
             >
               {needsSchoolCode && (
                 <div>
-                  <label htmlFor="school_code" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label htmlFor="school_code" className="mb-1.5 block text-[13px] font-medium text-ink-2">
                     {t("login.schoolCode")}
                   </label>
                   <input
@@ -280,13 +197,13 @@ export default function RoleLoginPage() {
                     placeholder="e.g. SCH-2024-XXXXXX"
                     value={schoolCode}
                     onChange={(e) => setSchoolCode(e.target.value)}
-                    className="w-full input-premium text-slate-800"
+                    className="lg-field"
                   />
                 </div>
               )}
 
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="username" className="mb-1.5 block text-[13px] font-medium text-ink-2">
                   {role === "STUDENT" ? t("login.studentId") : role === "TEACHER" ? t("login.teacherId") : role === "PARENT" ? t("login.phoneNumber") : t("login.username")}
                 </label>
                 <input
@@ -295,13 +212,13 @@ export default function RoleLoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full input-premium text-slate-800"
+                  className="lg-field"
                   placeholder={role === "STUDENT" ? "e.g. BPS-STU-001" : role === "TEACHER" ? "e.g. BPS-TCH-001" : role === "PARENT" ? "e.g. 9876543210" : "Enter username"}
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="password" className="mb-1.5 block text-[13px] font-medium text-ink-2">
                   {t("login.password")}
                 </label>
                 <div className="relative">
@@ -311,15 +228,16 @@ export default function RoleLoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full input-premium text-slate-800 pr-12"
+                    className="lg-field pe-12"
                     placeholder="Enter your password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-600 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute end-4 top-1/2 -translate-y-1/2 text-ink-3 transition-colors hover:text-ink"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
@@ -327,15 +245,15 @@ export default function RoleLoginPage() {
               <div className="flex items-center justify-end">
                 <Link
                   to={`/forgot-password${needsSchoolCode && schoolCode ? `?school=${schoolCode}` : ""}`}
-                  className="text-sm text-violet-600 hover:text-violet-700 font-medium transition-colors"
+                  className="text-sm font-medium text-accent-fg transition-opacity hover:opacity-70"
                 >
                   {t("login.forgotPassword")}
                 </Link>
               </div>
 
               {mutation.isError && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-200">
-                  <p className="text-red-600 text-sm text-center font-medium">
+                <div className="rounded-2xl bg-red-500/10 p-3.5 ring-1 ring-red-500/25">
+                  <p className="text-center text-sm font-medium text-red-600 dark:text-red-400">
                     {t("login.invalidCredentials")}
                   </p>
                 </div>
@@ -344,46 +262,39 @@ export default function RoleLoginPage() {
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full btn-premium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="lg-btn lg-btn-primary !min-h-12 w-full !text-[15px]"
               >
-                <span className="relative z-10 flex items-center justify-center">
-                  {mutation.isPending ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      {t("login.signingIn")}
-                    </>
-                  ) : (
-                    t("login.signIn")
-                  )}
-                </span>
+                {mutation.isPending ? (
+                  <>
+                    <svg className="-ml-1 mr-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {t("login.signingIn")}
+                  </>
+                ) : (
+                  t("login.signIn")
+                )}
               </button>
             </form>
           </div>
 
           {/* Demo Login */}
           <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-500">
-                  {t("login.orExploreDemo")}
-                </span>
-              </div>
+            <div className="relative mb-4 flex items-center gap-3 text-xs font-medium text-ink-3">
+              <span className="h-px flex-1 bg-line" />
+              {t("login.orExploreDemo")}
+              <span className="h-px flex-1 bg-line" />
             </div>
             <button
               type="button"
               onClick={() => demoMutation.mutate()}
               disabled={demoMutation.isPending}
-              className="mt-4 w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-white font-semibold shadow-lg shadow-orange-300/30 hover:shadow-xl hover:shadow-orange-400/40 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="lg-btn lg-btn-secondary !min-h-12 w-full"
             >
               {demoMutation.isPending ? (
                 <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
@@ -391,28 +302,24 @@ export default function RoleLoginPage() {
                 </>
               ) : (
                 <>
-                  <span className="text-lg">✨</span>
+                  <Sparkles className="h-[18px] w-[18px] text-amber-500" />
                   {t("login.tryDemo")} {roleLabel}
                 </>
               )}
             </button>
-            <p className="mt-2 text-xs text-slate-400 text-center">
-              {t("login.noLoginNeeded")}
-            </p>
+            <p className="mt-2 text-center text-xs text-ink-3">{t("login.noLoginNeeded")}</p>
           </div>
 
-          {/* Footer links */}
           <div className="mt-8 text-center">
-            <p className="text-slate-500 text-sm">
+            <p className="text-sm text-ink-3">
               {t("login.notA")} {roleLabel.toLowerCase()}?{" "}
-              <Link to="/login" className="text-violet-600 hover:text-violet-700 font-semibold transition-colors">
+              <Link to="/login" className="font-semibold text-accent-fg transition-opacity hover:opacity-70">
                 {t("login.chooseDifferentRole")}
               </Link>
             </p>
           </div>
 
-          {/* Mobile branding */}
-          <div className="mt-10 flex items-center justify-center gap-2 text-slate-400 lg:hidden">
+          <div className="mt-10 flex items-center justify-center gap-2 text-ink-3 lg:hidden">
             <Logo size={20} showWordmark={false} />
             <span className="text-xs font-medium">Cogniitec AI School ERP</span>
           </div>

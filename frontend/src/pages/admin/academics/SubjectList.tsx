@@ -46,12 +46,12 @@ export default function SubjectList() {
       <PageHeader title="Subjects" subtitle="School-wide subject catalog." />
 
       <Card className="mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Create Subject</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Create Subject</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end">
           <div>
             <Label htmlFor="sub-name">Name</Label>
             <Input id="sub-name" placeholder="Mathematics" value={name} onChange={(e) => setName(e.target.value)} />
-            {name && <p className="mt-1 text-xs text-violet-500">Code will be: {generateCode(name)}</p>}
+            {name && <p className="mt-1 text-xs text-accent-fg">Code will be: {generateCode(name)}</p>}
           </div>
           <Button type="submit" disabled={createMutation.isPending}>
             {createMutation.isPending ? "Creating…" : "Create"}

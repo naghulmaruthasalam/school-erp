@@ -22,18 +22,26 @@ export default function ForgotPasswordPage() {
 
   const requestOtpMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/auth/forgot-password", { email, school_code: schoolCode || null });
+      const { data } = await api.post<{ message: string; needs_admin?: boolean }>("/auth/forgot-password", {
+        username: email.trim(),
+        school_code: schoolCode || null,
+      });
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.needs_admin) {
+        setError(data.message);
+        return;
+      }
       setStep("otp");
       setError("");
     },
-    onError: () => setError("Failed to send OTP. Please check your email."),
+    onError: () => setError("Failed to send OTP. Please check your username and school code."),
   });
 
   const verifyOtpMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/auth/verify-otp", { email, otp, school_code: schoolCode || null });
+      await api.post("/auth/verify-otp", { username: email.trim(), otp, school_code: schoolCode || null });
     },
     onSuccess: () => {
       setStep("password");
@@ -45,7 +53,7 @@ export default function ForgotPasswordPage() {
   const resetPasswordMutation = useMutation({
     mutationFn: async () => {
       await api.post("/auth/reset-password-otp", {
-        email,
+        username: email.trim(),
         otp,
         new_password: newPassword,
         confirm_password: confirmPassword,
@@ -65,7 +73,7 @@ export default function ForgotPasswordPage() {
 
     if (step === "email") {
       if (!email) {
-        setError("Please enter your email");
+        setError("Please enter your username");
         return;
       }
       requestOtpMutation.mutate();
@@ -91,15 +99,12 @@ export default function ForgotPasswordPage() {
   const isPending = requestOtpMutation.isPending || verifyOtpMutation.isPending || resetPasswordMutation.isPending;
 
   return (
-    <div className="relative min-h-screen bg-auth-gradient flex items-center justify-center px-4 py-12">
-      <div className="absolute inset-0 bg-grid-pattern" />
-      <div className="glow-orb glow-orb-1" />
-      <div className="glow-orb glow-orb-2" />
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
 
       <div className="relative z-10 w-full max-w-md">
         <Link
           to="/login"
-          className="inline-flex items-center text-slate-400 hover:text-white text-sm mb-6 transition-colors group"
+          className="inline-flex items-center text-ink-3 hover:text-ink text-sm mb-6 transition-colors group"
         >
           <svg className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -108,27 +113,27 @@ export default function ForgotPasswordPage() {
         </Link>
 
         <div className="animated-border">
-          <div className="glass-card p-8">
+          <div className="glass-strong !rounded-[32px] p-8">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-soft mb-4">
                 {step === "success" ? (
                   <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
-                  <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-8 h-8 text-accent-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
                 )}
               </div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-semibold tracking-tight text-ink">
                 {step === "email" && "Reset Password"}
                 {step === "otp" && "Verify OTP"}
                 {step === "password" && "New Password"}
                 {step === "success" && "Password Reset!"}
               </h1>
-              <p className="text-slate-400 text-sm mt-1">
-                {step === "email" && "Enter your email to receive an OTP"}
+              <p className="text-ink-3 text-sm mt-1">
+                {step === "email" && "Enter your username to receive an OTP on your registered email"}
                 {step === "otp" && "Enter the 6-digit code (use 123456 for testing)"}
                 {step === "password" && "Create your new password"}
                 {step === "success" && "Your password has been reset successfully"}
@@ -140,9 +145,9 @@ export default function ForgotPasswordPage() {
                 {["email", "otp", "password"].map((s, i) => (
                   <div key={s} className="flex items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                      step === s ? "bg-indigo-500 text-white" :
+                      step === s ? "bg-accent text-white" :
                       ["email", "otp", "password"].indexOf(step) > i ? "bg-green-500 text-white" :
-                      "bg-slate-700 text-slate-400"
+                      "bg-surface-3 text-ink-3"
                     }`}>
                       {["email", "otp", "password"].indexOf(step) > i ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -154,7 +159,7 @@ export default function ForgotPasswordPage() {
                     </div>
                     {i < 2 && (
                       <div className={`w-12 h-0.5 mx-1 ${
-                        ["email", "otp", "password"].indexOf(step) > i ? "bg-green-500" : "bg-slate-700"
+                        ["email", "otp", "password"].indexOf(step) > i ? "bg-green-500" : "bg-surface-3"
                       }`} />
                     )}
                   </div>
@@ -166,7 +171,7 @@ export default function ForgotPasswordPage() {
               <div className="text-center">
                 <Link
                   to="/login"
-                  className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl glow-button font-medium"
+                  className="inline-flex items-center justify-center w-full py-3 px-4 lg-btn lg-btn-primary font-medium"
                 >
                   <span className="relative z-10">Go to Login</span>
                 </Link>
@@ -176,30 +181,31 @@ export default function ForgotPasswordPage() {
                 {step === "email" && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Email Address
+                      <label className="block text-sm font-medium text-ink-2 mb-2">
+                        Username
                       </label>
                       <input
-                        type="email"
+                        type="text"
+                        autoComplete="username"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl glow-input"
-                        placeholder="you@example.com"
+                        className="w-full px-4 py-3 lg-field"
+                        placeholder="e.g. admin@school.com or BPS-TCH-001"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-ink-2 mb-2">
                         School Code
-                        <span className="text-slate-500 font-normal ml-1">(optional)</span>
+                        <span className="text-ink-3 font-normal ml-1">(optional)</span>
                       </label>
                       <input
                         value={schoolCode}
                         onChange={(e) => setSchoolCode(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl glow-input"
+                        className="w-full px-4 py-3 lg-field"
                         placeholder="e.g. GHS2026"
                       />
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p className="text-xs text-ink-3 mt-2">
                         Only required for school staff (Admin, Teacher, etc.). Platform admins can leave this empty.
                       </p>
                     </div>
@@ -208,7 +214,7 @@ export default function ForgotPasswordPage() {
 
                 {step === "otp" && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-ink-2 mb-2">
                       Enter OTP
                     </label>
                     <input
@@ -217,11 +223,11 @@ export default function ForgotPasswordPage() {
                       required
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                      className="w-full px-4 py-3 rounded-xl glow-input text-center text-2xl tracking-[0.5em] font-mono"
+                      className="w-full px-4 py-3 lg-field text-center text-2xl tracking-[0.5em] font-mono"
                       placeholder="000000"
                     />
-                    <p className="mt-2 text-xs text-slate-500 text-center">
-                      Hint: Use <span className="text-violet-400 font-mono">123456</span> for testing
+                    <p className="mt-2 text-xs text-ink-3 text-center">
+                      Hint: Use <span className="text-accent-fg font-mono">123456</span> for testing
                     </p>
                   </div>
                 )}
@@ -229,7 +235,7 @@ export default function ForgotPasswordPage() {
                 {step === "password" && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-ink-2 mb-2">
                         New Password
                       </label>
                       <div className="relative">
@@ -238,13 +244,13 @@ export default function ForgotPasswordPage() {
                           required
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full px-4 py-3 pr-12 rounded-xl glow-input"
+                          className="w-full px-4 py-3 pr-12 lg-field"
                           placeholder="Minimum 8 characters"
                         />
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-slate-300 transition-colors"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink transition-colors"
                         >
                           {showNewPassword ? (
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -260,7 +266,7 @@ export default function ForgotPasswordPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-ink-2 mb-2">
                         Confirm Password
                       </label>
                       <div className="relative">
@@ -269,13 +275,13 @@ export default function ForgotPasswordPage() {
                           required
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full px-4 py-3 pr-12 rounded-xl glow-input"
+                          className="w-full px-4 py-3 pr-12 lg-field"
                           placeholder="Re-enter your password"
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-slate-300 transition-colors"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink transition-colors"
                         >
                           {showConfirmPassword ? (
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -302,7 +308,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full py-3 px-4 rounded-xl glow-button font-medium relative z-10 disabled:opacity-50"
+                  className="w-full py-3 px-4 lg-btn lg-btn-primary font-medium relative z-10 disabled:opacity-50"
                 >
                   <span className="relative z-10">
                     {isPending ? (
@@ -321,7 +327,7 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-3 text-slate-500">
+        <div className="mt-8 flex items-center justify-center gap-3 text-ink-3">
           <Logo size={24} showWordmark={false} />
           <span className="text-xs">Cogniitec AI School ERP</span>
         </div>

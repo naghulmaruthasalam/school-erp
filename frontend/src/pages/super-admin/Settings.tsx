@@ -16,8 +16,8 @@ export default function Settings() {
   return (
     <div className="animate-fade-in-up">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-[#24113F] dark:text-white">Platform Settings</h1>
-        <p className="mt-1 text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+        <h1 className="text-2xl font-semibold text-ink dark:text-white">Platform Settings</h1>
+        <p className="mt-1 text-sm text-ink-2">
           Configure platform-wide settings and preferences
         </p>
       </div>
@@ -25,14 +25,14 @@ export default function Settings() {
       <div className="max-w-3xl space-y-6">
         {/* Branding */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             Platform Branding
           </h3>
           <div className="space-y-4">
             <div>
               <Label>Platform Name</Label>
               <Input value={platformName} onChange={(e) => setPlatformName(e.target.value)} />
-              <p className="text-xs text-[#7C6F95] mt-1">Displayed in emails and system notifications</p>
+              <p className="text-xs text-ink-3 mt-1">Displayed in emails and system notifications</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -49,7 +49,7 @@ export default function Settings() {
 
         {/* Security */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             Security Settings
           </h3>
           <div className="space-y-4">
@@ -61,14 +61,14 @@ export default function Settings() {
                 <option value="60">1 hour</option>
                 <option value="120">2 hours</option>
               </Select>
-              <p className="text-xs text-[#7C6F95] mt-1">Inactive users will be logged out after this duration</p>
+              <p className="text-xs text-ink-3 mt-1">Inactive users will be logged out after this duration</p>
             </div>
           </div>
         </Card>
 
         {/* Email Notifications */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             Admin Notifications
           </h3>
           <div className="space-y-3">
@@ -78,11 +78,11 @@ export default function Settings() {
               { label: "Weekly platform summary", desc: "Receive weekly stats via email", checked: true },
               { label: "System alerts", desc: "Critical system errors and warnings", checked: true },
             ].map((item) => (
-              <label key={item.label} className="flex items-start gap-3 p-4 bg-[#F7F5FF] dark:bg-[#1B1230] rounded-lg cursor-pointer hover:bg-[#F0E9FF] dark:hover:bg-[#2D1B4E] border border-[#E5DDF5] dark:border-[#2D1B4E]">
-                <input type="checkbox" defaultChecked={item.checked} className="mt-0.5 w-4 h-4 rounded border-[#E5DDF5] text-[#6D28D9] focus:ring-[#6D28D9]" />
+              <label key={item.label} className="flex items-start gap-3 p-4 bg-surface-3 dark:bg-surface rounded-lg cursor-pointer hover:bg-surface-3 dark:hover:bg-surface-3 border border-line">
+                <input type="checkbox" defaultChecked={item.checked} className="mt-0.5 w-4 h-4 rounded border-line text-accent-fg focus:ring-accent/30" />
                 <div>
-                  <span className="text-sm font-medium text-[#24113F] dark:text-white">{item.label}</span>
-                  <p className="text-xs text-[#7C6F95]">{item.desc}</p>
+                  <span className="text-sm font-medium text-ink dark:text-white">{item.label}</span>
+                  <p className="text-xs text-ink-3">{item.desc}</p>
                 </div>
               </label>
             ))}
@@ -91,39 +91,39 @@ export default function Settings() {
 
         {/* API & Integrations */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             Integrations
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-[#F7F5FF] dark:bg-[#1B1230] rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E]">
+            <div className="flex items-center justify-between p-4 bg-surface-3 dark:bg-surface rounded-lg border border-line">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#16A34A] flex items-center justify-center text-white">✓</div>
                 <div>
-                  <p className="font-medium text-[#24113F] dark:text-white">AWS S3 Storage</p>
-                  <p className="text-xs text-[#7C6F95]">Document and media storage</p>
+                  <p className="font-medium text-ink dark:text-white">AWS S3 Storage</p>
+                  <p className="text-xs text-ink-3">Document and media storage</p>
                 </div>
               </div>
-              <span className="text-xs font-medium text-[#16A34A] bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">Connected</span>
+              <span className="text-xs font-medium text-emerald-600 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">Connected</span>
             </div>
-            <div className="flex items-center justify-between p-4 bg-[#F7F5FF] dark:bg-[#1B1230] rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E]">
+            <div className="flex items-center justify-between p-4 bg-surface-3 dark:bg-surface rounded-lg border border-line">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#6D28D9] flex items-center justify-center text-white">AI</div>
+                <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white">AI</div>
                 <div>
-                  <p className="font-medium text-[#24113F] dark:text-white">AI Assistant (Gemini)</p>
-                  <p className="text-xs text-[#7C6F95]">Intelligent chatbot for users</p>
+                  <p className="font-medium text-ink dark:text-white">AI Assistant (Gemini)</p>
+                  <p className="text-xs text-ink-3">Intelligent chatbot for users</p>
                 </div>
               </div>
-              <span className="text-xs font-medium text-[#7C6F95] bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Optional</span>
+              <span className="text-xs font-medium text-ink-3 bg-surface-3 dark:bg-surface px-2 py-1 rounded">Optional</span>
             </div>
-            <div className="flex items-center justify-between p-4 bg-[#F7F5FF] dark:bg-[#1B1230] rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E]">
+            <div className="flex items-center justify-between p-4 bg-surface-3 dark:bg-surface rounded-lg border border-line">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#F59E0B] flex items-center justify-center text-white">₹</div>
                 <div>
-                  <p className="font-medium text-[#24113F] dark:text-white">PayU Payment Gateway</p>
-                  <p className="text-xs text-[#7C6F95]">Fee collection and payments</p>
+                  <p className="font-medium text-ink dark:text-white">PayU Payment Gateway</p>
+                  <p className="text-xs text-ink-3">Fee collection and payments</p>
                 </div>
               </div>
-              <span className="text-xs font-medium text-[#7C6F95] bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Configure in .env</span>
+              <span className="text-xs font-medium text-ink-3 bg-surface-3 dark:bg-surface px-2 py-1 rounded">Configure in .env</span>
             </div>
           </div>
         </Card>

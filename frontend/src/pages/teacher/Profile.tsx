@@ -25,8 +25,8 @@ interface TeacherProfile {
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="animate-fade-in-up">
-      <p className="text-xs font-medium uppercase tracking-wide text-[#6D28D9] dark:text-[#A78BFA]">{label}</p>
-      <p className="mt-0.5 text-sm text-[#24113F] dark:text-white">{value || "—"}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
     </div>
   );
 }
@@ -108,7 +108,7 @@ export default function TeacherProfile() {
         <div className="space-y-6">
           {/* Profile Header Card */}
           <Card className="!p-0 overflow-hidden">
-            <div className="bg-gradient-to-r from-[#2563EB] to-[#3B82F6] p-6">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6">
               <div className="flex items-center gap-6">
                 {/* Profile Photo */}
                 <div className="relative group">
@@ -137,7 +137,7 @@ export default function TeacherProfile() {
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#6D28D9] hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
+                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-accent hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
                     title="Change photo"
                   >
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -161,32 +161,32 @@ export default function TeacherProfile() {
             </div>
 
             {/* Quick Info */}
-            <div className="grid grid-cols-3 divide-x divide-[#E5DDF5] dark:divide-[#2D1B4E]">
+            <div className="grid grid-cols-3 divide-x divide-line dark:divide-line">
               <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-[#2563EB] dark:text-[#60A5FA]">{profile.subject_ids?.length || 0}</p>
-                <p className="text-xs text-[#7C6F95] uppercase">{t("profile.subjects")}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{profile.subject_ids?.length || 0}</p>
+                <p className="text-xs text-ink-3 uppercase">{t("profile.subjects")}</p>
               </div>
               <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-[#2563EB] dark:text-[#60A5FA]">{profile.qualifications?.length || 0}</p>
-                <p className="text-xs text-[#7C6F95] uppercase">{t("profile.qualifications")}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{profile.qualifications?.length || 0}</p>
+                <p className="text-xs text-ink-3 uppercase">{t("profile.qualifications")}</p>
               </div>
               <div className="p-4 text-center">
-                <p className="text-sm font-bold text-[#2563EB] dark:text-[#60A5FA]">{formatDate(profile.joining_date)}</p>
-                <p className="text-xs text-[#7C6F95] uppercase">{t("profile.joined")}</p>
+                <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatDate(profile.joining_date)}</p>
+                <p className="text-xs text-ink-3 uppercase">{t("profile.joined")}</p>
               </div>
             </div>
           </Card>
 
           {/* Personal Details */}
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#6D28D9]/10 dark:bg-[#6D28D9]/20 rounded-xl">
-                  <svg className="w-5 h-5 text-[#6D28D9] dark:text-[#A78BFA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-xl">
+                  <svg className="w-5 h-5 text-accent-fg dark:text-accent-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">{t("profile.personalDetails")}</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">{t("profile.personalDetails")}</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
@@ -198,14 +198,14 @@ export default function TeacherProfile() {
 
           {/* Contact Information */}
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#059669]/10 dark:bg-[#059669]/20 rounded-xl">
-                  <svg className="w-5 h-5 text-[#059669]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">{t("profile.contactInfo")}</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">{t("profile.contactInfo")}</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
@@ -218,20 +218,20 @@ export default function TeacherProfile() {
           {/* Qualifications */}
           {profile.qualifications && profile.qualifications.length > 0 && (
             <Card className="!p-0 overflow-hidden">
-              <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+              <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#F59E0B]/10 dark:bg-[#F59E0B]/20 rounded-xl">
-                    <svg className="w-5 h-5 text-[#F59E0B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="p-2 bg-amber-500/10 dark:bg-amber-500/20 rounded-xl">
+                    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">{t("profile.qualifications")}</h3>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">{t("profile.qualifications")}</h3>
                 </div>
               </div>
               <div className="p-6">
                 <div className="flex flex-wrap gap-2">
                   {profile.qualifications.map((q, i) => (
-                    <span key={i} className="px-3 py-1.5 bg-[#F7F5FF] dark:bg-[#2D1B4E] text-[#6D28D9] dark:text-[#A78BFA] rounded-full text-sm font-medium">
+                    <span key={i} className="px-3 py-1.5 bg-surface-3 text-accent-fg dark:text-accent-fg rounded-full text-sm font-medium">
                       {q}
                     </span>
                   ))}

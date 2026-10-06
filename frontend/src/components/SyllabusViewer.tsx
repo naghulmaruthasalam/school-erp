@@ -1,6 +1,7 @@
+import { openDocument } from "../api/files";
 import { useState } from "react";
 import { Card, Spinner, Badge } from "./ui";
-import { BookOpen, FileText, ChevronDown, ChevronRight, Download, GraduationCap, Layers, Video, PlayCircle } from "lucide-react";
+import { BookOpen, FileText, ChevronDown, Download, GraduationCap, Layers, Video, PlayCircle } from "lucide-react";
 
 interface Chapter {
   id: string;
@@ -46,7 +47,6 @@ export function SyllabusViewer({
   getClassName,
   getSubjectName,
   getYearName,
-  getDocumentUrl,
   emptyMessage = "No syllabus available.",
 }: SyllabusViewerProps) {
   const [expandedSyllabus, setExpandedSyllabus] = useState<string | null>(null);
@@ -66,10 +66,10 @@ export function SyllabusViewer({
         <div className="relative inline-block mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full blur-xl opacity-30 animate-pulse" />
           <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
-            <BookOpen className="w-10 h-10 text-violet-400" />
+            <BookOpen className="w-10 h-10 text-accent-fg" />
           </div>
         </div>
-        <p className="text-[#7C6F95]">{emptyMessage}</p>
+        <p className="text-ink-3">{emptyMessage}</p>
       </Card>
     );
   }
@@ -86,13 +86,13 @@ export function SyllabusViewer({
       {syllabusList.map((syl) => (
         <div
           key={syl.id}
-          className={`rounded-2xl overflow-hidden transition-all duration-300 bg-white dark:bg-gradient-to-br dark:from-[#1B1230] dark:to-[#2D1B4E] border border-[#E5DDF5] dark:border-[#3D2B5E] ${
+          className={`rounded-2xl overflow-hidden transition-all duration-300 bg-surface dark:bg-gradient-to-br dark:from-surface-2 dark:to-surface border border-line ${
             expandedSyllabus === syl.id ? "shadow-xl shadow-violet-500/10" : "hover:shadow-lg"
           }`}
         >
           <button
             onClick={() => toggleSyllabus(syl.id)}
-            className="w-full p-5 flex items-center justify-between text-left transition-colors hover:bg-[#F7F5FF] dark:hover:bg-[#2D1B4E]/50"
+            className="w-full p-5 flex items-center justify-between text-left transition-colors hover:bg-surface-3 dark:hover:bg-[#2D1B4E]/50"
           >
             <div className="flex items-center gap-4">
               <div className="relative group">
@@ -102,23 +102,23 @@ export function SyllabusViewer({
                 </div>
               </div>
               <div>
-                <h3 className="font-bold text-lg text-[#24113F] dark:text-white">{syl.title}</h3>
+                <h3 className="font-bold text-lg text-ink dark:text-white">{syl.title}</h3>
                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                   <Badge tone="violet">{getClassName(syl.class_id)}</Badge>
                   <Badge tone="blue">{getSubjectName(syl.subject_id)}</Badge>
-                  <span className="text-xs text-[#7C6F95]">{getYearName(syl.academic_year_id)}</span>
+                  <span className="text-xs text-ink-3">{getYearName(syl.academic_year_id)}</span>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-[#7C6F95] bg-[#F7F5FF] dark:bg-[#2D1B4E] px-3 py-1.5 rounded-full">
-                <Layers size={16} className="text-violet-500" />
+              <div className="flex items-center gap-2 text-sm text-ink-3 bg-surface-3 px-3 py-1.5 rounded-full">
+                <Layers size={16} className="text-accent-fg" />
                 <span>{syl.chapters?.length || 0} chapters</span>
               </div>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                 expandedSyllabus === syl.id
                   ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white rotate-180"
-                  : "bg-[#F7F5FF] dark:bg-[#2D1B4E] text-[#7C6F95]"
+                  : "bg-surface-3 text-ink-3"
               }`}>
                 <ChevronDown size={18} />
               </div>
@@ -126,17 +126,17 @@ export function SyllabusViewer({
           </button>
 
           {expandedSyllabus === syl.id && (
-            <div className="border-t border-[#E5DDF5] dark:border-[#3D2B5E] animate-page-enter">
+            <div className="border-t border-line animate-page-enter">
               {syl.description && (
-                <div className="px-5 py-4 bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#2D1B4E]/50 dark:to-transparent">
-                  <p className="text-sm text-[#4B4260] dark:text-[#D8CCEA]">{syl.description}</p>
+                <div className="px-5 py-4 bg-gradient-to-r from-surface-2 to-white dark:from-[#2D1B4E]/50 dark:to-transparent">
+                  <p className="text-sm text-ink-2">{syl.description}</p>
                 </div>
               )}
 
               <div className="p-5 space-y-6">
                 {/* Chapters */}
                 <div>
-                  <h4 className="font-bold mb-4 flex items-center gap-2 text-[#24113F] dark:text-white">
+                  <h4 className="font-bold mb-4 flex items-center gap-2 text-ink dark:text-white">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                       <GraduationCap size={16} className="text-white" />
                     </div>
@@ -147,7 +147,7 @@ export function SyllabusViewer({
                       {syl.chapters.sort((a, b) => a.order - b.order).map((ch, idx) => (
                         <div
                           key={ch.id}
-                          className="rounded-xl overflow-hidden transition-all duration-200 bg-[#F7F5FF] dark:bg-[#2D1B4E]/50 hover:bg-[#EDE8FF] dark:hover:bg-[#2D1B4E] group"
+                          className="rounded-xl overflow-hidden transition-all duration-200 bg-surface-3 dark:bg-[#2D1B4E]/50 hover:bg-[#EDE8FF] dark:hover:bg-surface-3 group"
                         >
                           <button
                             onClick={() => toggleChapter(ch.id)}
@@ -157,18 +157,18 @@ export function SyllabusViewer({
                               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-md shadow-violet-500/30 group-hover:scale-110 transition-transform">
                                 {idx + 1}
                               </div>
-                              <span className="font-medium text-[#24113F] dark:text-white">{ch.name}</span>
+                              <span className="font-medium text-ink dark:text-white">{ch.name}</span>
                             </div>
                             {ch.description && (
                               <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                                expandedChapters.has(ch.id) ? "bg-violet-500 text-white rotate-180" : "bg-white dark:bg-[#1B1230] text-[#7C6F95]"
+                                expandedChapters.has(ch.id) ? "bg-violet-500 text-white rotate-180" : "bg-surface text-ink-3"
                               }`}>
                                 <ChevronDown size={14} />
                               </div>
                             )}
                           </button>
                           {ch.description && expandedChapters.has(ch.id) && (
-                            <div className="px-4 pb-4 pt-0 pl-[68px] text-sm text-[#7C6F95] animate-page-enter">
+                            <div className="px-4 pb-4 pt-0 pl-[68px] text-sm text-ink-3 animate-page-enter">
                               {ch.description}
                             </div>
                           )}
@@ -176,14 +176,14 @@ export function SyllabusViewer({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-[#7C6F95] italic">No chapters defined yet.</p>
+                    <p className="text-sm text-ink-3 italic">No chapters defined yet.</p>
                   )}
                 </div>
 
                 {/* Documents & Videos */}
                 {syl.documents && syl.documents.length > 0 && (
                   <div>
-                    <h4 className="font-bold mb-4 flex items-center gap-2 text-[#24113F] dark:text-white">
+                    <h4 className="font-bold mb-4 flex items-center gap-2 text-ink dark:text-white">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
                         <FileText size={16} className="text-white" />
                       </div>
@@ -195,9 +195,15 @@ export function SyllabusViewer({
                         return (
                           <a
                             key={doc.id}
-                            href={doc.video_url || getDocumentUrl(doc.id)}
-                            target="_blank"
+                            href={doc.video_url || "#"}
+                            target={doc.video_url ? "_blank" : undefined}
                             rel="noopener noreferrer"
+                            onClick={(e) => {
+                              if (!doc.video_url) {
+                                e.preventDefault();
+                                void openDocument(doc.id);
+                              }
+                            }}
                             className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-300 group border hover:shadow-lg ${
                               isVideo
                                 ? "bg-gradient-to-r from-pink-500/10 to-rose-500/10 border-pink-500/20 hover:border-pink-500/40 hover:shadow-pink-500/10"

@@ -41,12 +41,12 @@ export default function ResetPasswordPage() {
   if (!token) {
     return (
       <AuthLayout theme={theme} title="Invalid reset link">
-        <p className="text-center text-sm text-violet-600">
+        <p className="text-center text-sm text-accent-fg">
           This link is missing its reset token. Please request a new one.
         </p>
         <Link
           to="/forgot-password"
-          className="mt-4 block text-center text-sm font-medium text-violet-600 hover:underline"
+          className="mt-4 block text-center text-sm font-medium text-accent-fg hover:underline"
         >
           Request a new link
         </Link>
@@ -58,8 +58,8 @@ export default function ResetPasswordPage() {
     <AuthLayout theme={theme} title="Set a new password" subtitle="Choose a new password for your account.">
       {mutation.isSuccess ? (
         <div className="text-center">
-          <p className="text-sm text-violet-700">Your password has been reset.</p>
-          <p className="mt-1 text-xs text-violet-400">Redirecting you to sign in…</p>
+          <p className="text-sm text-ink-2">Your password has been reset.</p>
+          <p className="mt-1 text-xs text-accent-fg">Redirecting you to sign in…</p>
         </div>
       ) : (
         <form className="space-y-4" onSubmit={handleSubmit}>

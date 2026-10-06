@@ -43,7 +43,7 @@ export function AnimatedProgress({
 
   return (
     <div className={`w-full ${className}`}>
-      <div className={`w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${sizeClasses[size]}`}>
+      <div className={`w-full bg-gray-200 dark:bg-surface-3 rounded-full overflow-hidden ${sizeClasses[size]}`}>
         <div
           className={`${sizeClasses[size]} ${colorClasses[color]} rounded-full transition-all duration-700 ease-out ${
             striped ? "progress-striped" : ""
@@ -52,7 +52,7 @@ export function AnimatedProgress({
         />
       </div>
       {showLabel && (
-        <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 text-right animate-count-up">
+        <div className="mt-1 text-xs text-ink-2 dark:text-ink-3 text-right animate-count-up">
           {Math.round(displayValue)}%
         </div>
       )}

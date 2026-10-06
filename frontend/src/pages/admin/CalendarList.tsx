@@ -18,7 +18,7 @@ const EVENT_TYPES = [
   { value: "EXAM", label: "Exam", color: "bg-yellow-100 text-yellow-700" },
   { value: "MEETING", label: "Meeting", color: "bg-blue-100 text-blue-700" },
   { value: "EVENT", label: "Event", color: "bg-green-100 text-green-700" },
-  { value: "OTHER", label: "Other", color: "bg-gray-100 text-gray-700" },
+  { value: "OTHER", label: "Other", color: "bg-surface-3 text-ink-2" },
 ];
 
 export default function CalendarList() {
@@ -81,11 +81,11 @@ export default function CalendarList() {
 
       <Card className="mb-6">
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-violet-700">Academic Year:</label>
+          <label className="text-sm font-medium text-ink-2">Academic Year:</label>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+            className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
           >
             <option value="">All Years</option>
             {yearsQuery.data?.map((y) => (
@@ -100,31 +100,31 @@ export default function CalendarList() {
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="col-span-2 md:col-span-1">
-                <label className="block text-sm font-medium text-violet-700 mb-1">Title</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Title</label>
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-violet-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Date</label>
                 <input
                   type="date"
                   value={form.event_date}
                   onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-violet-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Type</label>
                 <select
                   value={form.event_type}
                   onChange={(e) => setForm({ ...form, event_type: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 >
                   {EVENT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -132,11 +132,11 @@ export default function CalendarList() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-violet-700 mb-1">Academic Year</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Academic Year</label>
                 <select
                   value={form.academic_year_id}
                   onChange={(e) => setForm({ ...form, academic_year_id: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                   required
                 >
                   <option value="">-- Select --</option>
@@ -146,12 +146,12 @@ export default function CalendarList() {
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-violet-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Description</label>
                 <input
                   type="text"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 />
               </div>
             </div>
@@ -165,31 +165,31 @@ export default function CalendarList() {
       {eventsQuery.isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : Object.keys(groupedEvents).length === 0 ? (
-        <Card><p className="text-center text-violet-400 py-8">No events found.</p></Card>
+        <Card><p className="text-center text-accent-fg py-8">No events found.</p></Card>
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedEvents).map(([month, events]) => (
             <div key={month}>
-              <h3 className="text-lg font-semibold text-violet-900 mb-3">{month}</h3>
+              <h3 className="text-lg font-semibold text-ink mb-3">{month}</h3>
               <div className="space-y-2">
                 {events.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime()).map((event) => (
                   <Card key={event.id}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="text-center min-w-[50px]">
-                          <p className="text-2xl font-bold text-violet-600">
+                          <p className="text-2xl font-bold text-accent-fg">
                             {new Date(event.event_date).getDate()}
                           </p>
-                          <p className="text-xs text-violet-400">
+                          <p className="text-xs text-accent-fg">
                             {new Date(event.event_date).toLocaleString("default", { weekday: "short" })}
                           </p>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-violet-900">{event.title}</p>
+                            <p className="font-medium text-ink">{event.title}</p>
                             <Badge tone={event.event_type === "HOLIDAY" ? "red" : event.event_type === "EXAM" ? "yellow" : event.event_type === "EVENT" ? "green" : event.event_type === "OTHER" ? "gray" : "violet"}>{event.event_type}</Badge>
                           </div>
-                          {event.description && <p className="text-sm text-violet-600">{event.description}</p>}
+                          {event.description && <p className="text-sm text-accent-fg">{event.description}</p>}
                         </div>
                       </div>
                       <button

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Badge, Button, Card, ErrorText, Input, Label, PageHeader } from "../../../components/ui";
+import FeesNav from "./FeesNav";
 import { DataTable, type Column } from "../../../components/DataTable";
 import {
   createFeeAssignment,
@@ -152,7 +153,7 @@ export default function FeeOverview() {
     {
       header: "",
       cell: (i) => (
-        <Link to={`/admin/fees/invoices/${i.id}`} className="text-violet-600 hover:underline">
+        <Link to={`/admin/fees/invoices/${i.id}`} className="text-accent-fg hover:underline">
           View
         </Link>
       ),
@@ -162,9 +163,10 @@ export default function FeeOverview() {
   return (
     <div>
       <PageHeader title="Fee Overview" subtitle="Look up a student to assign fees, raise invoices and track payments." />
+      <FeesNav />
 
       <Card className="mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Find Student</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Find Student</h2>
         <form onSubmit={handleSearch} className="flex items-end gap-4">
           <div className="flex-1 max-w-sm">
             <Label htmlFor="student-search">Student Name</Label>
@@ -183,17 +185,17 @@ export default function FeeOverview() {
         {searchTerm && (
           <div className="mt-4 space-y-1">
             {(searchResults ?? []).length === 0 && !isSearching && (
-              <p className="text-sm text-violet-400">No students found.</p>
+              <p className="text-sm text-accent-fg">No students found.</p>
             )}
             {(searchResults ?? []).map((s) => (
               <button
                 key={s.id}
                 onClick={() => setStudent(s)}
                 className={`block w-full rounded-md border px-3 py-2 text-left text-sm ${
-                  student?.id === s.id ? "border-indigo-500 bg-violet-50" : "border-violet-200 hover:bg-violet-50"
+                  student?.id === s.id ? "border-indigo-500 bg-violet-50" : "border-line hover:bg-violet-50"
                 }`}
               >
-                {s.full_name} <span className="text-violet-400">({s.admission_no})</span>
+                {s.full_name} <span className="text-accent-fg">({s.admission_no})</span>
               </button>
             ))}
           </div>
@@ -203,7 +205,7 @@ export default function FeeOverview() {
       {student && (
         <>
           <Card className="mb-6">
-            <h2 className="mb-4 text-sm font-semibold text-violet-900">
+            <h2 className="mb-4 text-sm font-semibold text-ink">
               Assign Fee Structure — {student.full_name}
             </h2>
             <form onSubmit={handleAssign} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
@@ -211,7 +213,7 @@ export default function FeeOverview() {
                 <Label htmlFor="assign-structure">Fee Structure</Label>
                 <select
                   id="assign-structure"
-                  className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                   value={feeStructureId}
                   onChange={(e) => setFeeStructureId(e.target.value)}
                 >
@@ -270,7 +272,7 @@ export default function FeeOverview() {
           </Card>
 
           <Card>
-            <h2 className="mb-4 text-sm font-semibold text-violet-900">Invoices — {student.full_name}</h2>
+            <h2 className="mb-4 text-sm font-semibold text-ink">Invoices — {student.full_name}</h2>
             <DataTable
               columns={invoiceColumns}
               rows={invoicesPage?.items ?? []}

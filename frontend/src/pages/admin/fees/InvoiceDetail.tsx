@@ -53,7 +53,7 @@ function RefundButton({ payment, invoiceId }: { payment: Payment; invoiceId: str
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-violet-200 bg-violet-50 p-3">
+    <div className="flex flex-col gap-2 rounded-md border border-line bg-violet-50 p-3">
       <Label htmlFor={`refund-amount-${payment.id}`}>Refund amount</Label>
       <Input
         id={`refund-amount-${payment.id}`}
@@ -137,7 +137,7 @@ export default function InvoiceDetail() {
   }
 
   if (!invoice) {
-    return <p className="text-sm text-violet-400">Invoice not found.</p>;
+    return <p className="text-sm text-accent-fg">Invoice not found.</p>;
   }
 
   return (
@@ -146,7 +146,7 @@ export default function InvoiceDetail() {
         title={`Invoice ${invoice.id.slice(-8).toUpperCase()}`}
         subtitle={`Due ${invoice.due_date}`}
         actions={
-          <Link to="/admin/fees" className="text-sm text-violet-600 hover:underline">
+          <Link to="/admin/fees" className="text-sm text-accent-fg hover:underline">
             Back to Fee Overview
           </Link>
         }
@@ -160,7 +160,7 @@ export default function InvoiceDetail() {
       </div>
 
       <Card>
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Record Manual Payment</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Record Manual Payment</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
           <div>
             <Label htmlFor="pay-amount">Amount</Label>
@@ -177,7 +177,7 @@ export default function InvoiceDetail() {
             <Label htmlFor="pay-method">Method</Label>
             <select
               id="pay-method"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={method}
               onChange={(e) => setMethod(e.target.value as PaymentMethod)}
             >
@@ -197,13 +197,13 @@ export default function InvoiceDetail() {
           </Button>
         </form>
         <ErrorText>{error}</ErrorText>
-        <p className="mt-3 text-xs text-violet-400">
+        <p className="mt-3 text-xs text-accent-fg">
           Recording a payment opens a PDF receipt in a new tab.
         </p>
       </Card>
 
       <Card className="mt-6">
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Payments</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Payments</h2>
         <DataTable<Payment>
           columns={[
             { header: "Method", cell: (p) => p.method },
@@ -220,7 +220,7 @@ export default function InvoiceDetail() {
           rowKey={(p) => p.id}
           emptyLabel="No payments recorded for this invoice yet."
         />
-        <p className="mt-3 text-xs text-violet-400">
+        <p className="mt-3 text-xs text-accent-fg">
           Refunds are only available for successful PayU payments — PayU confirms actual completion
           asynchronously, so the status will show REFUND PENDING until the refund webhook lands.
         </p>

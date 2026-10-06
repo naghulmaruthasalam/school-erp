@@ -24,7 +24,7 @@ export function GradientSpinner({ size = "md", className = "" }: GradientSpinner
       }}
     >
       <div
-        className={`absolute ${innerSizeMap[size]} rounded-full bg-white dark:bg-gray-900`}
+        className={`absolute ${innerSizeMap[size]} rounded-full bg-surface`}
       />
     </div>
   );

@@ -163,13 +163,13 @@ export default function TimetableList() {
       {/* View Mode Toggle */}
       <Card className="mb-6" gradient>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 bg-[#F7F5FF] dark:bg-[#2D1B4E] rounded-xl p-1">
+          <div className="flex items-center gap-2 bg-surface-3 rounded-xl p-1">
             <button
               onClick={() => setViewMode("overview")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 viewMode === "overview"
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md"
-                  : "text-[#7C6F95] hover:text-[#24113F]"
+                  : "text-ink-3 hover:text-ink"
               }`}
             >
               <Eye className="w-4 h-4 inline mr-2" />
@@ -180,7 +180,7 @@ export default function TimetableList() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 viewMode === "section"
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md"
-                  : "text-[#7C6F95] hover:text-[#24113F]"
+                  : "text-ink-3 hover:text-ink"
               }`}
             >
               <GraduationCap className="w-4 h-4 inline mr-2" />
@@ -190,11 +190,11 @@ export default function TimetableList() {
 
           {viewMode === "overview" && (
             <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-[#6D28D9]" />
+              <User className="w-4 h-4 text-accent-fg" />
               <select
                 value={selectedTeacher}
                 onChange={(e) => setSelectedTeacher(e.target.value)}
-                className="rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-2 text-sm text-[#24113F] dark:text-white"
+                className="rounded-xl border border-line bg-surface-3 px-4 py-2 text-sm text-ink dark:text-white"
               >
                 <option value="">All Teachers</option>
                 {teachersQuery.data?.items.map((t) => (
@@ -206,11 +206,11 @@ export default function TimetableList() {
 
           {viewMode === "section" && (
             <div className="flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-[#6D28D9]" />
+              <GraduationCap className="w-4 h-4 text-accent-fg" />
               <select
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
-                className="rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-2 text-sm text-[#24113F] dark:text-white"
+                className="rounded-xl border border-line bg-surface-3 px-4 py-2 text-sm text-ink dark:text-white"
               >
                 <option value="">-- Select Section --</option>
                 {sectionsQuery.data?.map((section) => (
@@ -225,7 +225,7 @@ export default function TimetableList() {
       {/* Add Slot Form */}
       {showForm && (
         <Card className="mb-6" gradient>
-          <h3 className="font-bold text-[#24113F] dark:text-white mb-4 flex items-center gap-2">
+          <h3 className="font-bold text-ink dark:text-white mb-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
               <Plus className="w-4 h-4 text-white" />
             </div>
@@ -239,11 +239,11 @@ export default function TimetableList() {
             className="grid grid-cols-2 md:grid-cols-4 gap-4"
           >
             <div>
-              <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Section</label>
+              <label className="block text-sm font-medium text-ink dark:text-white mb-2">Section</label>
               <select
                 value={form.section_id || selectedSection}
                 onChange={(e) => setForm({ ...form, section_id: e.target.value })}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white"
+                className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white"
                 required
               >
                 <option value="">-- Select --</option>
@@ -253,11 +253,11 @@ export default function TimetableList() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Day</label>
+              <label className="block text-sm font-medium text-ink dark:text-white mb-2">Day</label>
               <select
                 value={form.day_of_week}
                 onChange={(e) => setForm({ ...form, day_of_week: parseInt(e.target.value) })}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white"
+                className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white"
               >
                 {DAYS.map((d, i) => (
                   <option key={i} value={i}>{d}</option>
@@ -265,21 +265,21 @@ export default function TimetableList() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Period #</label>
+              <label className="block text-sm font-medium text-ink dark:text-white mb-2">Period #</label>
               <input
                 type="number"
                 min={1}
                 value={form.period_number}
                 onChange={(e) => setForm({ ...form, period_number: parseInt(e.target.value) || 1 })}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white"
+                className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Subject</label>
+              <label className="block text-sm font-medium text-ink dark:text-white mb-2">Subject</label>
               <select
                 value={form.subject_id}
                 onChange={(e) => setForm({ ...form, subject_id: e.target.value })}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white"
+                className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white"
                 required
               >
                 <option value="">-- Select --</option>
@@ -289,11 +289,11 @@ export default function TimetableList() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Teacher</label>
+              <label className="block text-sm font-medium text-ink dark:text-white mb-2">Teacher</label>
               <select
                 value={form.teacher_id}
                 onChange={(e) => setForm({ ...form, teacher_id: e.target.value })}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white"
+                className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white"
                 required
               >
                 <option value="">-- Select --</option>
@@ -303,21 +303,21 @@ export default function TimetableList() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Start Time</label>
+              <label className="block text-sm font-medium text-ink dark:text-white mb-2">Start Time</label>
               <input
                 type="time"
                 value={form.start_time}
                 onChange={(e) => setForm({ ...form, start_time: e.target.value })}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white"
+                className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">End Time</label>
+              <label className="block text-sm font-medium text-ink dark:text-white mb-2">End Time</label>
               <input
                 type="time"
                 value={form.end_time}
                 onChange={(e) => setForm({ ...form, end_time: e.target.value })}
-                className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white"
+                className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white"
               />
             </div>
             <div className="flex items-end">
@@ -336,8 +336,8 @@ export default function TimetableList() {
           <Card className="py-12 flex justify-center"><Spinner size="lg" /></Card>
         ) : filteredTeachers.length === 0 ? (
           <Card className="text-center py-12">
-            <Calendar className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-            <p className="text-[#7C6F95]">No timetable slots assigned yet. Add slots to assign teachers to classes.</p>
+            <Calendar className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+            <p className="text-ink-3">No timetable slots assigned yet. Add slots to assign teachers to classes.</p>
           </Card>
         ) : (
           <div className="space-y-4">
@@ -348,8 +348,8 @@ export default function TimetableList() {
                     {teacher.full_name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#24113F] dark:text-white">{teacher.full_name}</h3>
-                    <p className="text-sm text-[#7C6F95]">{slots.length} periods assigned</p>
+                    <h3 className="font-bold text-ink dark:text-white">{teacher.full_name}</h3>
+                    <p className="text-sm text-ink-3">{slots.length} periods assigned</p>
                   </div>
                 </div>
 
@@ -362,14 +362,14 @@ export default function TimetableList() {
                           {day.slice(0, 3)}
                         </p>
                         {daySlots.length === 0 ? (
-                          <p className="text-xs text-[#7C6F95]">—</p>
+                          <p className="text-xs text-ink-3">—</p>
                         ) : (
                           <div className="space-y-1">
                             {daySlots.map((slot) => (
-                              <div key={slot.id} className="p-2 bg-[#F7F5FF] dark:bg-[#2D1B4E] rounded-lg text-xs group relative">
-                                <p className="font-medium text-[#24113F] dark:text-white truncate">{getSubjectName(slot.subject_id)}</p>
-                                <p className="text-[#7C6F95] truncate">{getSectionName(slot.section_id)}</p>
-                                <p className="text-[#7C6F95]">P{slot.period_number}</p>
+                              <div key={slot.id} className="p-2 bg-surface-3 rounded-lg text-xs group relative">
+                                <p className="font-medium text-ink dark:text-white truncate">{getSubjectName(slot.subject_id)}</p>
+                                <p className="text-ink-3 truncate">{getSectionName(slot.section_id)}</p>
+                                <p className="text-ink-3">P{slot.period_number}</p>
                                 <button
                                   onClick={() => deleteMutation.mutate(slot.id)}
                                   className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -403,20 +403,20 @@ export default function TimetableList() {
                     {day}
                   </h3>
                   {slotsByDay[dayIndex].length === 0 ? (
-                    <p className="text-sm text-[#7C6F95] text-center py-4">No periods</p>
+                    <p className="text-sm text-ink-3 text-center py-4">No periods</p>
                   ) : (
                     <div className="space-y-2">
                       {slotsByDay[dayIndex].map((slot) => (
-                        <div key={slot.id} className="p-3 bg-[#F7F5FF] dark:bg-[#2D1B4E] rounded-xl group relative">
+                        <div key={slot.id} className="p-3 bg-surface-3 rounded-xl group relative">
                           <div className="flex items-center justify-between mb-1">
                             <Badge tone="violet">Period {slot.period_number}</Badge>
-                            <span className="text-xs text-[#7C6F95] flex items-center gap-1">
+                            <span className="text-xs text-ink-3 flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
                             </span>
                           </div>
-                          <p className="font-medium text-[#24113F] dark:text-white">{getSubjectName(slot.subject_id)}</p>
-                          <p className="text-sm text-[#7C6F95] flex items-center gap-1">
+                          <p className="font-medium text-ink dark:text-white">{getSubjectName(slot.subject_id)}</p>
+                          <p className="text-sm text-ink-3 flex items-center gap-1">
                             <User className="w-3 h-3" />
                             {getTeacherName(slot.teacher_id)}
                           </p>
@@ -436,8 +436,8 @@ export default function TimetableList() {
           )
         ) : (
           <Card className="text-center py-12">
-            <GraduationCap className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-            <p className="text-[#7C6F95]">Select a section to view/manage its timetable.</p>
+            <GraduationCap className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+            <p className="text-ink-3">Select a section to view/manage its timetable.</p>
           </Card>
         )
       )}

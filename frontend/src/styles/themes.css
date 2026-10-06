@@ -1,404 +1,129 @@
 /* =================================================================
-   Role-Based Theme System for School ERP
+   Liquid Glass design tokens
+   -----------------------------------------------------------------
+   One source of truth for colour, material and shape. Light is the
+   default; `.dark` (set on <html> by ThemeProvider) swaps the values.
+   `[data-role]` (also set on <html>) swaps the accent tint, so every
+   role feels like its own "wallpaper" of the same system.
    ================================================================= */
 
-/* Base Dark Theme - Modern AI Dashboard Style */
 :root {
-  /* Dark Background Gradient */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
+  /* ---- type ---- */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
 
-  /* Glass Morphism */
-  --glass-bg: rgba(30, 41, 59, 0.8);
-  --glass-border: rgba(71, 85, 105, 0.5);
-  --glass-blur: 16px;
+  /* ---- ink (text) ---- */
+  --ink: #0b1220;
+  --ink-2: #3a4458;
+  --ink-3: #667085;
 
-  /* Text Colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  /* ---- accent (overridden per role) ---- */
+  --accent: #0a7aff;
+  --accent-2: #5e5ce6;
+  --accent-fg: color-mix(in oklab, var(--accent) 82%, black);
+  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+  --accent-glow: color-mix(in oklab, var(--accent) 38%, transparent);
 
-  /* Status Colors */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --info: #3b82f6;
+  /* ---- materials ---- */
+  --canvas: #e9eefa;
+  --surface: rgba(255, 255, 255, 0.66);
+  --surface-2: rgba(255, 255, 255, 0.42);
+  --surface-3: rgba(100, 116, 160, 0.10);
+  --surface-solid: #ffffff;
+  --line: rgba(15, 23, 42, 0.09);
+  --line-strong: rgba(15, 23, 42, 0.18);
 
-  /* Default Role Primary (Admin - Blue Violet) */
-  --role-primary: #6366f1;
-  --role-primary-light: #818cf8;
-  --role-primary-dark: #4f46e5;
-  --role-glow: rgba(99, 102, 241, 0.4);
-  --role-gradient-from: #6366f1;
-  --role-gradient-to: #4f46e5;
+  --glass-fill: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46));
+  --glass-fill-strong: linear-gradient(160deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.72));
+  --glass-blur: 28px;
+  --glass-saturate: 1.8;
+  --rim-hi: rgba(255, 255, 255, 0.95);
+  --rim-lo: rgba(255, 255, 255, 0.30);
+  --glass-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 18px 44px -20px rgba(30, 48, 110, 0.30),
+    0 3px 8px -2px rgba(30, 48, 110, 0.07);
+  --glass-shadow-hover:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 26px 56px -22px rgba(30, 48, 110, 0.38),
+    0 4px 10px -2px rgba(30, 48, 110, 0.09);
+
+  /* ---- wallpaper blobs ---- */
+  --blob-1: color-mix(in oklab, var(--accent) 42%, transparent);
+  --blob-2: rgba(255, 130, 190, 0.34);
+  --blob-3: rgba(60, 210, 200, 0.30);
+  --blob-4: rgba(255, 190, 110, 0.30);
+
+  /* ---- shape ---- */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  color-scheme: light;
 }
 
-/* Light Mode Base */
-.light {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
+.dark {
+  --ink: #f4f6ff;
+  --ink-2: #c3cadf;
+  --ink-3: #8b94ad;
 
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(148, 163, 184, 0.3);
+  --accent: #3d9bff;
+  --accent-2: #7d7aff;
+  --accent-fg: color-mix(in oklab, var(--accent) 72%, white);
+  --accent-soft: color-mix(in oklab, var(--accent) 20%, transparent);
+  --accent-glow: color-mix(in oklab, var(--accent) 46%, transparent);
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-}
+  --canvas: #060813;
+  --surface: rgba(255, 255, 255, 0.075);
+  --surface-2: rgba(255, 255, 255, 0.045);
+  --surface-3: rgba(255, 255, 255, 0.085);
+  --surface-solid: #151a2c;
+  --line: rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.20);
 
-/* =================================================================
-   Role-Based Color Schemes
-   ================================================================= */
+  --glass-fill: linear-gradient(160deg, rgba(255, 255, 255, 0.115), rgba(255, 255, 255, 0.045));
+  --glass-fill-strong: linear-gradient(160deg, rgba(40, 46, 74, 0.82), rgba(24, 28, 50, 0.78));
+  --glass-blur: 30px;
+  --glass-saturate: 1.6;
+  --rim-hi: rgba(255, 255, 255, 0.42);
+  --rim-lo: rgba(255, 255, 255, 0.05);
+  --glass-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 20px 50px -22px rgba(0, 0, 0, 0.7),
+    0 3px 10px -2px rgba(0, 0, 0, 0.25);
+  --glass-shadow-hover:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 28px 60px -24px rgba(0, 0, 0, 0.8),
+    0 4px 12px -2px rgba(0, 0, 0, 0.3);
 
-/* Admin / School Admin - Blue Violet */
-[data-role="SCHOOL_ADMIN"],
-[data-role="SUPER_ADMIN"] {
-  --role-primary: #6366f1;
-  --role-primary-light: #818cf8;
-  --role-primary-dark: #4f46e5;
-  --role-glow: rgba(99, 102, 241, 0.4);
-  --role-gradient-from: #6366f1;
-  --role-gradient-to: #4f46e5;
-}
+  --blob-1: color-mix(in oklab, var(--accent) 50%, transparent);
+  --blob-2: rgba(190, 70, 220, 0.34);
+  --blob-3: rgba(20, 170, 190, 0.30);
+  --blob-4: rgba(255, 130, 70, 0.16);
 
-/* Teacher - Teal / Cyan */
-[data-role="TEACHER"] {
-  --role-primary: #14b8a6;
-  --role-primary-light: #2dd4bf;
-  --role-primary-dark: #0d9488;
-  --role-glow: rgba(20, 184, 166, 0.4);
-  --role-gradient-from: #14b8a6;
-  --role-gradient-to: #0d9488;
-}
-
-/* Student - Purple / Pink */
-[data-role="STUDENT"] {
-  --role-primary: #a855f7;
-  --role-primary-light: #c084fc;
-  --role-primary-dark: #9333ea;
-  --role-glow: rgba(168, 85, 247, 0.4);
-  --role-gradient-from: #a855f7;
-  --role-gradient-to: #ec4899;
-}
-
-/* Parent - Green / Emerald */
-[data-role="PARENT"] {
-  --role-primary: #10b981;
-  --role-primary-light: #34d399;
-  --role-primary-dark: #059669;
-  --role-glow: rgba(16, 185, 129, 0.4);
-  --role-gradient-from: #10b981;
-  --role-gradient-to: #059669;
-}
-
-/* Principal - Indigo */
-[data-role="PRINCIPAL"] {
-  --role-primary: #4f46e5;
-  --role-primary-light: #6366f1;
-  --role-primary-dark: #4338ca;
-  --role-glow: rgba(79, 70, 229, 0.4);
-  --role-gradient-from: #4f46e5;
-  --role-gradient-to: #3730a3;
-}
-
-/* =================================================================
-   Glass Morphism Utilities
-   ================================================================= */
-
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: 1rem;
-}
-
-.glass-card-strong {
-  background: rgba(30, 41, 59, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(71, 85, 105, 0.6);
-  border-radius: 1rem;
-}
-
-.light .glass-card {
-  background: var(--glass-bg);
-  border-color: var(--glass-border);
-}
-
-.light .glass-card-strong {
-  background: rgba(255, 255, 255, 0.98);
-  border-color: rgba(148, 163, 184, 0.4);
+  color-scheme: dark;
 }
 
 /* =================================================================
-   Gradient Button with Glow
+   Role accents - one tint per audience
    ================================================================= */
 
-.btn-gradient {
-  background: linear-gradient(135deg, var(--role-gradient-from), var(--role-gradient-to));
-  color: white;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px var(--role-glow);
-}
+[data-role="SCHOOL_ADMIN"] { --accent: #0a7aff; --accent-2: #5e5ce6; }
+[data-role="SUPER_ADMIN"]  { --accent: #5e5ce6; --accent-2: #bf5af2; }
+[data-role="PRINCIPAL"]    { --accent: #6a52f0; --accent-2: #0a84ff; }
+[data-role="TEACHER"]      { --accent: #12a8a8; --accent-2: #0a84ff; }
+[data-role="STUDENT"]      { --accent: #a64fe0; --accent-2: #ff4f8b; }
+[data-role="PARENT"]       { --accent: #22ac5c; --accent-2: #12a8a8; }
 
-.btn-gradient::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--role-primary-light), var(--role-primary));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.btn-gradient:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px var(--role-glow);
-}
-
-.btn-gradient:hover::before {
-  opacity: 1;
-}
-
-.btn-gradient:active {
-  transform: translateY(0);
-}
-
-.btn-gradient span {
-  position: relative;
-  z-index: 1;
-}
-
-/* =================================================================
-   Role-Colored Sidebar Active States
-   ================================================================= */
-
-.sidebar-link-active {
-  background: linear-gradient(135deg, var(--role-gradient-from), var(--role-gradient-to));
-  box-shadow: 0 4px 15px var(--role-glow);
-}
-
-/* =================================================================
-   Glow Effects
-   ================================================================= */
-
-.glow-border {
-  position: relative;
-}
-
-.glow-border::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, var(--role-gradient-from), var(--role-gradient-to));
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.glow-border:hover::after {
-  opacity: 0.5;
-  filter: blur(8px);
-}
-
-/* Input Focus Glow */
-.input-glow:focus {
-  border-color: var(--role-primary);
-  box-shadow: 0 0 0 3px var(--role-glow);
-}
-
-/* =================================================================
-   Dark Theme Utilities
-   ================================================================= */
-
-.dark-gradient-bg {
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-}
-
-.dark-sidebar {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-}
-
-/* Accent Line */
-.accent-line {
-  background: linear-gradient(90deg, var(--role-gradient-from), var(--role-gradient-to));
-}
-
-/* Stat Card Highlight */
-.stat-highlight {
-  color: var(--role-primary);
-}
-
-.stat-highlight-bg {
-  background: var(--role-glow);
-}
-
-/* =================================================================
-   Enhanced Animations & Effects
-   ================================================================= */
-
-/* Hover lift effect */
-.hover-lift {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -12px var(--role-glow);
-}
-
-/* Gradient text effect */
-.gradient-text {
-  background: linear-gradient(135deg, var(--role-gradient-from), var(--role-gradient-to));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Animated gradient border */
-@keyframes gradient-rotate {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animated-border {
-  position: relative;
-  background: linear-gradient(135deg, var(--role-gradient-from), var(--role-gradient-to), var(--role-gradient-from));
-  background-size: 200% 200%;
-  animation: gradient-rotate 3s ease infinite;
-  padding: 2px;
-  border-radius: 1rem;
-}
-
-.animated-border > * {
-  background: var(--bg-secondary);
-  border-radius: calc(1rem - 2px);
-}
-
-/* Card shimmer effect */
-.shimmer-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.shimmer-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 150%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  transform: skewX(-25deg);
-  transition: left 0.5s ease;
-}
-
-.shimmer-card:hover::before {
-  left: 150%;
-}
-
-/* Pulse dot */
-.pulse-dot {
-  position: relative;
-}
-
-.pulse-dot::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 8px;
-  height: 8px;
-  background: var(--success);
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.5); }
-}
-
-/* Floating label effect */
-.float-label {
-  transition: all 0.2s ease;
-}
-
-.float-label:focus-within label {
-  transform: translateY(-1.5rem) scale(0.85);
-  color: var(--role-primary);
-}
-
-/* Role-based accent bar */
-.role-accent-bar {
-  height: 4px;
-  background: linear-gradient(90deg, var(--role-gradient-from), var(--role-gradient-to));
-  border-radius: 2px;
-}
-
-/* Notification badge */
-.notification-badge {
-  background: linear-gradient(135deg, #ef4444, #f97316);
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.1rem 0.4rem;
-  border-radius: 9999px;
-  min-width: 1.25rem;
-  text-align: center;
-  animation: badge-bounce 2s ease-in-out infinite;
-}
-
-@keyframes badge-bounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-/* Data table row hover */
-.table-row-fancy {
-  transition: all 0.2s ease;
-}
-
-.table-row-fancy:hover {
-  background: linear-gradient(90deg, var(--role-glow), transparent);
-  transform: translateX(4px);
-}
-
-/* Icon wrapper with gradient */
-.icon-gradient {
-  background: linear-gradient(135deg, var(--role-gradient-from), var(--role-gradient-to));
-  color: white;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Success/Error states with animation */
-.success-animate {
-  animation: success-pop 0.3s ease;
-}
-
-@keyframes success-pop {
-  0% { transform: scale(0.8); opacity: 0; }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* Progress ring */
-.progress-ring {
-  transform: rotate(-90deg);
-}
-
-.progress-ring-circle {
-  stroke: var(--role-primary);
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s ease;
-}
+.dark[data-role="SCHOOL_ADMIN"] { --accent: #3d9bff; --accent-2: #7d7aff; }
+.dark[data-role="SUPER_ADMIN"]  { --accent: #7d7aff; --accent-2: #d17dff; }
+.dark[data-role="PRINCIPAL"]    { --accent: #8f7bff; --accent-2: #3d9bff; }
+.dark[data-role="TEACHER"]      { --accent: #2fd0c8; --accent-2: #3d9bff; }
+.dark[data-role="STUDENT"]      { --accent: #c47bf5; --accent-2: #ff6fa4; }
+.dark[data-role="PARENT"]       { --accent: #3ddc84; --accent-2: #2fd0c8; }

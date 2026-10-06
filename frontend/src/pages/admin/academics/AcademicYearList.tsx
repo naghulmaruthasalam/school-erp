@@ -68,7 +68,7 @@ export default function AcademicYearList() {
       <PageHeader title="Academic Years" subtitle="Create and manage academic years for your school." />
 
       <Card className="mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Create Academic Year</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Create Academic Year</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
           <div>
             <Label htmlFor="ay-name">Name</Label>
@@ -83,7 +83,7 @@ export default function AcademicYearList() {
             <Input id="ay-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-violet-700">
+            <label className="flex items-center gap-2 text-sm text-ink-2">
               <input type="checkbox" checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)} />
               Set as current
             </label>

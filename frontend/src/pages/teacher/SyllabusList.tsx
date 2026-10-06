@@ -34,11 +34,11 @@ export default function SyllabusList() {
       <Card className="mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Class</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+              className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
               <option value="">All Classes</option>
               {classesQuery.data?.map((c) => (
@@ -47,11 +47,11 @@ export default function SyllabusList() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Subject</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Subject</label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+              className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
               <option value="">All Subjects</option>
               {subjectsQuery.data?.map((s) => (
@@ -72,18 +72,18 @@ export default function SyllabusList() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-violet-900">{syl.title}</h3>
+                      <h3 className="font-semibold text-ink">{syl.title}</h3>
                       <Badge tone="violet">{getClassName(syl.class_id)}</Badge>
                       <Badge tone="gray">{getSubjectName(syl.subject_id)}</Badge>
                     </div>
-                    <p className="text-sm text-violet-700 mb-2 line-clamp-2">{syl.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-violet-500">
+                    <p className="text-sm text-ink-2 mb-2 line-clamp-2">{syl.description}</p>
+                    <div className="flex items-center gap-4 text-xs text-accent-fg">
                       <span>{syl.chapters_count} chapters</span>
                     </div>
                   </div>
                   <div className="text-right">
                     <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{syl.status}</Badge>
-                    <p className="text-xs text-violet-400 mt-2">
+                    <p className="text-xs text-accent-fg mt-2">
                       Updated: {new Date(syl.updated_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -92,7 +92,7 @@ export default function SyllabusList() {
             </Link>
           ))}
           {syllabusQuery.data?.items.length === 0 && (
-            <Card><p className="text-center text-violet-400 py-8">No syllabus found for your subjects.</p></Card>
+            <Card><p className="text-center text-accent-fg py-8">No syllabus found for your subjects.</p></Card>
           )}
         </div>
       )}

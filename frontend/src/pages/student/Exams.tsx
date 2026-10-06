@@ -58,47 +58,47 @@ function ExamResultPanel({
   });
 
   if (isLoading) return <Spinner />;
-  if (error || !result) return <p className="text-sm text-violet-400">Result not published yet for this exam.</p>;
+  if (error || !result) return <p className="text-sm text-accent-fg">Result not published yet for this exam.</p>;
 
   return (
     <div>
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-600">Total</p>
-          <p className="mt-0.5 text-sm text-violet-900">
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Total</p>
+          <p className="mt-0.5 text-sm text-ink">
             {result.total_marks_obtained} / {result.total_max_marks}
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-600">Percentage</p>
-          <p className="mt-0.5 text-sm text-violet-900">{result.percentage.toFixed(1)}%</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Percentage</p>
+          <p className="mt-0.5 text-sm text-ink">{result.percentage.toFixed(1)}%</p>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-600">Grade</p>
-          <p className="mt-0.5 text-sm text-violet-900">{result.overall_grade}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Grade</p>
+          <p className="mt-0.5 text-sm text-ink">{result.overall_grade}</p>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-600">Roll No.</p>
-          <p className="mt-0.5 text-sm text-violet-900">{result.roll_number || "—"}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Roll No.</p>
+          <p className="mt-0.5 text-sm text-ink">{result.roll_number || "—"}</p>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-lg border border-violet-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
+      <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+        <table className="min-w-full divide-y divide-line text-sm">
           <thead className="bg-violet-50">
             <tr>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-violet-600">Subject</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-violet-600">Marks</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-violet-600">Max</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-violet-600">Grade</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Subject</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Marks</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Max</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Grade</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-line">
             {result.subjects.map((s) => (
               <tr key={s.exam_subject_id}>
-                <td className="px-4 py-2.5 text-violet-700">{subjectNames[s.subject_id] ?? s.subject_id}</td>
-                <td className="px-4 py-2.5 text-violet-700">{s.marks_obtained ?? "—"}</td>
-                <td className="px-4 py-2.5 text-violet-700">{s.max_marks}</td>
-                <td className="px-4 py-2.5 text-violet-700">{s.grade ?? "—"}</td>
+                <td className="px-4 py-2.5 text-ink-2">{subjectNames[s.subject_id] ?? s.subject_id}</td>
+                <td className="px-4 py-2.5 text-ink-2">{s.marks_obtained ?? "—"}</td>
+                <td className="px-4 py-2.5 text-ink-2">{s.max_marks}</td>
+                <td className="px-4 py-2.5 text-ink-2">{s.grade ?? "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -140,7 +140,7 @@ export default function StudentExams() {
             header: "",
             cell: (row) => (
               <button
-                className="text-sm font-medium text-violet-600 hover:text-violet-700"
+                className="text-sm font-medium text-accent-fg hover:text-ink-2"
                 onClick={() => setSelectedExamId(selectedExamId === row.id ? null : row.id)}
               >
                 {selectedExamId === row.id ? "Hide result" : "View result"}
@@ -157,7 +157,7 @@ export default function StudentExams() {
       {selectedExamId && profile && (
         <Card className="mt-4">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-violet-900">
+            <h2 className="text-sm font-semibold text-ink">
               Result · {exams.find((e) => e.id === selectedExamId)?.name}
             </h2>
             <ReportCardButton

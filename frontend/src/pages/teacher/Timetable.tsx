@@ -41,11 +41,11 @@ export default function TeacherTimetable() {
         </Card>
       ) : !slots || slots.length === 0 ? (
         <Card className="text-center py-16">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#6D28D9]/10 to-[#EC4899]/10 flex items-center justify-center animate-float">
-            <Calendar className="w-10 h-10 text-[#6D28D9]" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10 flex items-center justify-center animate-float">
+            <Calendar className="w-10 h-10 text-accent-fg" />
           </div>
-          <h3 className="text-xl font-bold text-[#24113F] dark:text-white mb-2">No Timetable Yet</h3>
-          <p className="text-[#7C6F95] max-w-md mx-auto">
+          <h3 className="text-xl font-bold text-ink dark:text-white mb-2">No Timetable Yet</h3>
+          <p className="text-ink-3 max-w-md mx-auto">
             No timetable slots have been assigned to you yet. Please contact your school administrator to set up your class schedule.
           </p>
         </Card>
@@ -60,14 +60,14 @@ export default function TeacherTimetable() {
             ].map((stat, i) => (
               <div
                 key={stat.label}
-                className="p-5 rounded-2xl bg-white dark:bg-[#1B1230] border border-[#E5DDF5] dark:border-[#2D1B4E] hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                className="p-5 rounded-2xl bg-surface border border-line hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-3`}>
                   <stat.icon className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-[#24113F] dark:text-white">{stat.value}</p>
-                <p className="text-sm text-[#7C6F95]">{stat.label}</p>
+                <p className="text-3xl font-bold text-ink dark:text-white">{stat.value}</p>
+                <p className="text-sm text-ink-3">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -91,7 +91,7 @@ export default function TeacherTimetable() {
                   </div>
 
                   {/* Periods List */}
-                  <div className="divide-y divide-[#E5DDF5] dark:divide-[#2D1B4E]">
+                  <div className="divide-y divide-line dark:divide-line">
                     {byDay[dow].map((slot, i) => {
                       const section = sections?.find((s) => s.id === slot.section_id);
                       const subject = subjects?.find((s) => s.id === slot.subject_id);
@@ -100,33 +100,33 @@ export default function TeacherTimetable() {
                       return (
                         <div
                           key={slot.id}
-                          className="p-4 hover:bg-[#F7F5FF] dark:hover:bg-[#2D1B4E] transition-all flex items-center gap-4"
+                          className="p-4 hover:bg-surface-3 dark:hover:bg-surface-3 transition-all flex items-center gap-4"
                           style={{ animationDelay: `${i * 0.05}s` }}
                         >
                           {/* Period Number */}
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6D28D9]/10 to-[#8B5CF6]/10 flex items-center justify-center flex-shrink-0">
-                            <span className="text-lg font-bold text-[#6D28D9]">{slot.period_number}</span>
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/10 to-[#8B5CF6]/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg font-bold text-accent-fg">{slot.period_number}</span>
                           </div>
 
                           {/* Time */}
                           <div className="flex items-center gap-2 min-w-[120px]">
-                            <Clock className="w-4 h-4 text-[#7C6F95]" />
-                            <span className="text-sm font-medium text-[#24113F] dark:text-white">
+                            <Clock className="w-4 h-4 text-ink-3" />
+                            <span className="text-sm font-medium text-ink dark:text-white">
                               {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
                             </span>
                           </div>
 
                           {/* Subject & Section */}
                           <div className="flex-1">
-                            <p className="font-semibold text-[#24113F] dark:text-white">
+                            <p className="font-semibold text-ink dark:text-white">
                               {subject?.name ?? "Unknown Subject"}
                             </p>
-                            <p className="text-sm text-[#7C6F95]">
+                            <p className="text-sm text-ink-3">
                               {cls?.name} - {section?.name ?? "Unknown Section"}
                             </p>
                           </div>
 
-                          <ChevronRight className="w-5 h-5 text-[#7C6F95]" />
+                          <ChevronRight className="w-5 h-5 text-ink-3" />
                         </div>
                       );
                     })}

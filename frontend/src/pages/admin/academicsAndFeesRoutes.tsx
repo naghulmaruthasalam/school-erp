@@ -20,6 +20,7 @@ export const academicsFeesNavItems: NavItem[] = [
   { label: "Timetable", to: "/admin/academics/timetable" },
   { label: "Calendar", to: "/admin/academics/calendar" },
   { label: "Fees", to: "/admin/fees", end: true },
+  { label: "Assign & Invoice", to: "/admin/fees/manage" },
   { label: "Fee Structures", to: "/admin/fees/structures" },
   { label: "Fee Categories", to: "/admin/fees/categories" },
 ];
@@ -33,7 +34,7 @@ export const academicsFeesChildRoutes = (
     <Route path="academics/subjects" element={<SubjectList />} />
     <Route path="academics/timetable" element={<TimetableView />} />
     <Route path="academics/calendar" element={<CalendarView />} />
-    <Route path="fees" element={<FeeOverview />} />
+    <Route path="fees/manage" element={<FeeOverview />} />
     <Route path="fees/structures" element={<FeeStructureList />} />
     <Route path="fees/categories" element={<FeeCategoryList />} />
     <Route path="fees/invoices/:id" element={<InvoiceDetail />} />

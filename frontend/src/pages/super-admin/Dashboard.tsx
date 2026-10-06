@@ -122,7 +122,7 @@ export default function SuperAdminDashboard() {
   return (
     <div className="animate-fade-in-up">
       {/* Hero Section */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#6D28D9] via-[#7C3AED] to-[#8B5CF6] p-8">
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-accent via-[#7C3AED] to-accent-2 p-8">
         <div className="absolute inset-0 bg-grid-pattern opacity-10" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#EC4899]/20 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
@@ -163,7 +163,7 @@ export default function SuperAdminDashboard() {
               Export
             </Button>
             <Link to="/super-admin/new">
-              <Button className="!bg-white !text-[#6D28D9] hover:!bg-white/90">
+              <Button className="!bg-white !text-accent-fg hover:!bg-white/90">
                 <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -178,48 +178,48 @@ export default function SuperAdminDashboard() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 mb-8">
         <StatCard
           label="Total Schools"
-          value={statsQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : statsQuery.data?.total_schools ?? 0}
+          value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_schools ?? 0}
           icon={<SchoolIcon />}
-          gradient="bg-gradient-to-br from-[#6D28D9] to-[#4C1D95]"
+          gradient="bg-gradient-to-br from-accent to-[#4C1D95]"
           delay="0.1s"
           trend="+12%"
           trendUp
         />
         <StatCard
           label="Active Schools"
-          value={statsQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : statsQuery.data?.active_schools ?? 0}
+          value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.active_schools ?? 0}
           icon={<ChartIcon />}
-          gradient="bg-gradient-to-br from-[#059669] to-[#047857]"
+          gradient="bg-gradient-to-br from-emerald-600 to-[#047857]"
           delay="0.15s"
           trend="+8%"
           trendUp
         />
         <StatCard
           label="Total Users"
-          value={statsQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : statsQuery.data?.total_users ?? 0}
+          value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_users ?? 0}
           icon={<UsersIcon />}
-          gradient="bg-gradient-to-br from-[#2563EB] to-[#1D4ED8]"
+          gradient="bg-gradient-to-br from-blue-600 to-[#1D4ED8]"
           delay="0.2s"
           trend="+24%"
           trendUp
         />
         <StatCard
           label="Students"
-          value={usersQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : totalStudents}
+          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalStudents}
           icon={<StudentIcon />}
           gradient="bg-gradient-to-br from-[#7C3AED] to-[#5B21B6]"
           delay="0.25s"
         />
         <StatCard
           label="Teachers"
-          value={usersQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : totalTeachers}
+          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalTeachers}
           icon={<TeacherIcon />}
           gradient="bg-gradient-to-br from-[#DB2777] to-[#BE185D]"
           delay="0.3s"
         />
         <StatCard
           label="Inactive"
-          value={statsQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : statsQuery.data?.inactive_schools ?? 0}
+          value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.inactive_schools ?? 0}
           icon={<SchoolIcon />}
           gradient="bg-gradient-to-br from-[#64748B] to-[#475569]"
           delay="0.35s"
@@ -230,13 +230,13 @@ export default function SuperAdminDashboard() {
         {/* Users by Role */}
         <div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#6D28D9]/10 dark:bg-[#6D28D9]/20 rounded-xl">
+                  <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-xl">
                     <UsersIcon />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Users by Role</h3>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">Users by Role</h3>
                 </div>
                 {usersQuery.data && usersQuery.data.length > 0 && (
                   <Button variant="secondary" onClick={() => exportDataToCsv(usersQuery.data!, "users-by-role.csv")}>
@@ -253,17 +253,17 @@ export default function SuperAdminDashboard() {
                   {usersQuery.data.map((item, idx) => (
                     <div
                       key={item.role}
-                      className="animate-scale-in group relative p-4 bg-gradient-to-br from-[#F7F5FF] to-white dark:from-[#231640] dark:to-[#1B1230] rounded-xl text-center border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#6D28D9]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#6D28D9]/10 cursor-default"
+                      className="animate-scale-in group relative p-4 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-xl text-center border border-line hover:border-accent/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#6D28D9]/10 cursor-default"
                       style={{ animationDelay: `${0.1 * idx}s` }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-[#6D28D9]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-                      <p className="relative text-3xl font-bold bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] bg-clip-text text-transparent">{item.count}</p>
-                      <p className="relative text-xs text-[#7C6F95] uppercase mt-2 font-medium tracking-wide">{item.role.replace("_", " ")}</p>
+                      <p className="relative text-3xl font-bold bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">{item.count}</p>
+                      <p className="relative text-xs text-ink-3 uppercase mt-2 font-medium tracking-wide">{item.role.replace("_", " ")}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-[#7C6F95]">No user data available.</p>
+                <p className="text-sm text-ink-3">No user data available.</p>
               )}
             </div>
           </Card>
@@ -272,13 +272,13 @@ export default function SuperAdminDashboard() {
         {/* Recent Schools */}
         <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#059669]/10 dark:bg-[#059669]/20 rounded-xl text-[#059669]">
+                  <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl text-emerald-600">
                     <SchoolIcon />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Recent Schools</h3>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">Recent Schools</h3>
                 </div>
                 <Link to="/super-admin/schools">
                   <Button variant="secondary">View All</Button>
@@ -293,18 +293,18 @@ export default function SuperAdminDashboard() {
                   {schoolsQuery.data.items.map((school, idx) => (
                     <div
                       key={school.id}
-                      className="animate-slide-in-right group flex items-center justify-between p-4 bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#231640] dark:to-[#1B1230] rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#6D28D9]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#6D28D9]/10"
+                      className="animate-slide-in-right group flex items-center justify-between p-4 bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-xl border border-line hover:border-accent/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#6D28D9]/10"
                       style={{ animationDelay: `${0.1 * idx}s` }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-sm">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center text-white font-bold text-sm">
                           {school.name.charAt(0)}
                         </div>
                         <div>
-                          <Link to={`/super-admin/${school.id}`} className="font-medium text-[#24113F] dark:text-white hover:text-[#6D28D9] dark:hover:text-[#8B5CF6] transition-colors">
+                          <Link to={`/super-admin/${school.id}`} className="font-medium text-ink dark:text-white hover:text-accent-fg dark:hover:text-accent-fg transition-colors">
                             {school.name}
                           </Link>
-                          <p className="text-xs text-[#7C6F95] flex items-center gap-1">
+                          <p className="text-xs text-ink-3 flex items-center gap-1">
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -320,7 +320,7 @@ export default function SuperAdminDashboard() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-[#7C6F95]">No schools registered yet.</p>
+                <p className="text-sm text-ink-3">No schools registered yet.</p>
               )}
             </div>
           </Card>
@@ -330,15 +330,15 @@ export default function SuperAdminDashboard() {
       {/* Recent Activity */}
       <div className="animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
         <Card className="!p-0 overflow-hidden">
-          <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+          <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#F59E0B]/10 dark:bg-[#F59E0B]/20 rounded-xl text-[#F59E0B]">
+                <div className="p-2 bg-amber-500/10 dark:bg-amber-500/20 rounded-xl text-amber-500">
                   <ActivityIcon />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Recent Activity</h3>
-                  <p className="text-xs text-[#7C6F95]">Platform-wide audit trail</p>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">Recent Activity</h3>
+                  <p className="text-xs text-ink-3">Platform-wide audit trail</p>
                 </div>
               </div>
               <Link to="/super-admin/audit">
@@ -354,30 +354,30 @@ export default function SuperAdminDashboard() {
                 {auditQuery.data.map((log, idx) => (
                   <div
                     key={log.id}
-                    className="animate-fade-in-up group flex items-center justify-between py-4 px-4 -mx-4 hover:bg-[#F7F5FF] dark:hover:bg-[#231640] rounded-xl transition-colors cursor-default border-b border-[#E5DDF5]/50 dark:border-[#2D1B4E]/50 last:border-0"
+                    className="animate-fade-in-up group flex items-center justify-between py-4 px-4 -mx-4 hover:bg-surface-3 dark:hover:bg-[#231640] rounded-xl transition-colors cursor-default border-b border-line dark:border-[#2D1B4E]/50 last:border-0"
                     style={{ animationDelay: `${0.05 * idx}s` }}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6D28D9]/20 to-[#8B5CF6]/20 dark:from-[#6D28D9]/30 dark:to-[#8B5CF6]/30 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-[#6D28D9] animate-pulse" />
+                        <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#24113F] dark:text-white">{log.action}</p>
-                        <p className="text-xs text-[#7C6F95] flex items-center gap-2">
+                        <p className="text-sm font-medium text-ink dark:text-white">{log.action}</p>
+                        <p className="text-xs text-ink-3 flex items-center gap-2">
                           <span>{log.actor_name}</span>
                           <span className="w-1 h-1 rounded-full bg-[#7C6F95]" />
                           <span>{log.school_name}</span>
                         </p>
                       </div>
                     </div>
-                    <p className="text-xs text-[#7C6F95] font-medium">
+                    <p className="text-xs text-ink-3 font-medium">
                       {log.created_at ? new Date(log.created_at).toLocaleString() : "—"}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#7C6F95]">No recent activity.</p>
+              <p className="text-sm text-ink-3">No recent activity.</p>
             )}
           </div>
         </Card>

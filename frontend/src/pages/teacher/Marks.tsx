@@ -107,7 +107,7 @@ export default function TeacherMarks() {
       </div>
 
       <Card className="mb-6" gradient>
-        <h3 className="font-bold text-[#24113F] dark:text-white mb-4 flex items-center gap-2">
+        <h3 className="font-bold text-ink dark:text-white mb-4 flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
@@ -115,11 +115,11 @@ export default function TeacherMarks() {
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Exam</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Exam</label>
             <select
               value={examId}
               onChange={(e) => { setExamId(e.target.value); setExamSubjectId(""); }}
-              className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
+              className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30"
             >
               <option value="">Select an exam</option>
               {examsQuery.data?.items.map((exam) => (
@@ -130,12 +130,12 @@ export default function TeacherMarks() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Class / Subject</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Class / Subject</label>
             <select
               value={examSubjectId}
               onChange={(e) => setExamSubjectId(e.target.value)}
               disabled={!examId}
-              className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20 disabled:opacity-50"
+              className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
             >
               <option value="">Select a class/subject</option>
               {examSubjectsQuery.data?.map((es) => (
@@ -150,46 +150,46 @@ export default function TeacherMarks() {
 
       {!examSubject ? (
         <Card className="text-center py-12">
-          <FileText className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-          <p className="text-[#7C6F95]">Select an exam and class/subject to enter marks.</p>
+          <FileText className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+          <p className="text-ink-3">Select an exam and class/subject to enter marks.</p>
         </Card>
       ) : rosterQuery.isLoading || existingMarksQuery.isLoading ? (
         <Card className="py-12 flex justify-center"><Spinner size="lg" /></Card>
       ) : roster.length === 0 ? (
         <Card className="text-center py-12">
-          <Users className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-          <p className="text-[#7C6F95]">No active students found for this class.</p>
+          <Users className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+          <p className="text-ink-3">No active students found for this class.</p>
         </Card>
       ) : (
         <Card gradient>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-[#24113F] dark:text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-[#6D28D9]" />
+            <h3 className="font-bold text-ink dark:text-white flex items-center gap-2">
+              <Award className="w-5 h-5 text-accent-fg" />
               Enter Marks (Max: {examSubject.max_marks})
             </h3>
             <Badge tone="blue">{enteredCount}/{roster.length} entered</Badge>
           </div>
           <div className="space-y-3">
             {roster.map((student, idx) => (
-              <div key={student.id} className={`flex items-center gap-4 p-4 rounded-xl ${idx % 2 === 0 ? "bg-[#F7F5FF] dark:bg-[#2D1B4E]/50" : "bg-white dark:bg-[#1B1230]"}`}>
+              <div key={student.id} className={`flex items-center gap-4 p-4 rounded-xl ${idx % 2 === 0 ? "bg-surface-3 dark:bg-[#2D1B4E]/50" : "bg-surface"}`}>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
                   {student.full_name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[#24113F] dark:text-white truncate">{student.full_name}</p>
+                  <p className="font-medium text-ink dark:text-white truncate">{student.full_name}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <input
                     type="number"
                     min={0}
                     max={examSubject.max_marks}
-                    className="w-20 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-3 py-2 text-sm text-center font-medium focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
+                    className="w-20 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-center font-medium focus:border-accent focus:ring-2 focus:ring-accent/30"
                     value={marks[student.id] ?? ""}
                     onChange={(e) => setMarks((prev) => ({ ...prev, [student.id]: e.target.value }))}
                     placeholder="—"
                   />
                   <input
-                    className="w-40 rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-3 py-2 text-sm focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
+                    className="w-40 rounded-xl border border-line bg-surface px-3 py-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30"
                     value={remarks[student.id] ?? ""}
                     onChange={(e) => setRemarks((prev) => ({ ...prev, [student.id]: e.target.value }))}
                     placeholder="Remarks"
@@ -199,7 +199,7 @@ export default function TeacherMarks() {
             ))}
           </div>
 
-          <div className="mt-6 pt-4 border-t border-[#E5DDF5] dark:border-[#2D1B4E] flex items-center gap-3">
+          <div className="mt-6 pt-4 border-t border-line flex items-center gap-3">
             <Button onClick={handleSave} disabled={saveMutation.isPending} glow>
               {saveMutation.isPending ? <Spinner size="sm" /> : <Save className="w-4 h-4" />}
               {saveMutation.isPending ? "Saving..." : "Save Marks"}

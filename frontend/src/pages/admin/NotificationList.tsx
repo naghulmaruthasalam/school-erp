@@ -82,32 +82,32 @@ export default function NotificationList() {
             className="space-y-4"
           >
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Title</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Title</label>
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Content</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Content</label>
               <textarea
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
                 rows={4}
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-violet-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Type</label>
                 <select
                   value={form.notification_type}
                   onChange={(e) => setForm({ ...form, notification_type: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
                 >
                   <option value="ANNOUNCEMENT">Announcement</option>
                   <option value="NOTICE">Notice</option>
@@ -117,11 +117,11 @@ export default function NotificationList() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-violet-700 mb-1">Priority</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Priority</label>
                 <select
                   value={form.priority}
                   onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
                 >
                   <option value="LOW">Low</option>
                   <option value="NORMAL">Normal</option>
@@ -146,12 +146,12 @@ export default function NotificationList() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-violet-900">{n.title}</h3>
+                    <h3 className="font-semibold text-ink">{n.title}</h3>
                     <Badge tone={n.priority === "URGENT" ? "red" : n.priority === "HIGH" ? "yellow" : n.priority === "LOW" ? "gray" : "violet"}>{n.priority}</Badge>
                     <Badge tone="violet">{n.notification_type}</Badge>
                   </div>
-                  <p className="text-violet-700 mb-2">{n.content}</p>
-                  <p className="text-xs text-violet-400">
+                  <p className="text-ink-2 mb-2">{n.content}</p>
+                  <p className="text-xs text-accent-fg">
                     By {n.created_by_name} · {new Date(n.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -170,7 +170,7 @@ export default function NotificationList() {
           ))}
           {data?.items.length === 0 && (
             <Card>
-              <p className="text-center text-violet-400 py-8">No notifications yet.</p>
+              <p className="text-center text-accent-fg py-8">No notifications yet.</p>
             </Card>
           )}
         </div>

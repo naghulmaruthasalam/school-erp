@@ -16,7 +16,7 @@ const STATUS_TONE: Record<AdmissionStatus, "gray" | "green" | "red" | "yellow"> 
 };
 
 function selectClass(className = "") {
-  return `w-full rounded-md border border-violet-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`;
+  return `w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`;
 }
 
 export default function AdmissionDetail() {
@@ -139,7 +139,7 @@ export default function AdmissionDetail() {
         <Card className="lg:col-span-2 space-y-6">
           {/* Student Information */}
           <div>
-            <h3 className="text-sm font-semibold text-violet-900 mb-3 pb-2 border-b border-violet-100">Student Information</h3>
+            <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">Student Information</h3>
             <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-3">
               <Field label="Full Name" value={`${admission.applicant_first_name} ${admission.applicant_last_name}`} />
               <Field label="Date of Birth" value={admission.dob ?? "—"} />
@@ -147,30 +147,41 @@ export default function AdmissionDetail() {
               <Field label="Email" value={admission.applicant_email ?? "—"} />
               <Field label="Applying For Class" value={classNameById.get(admission.applying_for_class_id) ?? admission.applying_for_class_id} />
               <Field label="Application Date" value={new Date(admission.created_at).toLocaleDateString()} />
+              <Field label="Blood Group" value={admission.blood_group || "—"} />
+              <Field label="Admission Type" value={admission.admission_type || "—"} />
+              <Field label="Previous School" value={admission.previous_school || "—"} />
             </dl>
           </div>
 
           {/* Guardian Information */}
           <div>
-            <h3 className="text-sm font-semibold text-violet-900 mb-3 pb-2 border-b border-violet-100">Guardian Information</h3>
+            <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">Guardian Information</h3>
             <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-3">
               <Field label="Guardian Name" value={admission.guardian_name} />
               <Field label="Guardian Phone" value={admission.guardian_phone} />
               <Field label="Guardian Email" value={admission.guardian_email ?? "—"} />
+              <Field label="Relationship" value={admission.guardian_relationship || admission.primary_guardian || "—"} />
+              <Field label="Father" value={admission.father_name || "—"} />
+              <Field label="Mother" value={admission.mother_name || "—"} />
+              <Field
+                label="Address"
+                value={[admission.address_line1, admission.address_line2, admission.city, admission.state, admission.postal_code].filter(Boolean).join(", ") || "—"}
+              />
+              <Field label="Documents" value={`${admission.document_ids.length + (admission.student_photo_id ? 1 : 0)} uploaded`} />
             </dl>
           </div>
 
           {/* Review Information */}
           {admission.review_notes && (
             <div>
-              <h3 className="text-sm font-semibold text-violet-900 mb-3 pb-2 border-b border-violet-100">Review Notes</h3>
-              <p className="text-sm text-violet-700">{admission.review_notes}</p>
+              <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">Review Notes</h3>
+              <p className="text-sm text-ink-2">{admission.review_notes}</p>
             </div>
           )}
 
           {admission.created_student_id && (
-            <div className="pt-4 border-t border-violet-100">
-              <Link to={`/admin/students/${admission.created_student_id}`} className="text-sm font-medium text-violet-600 hover:underline">
+            <div className="pt-4 border-t border-line">
+              <Link to={`/admin/students/${admission.created_student_id}`} className="text-sm font-medium text-accent-fg hover:underline">
                 View enrolled student →
               </Link>
             </div>
@@ -179,7 +190,7 @@ export default function AdmissionDetail() {
 
         {canReview && (
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-violet-900">Review Application</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink">Review Application</h2>
             <form className="space-y-3" onSubmit={handleApprove}>
               <div>
                 <Label>Academic Year *</Label>
@@ -256,13 +267,13 @@ export default function AdmissionDetail() {
             </form>
 
             {result && (
-              <div className="mt-4 rounded-md border border-violet-200 bg-violet-50 p-3 text-sm text-violet-700">
-                <p className="font-medium text-violet-900">
+              <div className="mt-4 rounded-md border border-line bg-violet-50 p-3 text-sm text-ink-2">
+                <p className="font-medium text-ink">
                   {result.studentLoginCreated || result.guardianLoginCreated
                     ? "Student and parent accounts created."
                     : "Review recorded."}
                 </p>
-                <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-gray-600">
+                <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-ink-2">
                   <li>Student login created: {result.studentLoginCreated ? "Yes" : "No"}</li>
                   <li>Guardian login created: {result.guardianLoginCreated ? "Yes" : "No"}</li>
                   {result.notes.map((note, i) => (
@@ -286,8 +297,8 @@ export default function AdmissionDetail() {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-violet-400">{label}</dt>
-      <dd className="mt-0.5 text-sm text-violet-900">{value}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-accent-fg">{label}</dt>
+      <dd className="mt-0.5 text-sm text-ink">{value}</dd>
     </div>
   );
 }

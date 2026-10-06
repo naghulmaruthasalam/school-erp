@@ -82,7 +82,7 @@ export default function CalendarView() {
           <Label htmlFor="cal-year">Academic Year</Label>
           <select
             id="cal-year"
-            className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={academicYearId}
             onChange={(e) => setAcademicYearId(e.target.value)}
           >
@@ -94,7 +94,7 @@ export default function CalendarView() {
           </select>
         </div>
 
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Add Event</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Add Event</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-5 sm:items-end">
           <div>
             <Label htmlFor="cal-title">Title</Label>
@@ -108,7 +108,7 @@ export default function CalendarView() {
             <Label htmlFor="cal-type">Type</Label>
             <select
               id="cal-type"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={eventType}
               onChange={(e) => setEventType(e.target.value as CalendarEventType)}
             >

@@ -109,7 +109,7 @@ export default function TeacherDashboard() {
   return (
     <div className="animate-fade-in-up">
       {/* Hero Section - Teal/Cyan theme */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0D9488] via-[#14B8A6] to-[#2DD4BF] p-8">
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-[#14B8A6] to-[#2DD4BF] p-8">
         <div className="absolute inset-0 bg-grid-pattern opacity-10" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#06B6D4]/30 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
@@ -134,7 +134,7 @@ export default function TeacherDashboard() {
 
       {!teacherId && (
         <Card className="mb-6 border-l-4 border-l-amber-500">
-          <p className="text-sm text-[#7C6F95] dark:text-[#D8CCEA]">
+          <p className="text-sm text-ink-3 dark:text-ink-2">
             No teacher profile is linked to this account, so classes cannot be loaded.
           </p>
         </Card>
@@ -144,54 +144,54 @@ export default function TeacherDashboard() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-8">
         <StatCard
           label={t("dashboard.myClasses")}
-          value={isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : uniqueSections}
+          value={isLoading ? <Spinner className="!text-white" /> : uniqueSections}
           icon={<UsersIcon />}
-          gradient="bg-gradient-to-br from-[#0D9488] to-[#0F766E]"
+          gradient="bg-gradient-to-br from-teal-600 to-[#0F766E]"
           delay="0.1s"
         />
         <StatCard
           label={t("dashboard.todaysClasses")}
-          value={isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : todaysClasses.length}
+          value={isLoading ? <Spinner className="!text-white" /> : todaysClasses.length}
           icon={<CalendarIcon />}
           gradient="bg-gradient-to-br from-[#0891B2] to-[#0E7490]"
           delay="0.15s"
         />
         <StatCard
           label={t("dashboard.weeklyClasses")}
-          value={isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : totalClasses}
+          value={isLoading ? <Spinner className="!text-white" /> : totalClasses}
           icon={<ClockIcon />}
           gradient="bg-gradient-to-br from-[#06B6D4] to-[#0891B2]"
           delay="0.2s"
         />
         <StatCard
           label={t("dashboard.subjects")}
-          value={isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : uniqueSubjects}
+          value={isLoading ? <Spinner className="!text-white" /> : uniqueSubjects}
           icon={<BookIcon />}
-          gradient="bg-gradient-to-br from-[#14B8A6] to-[#0D9488]"
+          gradient="bg-gradient-to-br from-teal-500 to-teal-600"
           delay="0.25s"
         />
       </div>
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4">{t("dashboard.quickActions")}</h2>
+        <h2 className="text-lg font-semibold text-ink dark:text-white mb-4">{t("dashboard.quickActions")}</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Link to="/teacher/attendance" className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-[#F0FDFA] to-white dark:from-[#042F2E] dark:to-[#0F172A] border border-[#99F6E4] dark:border-[#115E59] hover:border-[#14B8A6] transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
+            <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-teal-50 to-white dark:from-[#042F2E] dark:to-surface border border-line hover:border-teal-500 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
               <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl" />
               <div className="relative z-10 flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-br from-[#14B8A6] to-[#0D9488] rounded-xl text-white">
+                <div className="p-3 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl text-white">
                   <CheckCircleIcon />
                 </div>
                 <div>
-                  <p className="font-semibold text-[#0D9488] dark:text-[#2DD4BF] group-hover:text-[#0F766E] dark:group-hover:text-[#5EEAD4] transition-colors">{t("dashboard.takeAttendance")}</p>
-                  <p className="text-xs text-[#4B4260] dark:text-[#D8CCEA]">{t("dashboard.markTodaysAttendance")}</p>
+                  <p className="font-semibold text-teal-600 dark:text-[#2DD4BF] group-hover:text-[#0F766E] dark:group-hover:text-[#5EEAD4] transition-colors">{t("dashboard.takeAttendance")}</p>
+                  <p className="text-xs text-ink-2">{t("dashboard.markTodaysAttendance")}</p>
                 </div>
               </div>
             </div>
           </Link>
           <Link to="/teacher/homework" className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
-            <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-[#F0FDFA] to-white dark:from-[#042F2E] dark:to-[#0F172A] border border-[#99F6E4] dark:border-[#115E59] hover:border-[#14B8A6] transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
+            <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-teal-50 to-white dark:from-[#042F2E] dark:to-surface border border-line hover:border-teal-500 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl" />
               <div className="relative z-10 flex items-center gap-4">
                 <div className="p-3 bg-gradient-to-br from-[#06B6D4] to-[#0891B2] rounded-xl text-white">
@@ -199,21 +199,21 @@ export default function TeacherDashboard() {
                 </div>
                 <div>
                   <p className="font-semibold text-[#0891B2] dark:text-[#22D3EE] group-hover:text-[#0E7490] dark:group-hover:text-[#67E8F9] transition-colors">{t("dashboard.assignHomework")}</p>
-                  <p className="text-xs text-[#4B4260] dark:text-[#D8CCEA]">{t("dashboard.createNewAssignments")}</p>
+                  <p className="text-xs text-ink-2">{t("dashboard.createNewAssignments")}</p>
                 </div>
               </div>
             </div>
           </Link>
           <Link to="/teacher/marks" className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-            <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-[#F0FDFA] to-white dark:from-[#042F2E] dark:to-[#0F172A] border border-[#99F6E4] dark:border-[#115E59] hover:border-[#14B8A6] transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
+            <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-teal-50 to-white dark:from-[#042F2E] dark:to-surface border border-line hover:border-teal-500 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
               <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl" />
               <div className="relative z-10 flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-br from-[#0D9488] to-[#0F766E] rounded-xl text-white">
+                <div className="p-3 bg-gradient-to-br from-teal-600 to-[#0F766E] rounded-xl text-white">
                   <PencilIcon />
                 </div>
                 <div>
                   <p className="font-semibold text-[#0F766E] dark:text-[#14B8A6] group-hover:text-[#115E59] dark:group-hover:text-[#2DD4BF] transition-colors">{t("dashboard.enterMarks")}</p>
-                  <p className="text-xs text-[#4B4260] dark:text-[#D8CCEA]">{t("dashboard.recordExamScores")}</p>
+                  <p className="text-xs text-ink-2">{t("dashboard.recordExamScores")}</p>
                 </div>
               </div>
             </div>
@@ -224,15 +224,15 @@ export default function TeacherDashboard() {
       {/* Today's Schedule */}
       <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
         <Card className="!p-0 overflow-hidden">
-          <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F0FDFA] to-white dark:from-[#042F2E] dark:to-[#0F172A]">
+          <div className="p-5 border-b border-line bg-gradient-to-r from-teal-50 to-white dark:from-[#042F2E] dark:to-surface">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#14B8A6]/10 dark:bg-[#14B8A6]/20 rounded-xl text-[#0D9488]">
+                <div className="p-2 bg-[#14B8A6]/10 dark:bg-[#14B8A6]/20 rounded-xl text-teal-600">
                   <CalendarIcon />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">{t("dashboard.todaysSchedule")}</h3>
-                  <p className="text-xs text-[#7C6F95]">{t(WEEKDAY_KEYS[todayDow])}</p>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">{t("dashboard.todaysSchedule")}</h3>
+                  <p className="text-xs text-ink-3">{t(WEEKDAY_KEYS[todayDow])}</p>
                 </div>
               </div>
               <Link to="/teacher/timetable">
@@ -248,7 +248,7 @@ export default function TeacherDashboard() {
                 <div className="w-16 h-16 bg-[#F0FDFA] dark:bg-[#042F2E] rounded-full flex items-center justify-center mb-4">
                   <CalendarIcon />
                 </div>
-                <p className="text-sm text-[#7C6F95] dark:text-[#D8CCEA]">No classes scheduled for today</p>
+                <p className="text-sm text-ink-3 dark:text-ink-2">No classes scheduled for today</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -258,24 +258,24 @@ export default function TeacherDashboard() {
                   return (
                     <div
                       key={slot.id}
-                      className="animate-slide-in-right group flex items-center justify-between p-4 bg-gradient-to-r from-[#F0FDFA] to-white dark:from-[#042F2E] dark:to-[#0F172A] rounded-xl border border-[#99F6E4] dark:border-[#115E59] hover:border-[#14B8A6] transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10"
+                      className="animate-slide-in-right group flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-white dark:from-[#042F2E] dark:to-surface rounded-xl border border-line hover:border-teal-500 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10"
                       style={{ animationDelay: `${idx * 50}ms` }}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#14B8A6] to-[#0D9488] flex items-center justify-center text-white font-bold">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-bold">
                           P{slot.period_number}
                         </div>
                         <div>
-                          <p className="font-medium text-[#24113F] dark:text-white">
+                          <p className="font-medium text-ink dark:text-white">
                             {subject?.name ?? slot.subject_id}
                           </p>
-                          <p className="text-sm text-[#7C6F95] dark:text-[#D8CCEA]">
+                          <p className="text-sm text-ink-3 dark:text-ink-2">
                             Section {section?.name ?? slot.section_id}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <Badge tone="gray" className="bg-[#F0FDFA] dark:bg-[#042F2E] text-[#0D9488]">
+                        <Badge tone="gray" className="bg-[#F0FDFA] dark:bg-[#042F2E] text-teal-600">
                           {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
                         </Badge>
                       </div>

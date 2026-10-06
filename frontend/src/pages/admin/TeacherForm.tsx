@@ -23,7 +23,7 @@ const emptyForm: TeacherCreateRequest = {
 };
 
 function selectClass(className = "") {
-  return `w-full rounded-md border border-violet-200 dark:border-slate-600 bg-violet-50/50 dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-slate-700 ${className}`;
+  return `w-full rounded-md border border-line bg-violet-50/50 dark:bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 focus:bg-surface dark:focus:bg-surface-3 ${className}`;
 }
 
 export default function TeacherForm() {
@@ -114,6 +114,11 @@ export default function TeacherForm() {
         photoDocumentId = await uploadFile(photoFile, "TEACHER_PHOTO");
       }
 
+      const documentIds: string[] = [];
+      for (const doc of documents) {
+        if (doc.file) documentIds.push(await uploadFile(doc.file, "TEACHER_DOCUMENT"));
+      }
+
       const payload: TeacherCreateRequest = {
         ...form,
         dob: form.dob || null,
@@ -125,6 +130,7 @@ export default function TeacherForm() {
           .map((q) => q.trim())
           .filter(Boolean),
         photo_document_id: photoDocumentId,
+        document_ids: documentIds,
       };
       mutation.mutate(payload);
     } catch {
@@ -184,14 +190,14 @@ export default function TeacherForm() {
           </div>
 
           {/* Photo Upload */}
-          <div className="border-t border-violet-100 pt-4">
+          <div className="border-t border-line pt-4">
             <Label>Profile Photo</Label>
             <div className="flex items-center gap-4 mt-2">
-              <div className="w-24 h-24 rounded-xl bg-violet-50 border-2 border-dashed border-violet-200 flex items-center justify-center overflow-hidden">
+              <div className="w-24 h-24 rounded-xl bg-violet-50 border-2 border-dashed border-line flex items-center justify-center overflow-hidden">
                 {photoPreview ? (
                   <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-violet-300 text-3xl">👤</span>
+                  <span className="text-ink-2 text-3xl">👤</span>
                 )}
               </div>
               <div>
@@ -199,25 +205,25 @@ export default function TeacherForm() {
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoChange}
-                  className="text-sm text-violet-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-violet-100 file:text-violet-700 hover:file:bg-violet-200"
+                  className="text-sm text-accent-fg file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-violet-100 file:text-ink-2 hover:file:bg-violet-200"
                 />
-                <p className="text-xs text-violet-400 mt-1">JPG, PNG up to 5MB</p>
+                <p className="text-xs text-accent-fg mt-1">JPG, PNG up to 5MB</p>
               </div>
             </div>
           </div>
 
           {/* Documents Upload */}
-          <div className="border-t border-violet-100 pt-4">
+          <div className="border-t border-line pt-4">
             <Label>Documents</Label>
             <div className="space-y-3 mt-2">
               {documents.map((doc, idx) => (
                 <div key={doc.name} className="flex items-center gap-3 p-3 bg-violet-50/50 rounded-lg">
-                  <span className="text-sm font-medium text-violet-700 w-40">{doc.name}</span>
+                  <span className="text-sm font-medium text-ink-2 w-40">{doc.name}</span>
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => handleDocChange(idx, e)}
-                    className="flex-1 text-sm text-violet-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-violet-100 file:text-violet-700"
+                    className="flex-1 text-sm text-accent-fg file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-violet-100 file:text-ink-2"
                   />
                   {doc.file && <span className="text-green-600 text-sm">✓</span>}
                 </div>
@@ -227,12 +233,12 @@ export default function TeacherForm() {
 
           <div>
             <Label>Assigned Classes/Grades *</Label>
-            <p className="text-xs text-violet-500 dark:text-slate-400 mb-2">
+            <p className="text-xs text-accent-fg dark:text-ink-3 mb-2">
               Select the classes this teacher can manage (attendance, exam results)
             </p>
-            <div className="flex flex-wrap gap-2 rounded-md border border-violet-200 dark:border-slate-600 bg-violet-50/30 dark:bg-slate-800/50 p-3">
+            <div className="flex flex-wrap gap-2 rounded-md border border-line bg-violet-50/30 dark:bg-slate-800/50 p-3">
               {(classes ?? []).length === 0 && (
-                <span className="text-sm text-violet-400 dark:text-slate-400">
+                <span className="text-sm text-accent-fg dark:text-ink-3">
                   No classes configured. <a href="/admin/academic-setup" className="underline text-amber-600 dark:text-amber-400">Create classes first</a>
                 </span>
               )}
@@ -246,7 +252,7 @@ export default function TeacherForm() {
                     className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                       active
                         ? "border-emerald-600 bg-emerald-100 text-emerald-700 dark:border-emerald-400 dark:bg-emerald-900/50 dark:text-emerald-300"
-                        : "border-violet-300 text-violet-600 hover:bg-violet-100 dark:border-slate-500 dark:text-slate-300 dark:hover:bg-slate-700"
+                        : "border-line text-accent-fg hover:bg-violet-100 dark:border-slate-500 dark:text-ink-2 dark:hover:bg-surface-3"
                     }`}
                   >
                     {c.name}
@@ -258,9 +264,9 @@ export default function TeacherForm() {
 
           <div>
             <Label>Subjects</Label>
-            <div className="flex flex-wrap gap-2 rounded-md border border-violet-200 dark:border-slate-600 bg-violet-50/30 dark:bg-slate-800/50 p-3">
+            <div className="flex flex-wrap gap-2 rounded-md border border-line bg-violet-50/30 dark:bg-slate-800/50 p-3">
               {(subjects ?? []).length === 0 && (
-                <span className="text-sm text-violet-400 dark:text-slate-400">
+                <span className="text-sm text-accent-fg dark:text-ink-3">
                   No subjects configured. <a href="/admin/academic-setup" className="underline text-amber-600 dark:text-amber-400">Create subjects first</a>
                 </span>
               )}
@@ -273,8 +279,8 @@ export default function TeacherForm() {
                     onClick={() => toggleSubject(s.id)}
                     className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                       active
-                        ? "border-violet-600 bg-violet-100 text-violet-700 dark:border-violet-400 dark:bg-violet-900/50 dark:text-violet-300"
-                        : "border-violet-300 text-violet-600 hover:bg-violet-100 dark:border-slate-500 dark:text-slate-300 dark:hover:bg-slate-700"
+                        ? "border-violet-600 bg-violet-100 text-ink-2 dark:border-violet-400 dark:bg-violet-900/50 dark:text-ink-2"
+                        : "border-line text-accent-fg hover:bg-violet-100 dark:border-slate-500 dark:text-ink-2 dark:hover:bg-surface-3"
                     }`}
                   >
                     {s.name}

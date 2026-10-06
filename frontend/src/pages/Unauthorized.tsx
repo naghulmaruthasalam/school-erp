@@ -4,15 +4,15 @@ import { ROLE_HOME, useAuthStore } from "../auth/store";
 export default function Unauthorized() {
   const user = useAuthStore((s) => s.user);
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-violet-50 text-center">
-      <p className="text-3xl font-semibold text-violet-900">403</p>
-      <p className="text-sm text-violet-600">You don't have access to that page.</p>
-      <Link
-        to={user ? ROLE_HOME[user.role] : "/login"}
-        className="mt-4 text-sm font-medium text-violet-600 hover:underline"
-      >
-        Back to dashboard
-      </Link>
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="glass-strong animate-pop-in w-full max-w-sm !rounded-[32px] p-10 text-center">
+        <p className="text-gradient text-7xl font-semibold tracking-tight">403</p>
+        <p className="mt-3 text-base font-medium text-ink">Access restricted</p>
+        <p className="mt-1 text-sm text-ink-3">You don't have access to that page.</p>
+        <Link to={user ? ROLE_HOME[user.role] : "/login"} className="lg-btn lg-btn-primary mt-7">
+          Back to dashboard
+        </Link>
+      </div>
     </div>
   );
 }

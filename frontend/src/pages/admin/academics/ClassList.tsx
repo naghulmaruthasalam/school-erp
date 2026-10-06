@@ -61,7 +61,7 @@ export default function ClassList() {
           <Label htmlFor="cl-year">Academic Year</Label>
           <select
             id="cl-year"
-            className="w-full max-w-xs rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full max-w-xs rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={academicYearId}
             onChange={(e) => setAcademicYearId(e.target.value)}
           >
@@ -77,7 +77,7 @@ export default function ClassList() {
           </select>
         </div>
 
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Create Class</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Create Class</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end">
           <div>
             <Label htmlFor="cl-name">Name</Label>

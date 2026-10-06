@@ -73,10 +73,10 @@ function AnimatedProgressBar({ label, value, max, color, delay }: { label: strin
   return (
     <div className="animate-fade-in-up group" style={{ animationDelay: delay }}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA]">{label}</span>
-        <span className="text-sm font-bold text-[#24113F] dark:text-white">{value.toLocaleString()}</span>
+        <span className="text-sm font-medium text-ink-2">{label}</span>
+        <span className="text-sm font-bold text-ink dark:text-white">{value.toLocaleString()}</span>
       </div>
-      <div className="h-3 bg-[#F0E9FF] dark:bg-[#2D1B4E] rounded-full overflow-hidden">
+      <div className="h-3 bg-surface-3 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-1000 ease-out ${color} relative overflow-hidden`}
           style={{ width: `${Math.max(5, percentage)}%` }}
@@ -119,7 +119,7 @@ export default function Analytics() {
   return (
     <div className="animate-fade-in-up">
       {/* Hero Section */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#2563EB] via-[#3B82F6] to-[#60A5FA] p-8">
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-[#3B82F6] to-[#60A5FA] p-8">
         <div className="absolute inset-0 bg-grid-pattern opacity-10" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#818CF8]/30 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
@@ -166,41 +166,41 @@ export default function Analytics() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard
           title="Total Schools"
-          value={statsQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : statsQuery.data?.total_schools ?? 0}
+          value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_schools ?? 0}
           subtitle={`${statsQuery.data?.active_schools ?? 0} active`}
           icon={
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
             </svg>
           }
-          gradient="bg-gradient-to-br from-[#6D28D9] to-[#4C1D95]"
+          gradient="bg-gradient-to-br from-accent to-[#4C1D95]"
           delay="0.1s"
           trend={{ value: "+12%", up: true }}
         />
         <MetricCard
           title="Total Users"
-          value={statsQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : statsQuery.data?.total_users ?? 0}
+          value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_users ?? 0}
           subtitle={`${statsQuery.data?.active_users ?? 0} active`}
           icon={<UsersIcon />}
-          gradient="bg-gradient-to-br from-[#2563EB] to-[#1D4ED8]"
+          gradient="bg-gradient-to-br from-blue-600 to-[#1D4ED8]"
           delay="0.15s"
           trend={{ value: "+24%", up: true }}
         />
         <MetricCard
           title="Students"
-          value={usersQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : totalStudents.toLocaleString()}
+          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalStudents.toLocaleString()}
           subtitle="Across all schools"
           icon={
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           }
-          gradient="bg-gradient-to-br from-[#059669] to-[#047857]"
+          gradient="bg-gradient-to-br from-emerald-600 to-[#047857]"
           delay="0.2s"
         />
         <MetricCard
           title="Teachers"
-          value={usersQuery.isLoading ? <Spinner className="!border-white/30 !border-t-white" /> : totalTeachers.toLocaleString()}
+          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalTeachers.toLocaleString()}
           subtitle="Across all schools"
           icon={
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -216,15 +216,15 @@ export default function Analytics() {
         {/* User Distribution */}
         <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#6D28D9]/10 dark:bg-[#6D28D9]/20 rounded-xl text-[#6D28D9]">
+                  <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-xl text-accent-fg">
                     <UsersIcon />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">User Distribution</h3>
-                    <p className="text-xs text-[#7C6F95]">By role across platform</p>
+                    <h3 className="text-lg font-semibold text-ink dark:text-white">User Distribution</h3>
+                    <p className="text-xs text-ink-3">By role across platform</p>
                   </div>
                 </div>
                 {usersQuery.data && (
@@ -241,11 +241,11 @@ export default function Analytics() {
                 <div className="space-y-5">
                   {usersQuery.data.map((item, idx) => {
                     const colors = [
-                      "bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6]",
-                      "bg-gradient-to-r from-[#059669] to-[#10B981]",
-                      "bg-gradient-to-r from-[#2563EB] to-[#3B82F6]",
+                      "bg-gradient-to-r from-accent to-accent-2",
+                      "bg-gradient-to-r from-emerald-600 to-emerald-500",
+                      "bg-gradient-to-r from-blue-600 to-blue-500",
                       "bg-gradient-to-r from-[#F59E0B] to-[#FBBF24]",
-                      "bg-gradient-to-r from-[#EC4899] to-[#F472B6]",
+                      "bg-gradient-to-r from-pink-500 to-pink-400",
                       "bg-gradient-to-r from-[#7C3AED] to-[#A78BFA]",
                     ];
                     return (
@@ -261,7 +261,7 @@ export default function Analytics() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-[#7C6F95] text-center py-8">No user data available.</p>
+                <p className="text-sm text-ink-3 text-center py-8">No user data available.</p>
               )}
             </div>
           </Card>
@@ -270,15 +270,15 @@ export default function Analytics() {
         {/* Schools by Region */}
         <div className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#059669]/10 dark:bg-[#059669]/20 rounded-xl text-[#059669]">
+                  <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl text-emerald-600">
                     <GlobeIcon />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Schools by Region</h3>
-                    <p className="text-xs text-[#7C6F95]">Geographic distribution</p>
+                    <h3 className="text-lg font-semibold text-ink dark:text-white">Schools by Region</h3>
+                    <p className="text-xs text-ink-3">Geographic distribution</p>
                   </div>
                 </div>
               </div>
@@ -294,27 +294,27 @@ export default function Analytics() {
                     .map(([state, count], idx) => (
                       <div
                         key={state}
-                        className="animate-slide-in-right group flex items-center justify-between p-4 bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#231640] dark:to-[#1B1230] rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#059669]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#059669]/10"
+                        className="animate-slide-in-right group flex items-center justify-between p-4 bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-xl border border-line hover:border-[#059669]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#059669]/10"
                         style={{ animationDelay: `${0.1 * idx}s` }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#059669] to-[#10B981] flex items-center justify-center text-white">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 flex items-center justify-center text-white">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           </div>
-                          <span className="font-medium text-[#24113F] dark:text-white">{state}</span>
+                          <span className="font-medium text-ink dark:text-white">{state}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-[#059669]">{count}</span>
-                          <span className="text-sm text-[#7C6F95]">{count === 1 ? 'school' : 'schools'}</span>
+                          <span className="text-lg font-bold text-emerald-600">{count}</span>
+                          <span className="text-sm text-ink-3">{count === 1 ? 'school' : 'schools'}</span>
                         </div>
                       </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-sm text-[#7C6F95] text-center py-8">No school data available.</p>
+                <p className="text-sm text-ink-3 text-center py-8">No school data available.</p>
               )}
             </div>
           </Card>
@@ -324,24 +324,24 @@ export default function Analytics() {
       {/* Platform Insights */}
       <div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
         <Card className="!p-0 overflow-hidden">
-          <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+          <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#F59E0B]/10 dark:bg-[#F59E0B]/20 rounded-xl text-[#F59E0B]">
+              <div className="p-2 bg-amber-500/10 dark:bg-amber-500/20 rounded-xl text-amber-500">
                 <LightBulbIcon />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Platform Insights</h3>
-                <p className="text-xs text-[#7C6F95]">Key performance indicators</p>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">Platform Insights</h3>
+                <p className="text-xs text-ink-3">Key performance indicators</p>
               </div>
             </div>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-[#F7F5FF] to-white dark:from-[#231640] dark:to-[#1B1230] rounded-2xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#6D28D9]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.45s" }}>
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#6D28D9]/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
+              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-accent/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.45s" }}>
+                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-accent/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-[#7C6F95] mb-2">Avg Users / School</p>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] bg-clip-text text-transparent">
+                  <p className="text-sm text-ink-3 mb-2">Avg Users / School</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
                     {statsQuery.data?.total_schools
                       ? Math.round((statsQuery.data.total_users ?? 0) / statsQuery.data.total_schools)
                       : 0}
@@ -349,29 +349,29 @@ export default function Analytics() {
                 </div>
               </div>
 
-              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-[#F7F5FF] to-white dark:from-[#231640] dark:to-[#1B1230] rounded-2xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#059669]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.5s" }}>
+              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-[#059669]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.5s" }}>
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#059669]/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-[#7C6F95] mb-2">Student:Teacher Ratio</p>
-                  <p className="text-3xl font-bold text-[#059669]">
+                  <p className="text-sm text-ink-3 mb-2">Student:Teacher Ratio</p>
+                  <p className="text-3xl font-bold text-emerald-600">
                     {totalTeachers > 0 ? `${Math.round(totalStudents / totalTeachers)}:1` : "N/A"}
                   </p>
                 </div>
               </div>
 
-              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-[#F7F5FF] to-white dark:from-[#231640] dark:to-[#1B1230] rounded-2xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#2563EB]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.55s" }}>
+              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-[#2563EB]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.55s" }}>
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#2563EB]/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-[#7C6F95] mb-2">School Admins</p>
-                  <p className="text-3xl font-bold text-[#2563EB]">{totalAdmins}</p>
+                  <p className="text-sm text-ink-3 mb-2">School Admins</p>
+                  <p className="text-3xl font-bold text-blue-600">{totalAdmins}</p>
                 </div>
               </div>
 
-              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-[#F7F5FF] to-white dark:from-[#231640] dark:to-[#1B1230] rounded-2xl border border-[#E5DDF5] dark:border-[#2D1B4E] hover:border-[#DC2626]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.6s" }}>
+              <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-[#DC2626]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.6s" }}>
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#DC2626]/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-[#7C6F95] mb-2">Inactive Schools</p>
-                  <p className="text-3xl font-bold text-[#DC2626]">
+                  <p className="text-sm text-ink-3 mb-2">Inactive Schools</p>
+                  <p className="text-3xl font-bold text-red-600">
                     {statsQuery.data?.inactive_schools ?? 0}
                   </p>
                 </div>

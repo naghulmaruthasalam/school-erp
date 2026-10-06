@@ -185,7 +185,7 @@ export default function LeaveList() {
                       </Button>
                     </div>
                   ) : (
-                    <span className="text-violet-400">—</span>
+                    <span className="text-accent-fg">—</span>
                   ),
               },
             ]}

@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button, PageHeader, Card, Spinner, Badge } from "../../components/ui";
-import { SyllabusViewer } from "../../components/SyllabusViewer";
-import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
+import { listSyllabus } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
 import { Plus, Filter, BookOpen, GraduationCap, FileText, Sparkles } from "lucide-react";
 
@@ -65,15 +64,15 @@ export default function TeacherSyllabus() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
             <Filter size={16} className="text-white" />
           </div>
-          <h3 className="font-bold text-[#24113F] dark:text-white">Filter Syllabus</h3>
+          <h3 className="font-bold text-ink dark:text-white">Filter Syllabus</h3>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Class</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Class</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20 transition-all [&>option]:bg-white [&>option]:dark:bg-[#2D1B4E] [&>option]:text-[#24113F] [&>option]:dark:text-white"
+              className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:ring-2 focus:ring-accent/30 transition-all [&>option]:bg-surface [&>option]:dark:bg-surface-3 [&>option]:text-ink [&>option]:dark:text-white"
             >
               <option value="">All Classes</option>
               {classesQuery.data?.map((c) => (
@@ -82,11 +81,11 @@ export default function TeacherSyllabus() {
             </select>
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Subject</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Subject</label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#3D2B5E] bg-white dark:bg-[#2D1B4E] px-4 py-3 text-sm text-[#24113F] dark:text-white focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20 transition-all [&>option]:bg-white [&>option]:dark:bg-[#2D1B4E] [&>option]:text-[#24113F] [&>option]:dark:text-white"
+              className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:ring-2 focus:ring-accent/30 transition-all [&>option]:bg-surface [&>option]:dark:bg-surface-3 [&>option]:text-ink [&>option]:dark:text-white"
             >
               <option value="">All Subjects</option>
               {subjectsQuery.data?.map((s) => (
@@ -107,11 +106,11 @@ export default function TeacherSyllabus() {
           <div className="relative inline-block mb-6">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full blur-xl opacity-30 animate-pulse" />
             <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
-              <BookOpen className="w-10 h-10 text-violet-400" />
+              <BookOpen className="w-10 h-10 text-accent-fg" />
             </div>
           </div>
-          <p className="text-lg font-bold text-[#24113F] dark:text-white mb-2">No syllabus found</p>
-          <p className="text-[#7C6F95] mb-6">Create one to get started with your course curriculum.</p>
+          <p className="text-lg font-bold text-ink dark:text-white mb-2">No syllabus found</p>
+          <p className="text-ink-3 mb-6">Create one to get started with your course curriculum.</p>
           <Link to="/teacher/syllabus/new">
             <Button glow>
               <Sparkles className="w-4 h-4" /> Create Your First Syllabus
@@ -131,17 +130,17 @@ export default function TeacherSyllabus() {
                     </div>
                   </div>
                   <div>
-                    <Link to={`/teacher/syllabus/${syllabus.id}`} className="font-bold text-lg text-[#24113F] dark:text-white hover:text-[#6D28D9] transition-colors">
+                    <Link to={`/teacher/syllabus/${syllabus.id}`} className="font-bold text-lg text-ink dark:text-white hover:text-accent-fg transition-colors">
                       {syllabus.title}
                     </Link>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-sm text-[#7C6F95] flex items-center gap-1">
+                      <span className="text-sm text-ink-3 flex items-center gap-1">
                         <GraduationCap className="w-4 h-4" /> {getClassName(syllabus.class_id)}
                       </span>
-                      <span className="text-[#7C6F95]">•</span>
-                      <span className="text-sm text-[#7C6F95]">{getSubjectName(syllabus.subject_id)}</span>
-                      <span className="text-[#7C6F95]">•</span>
-                      <span className="text-sm text-[#7C6F95]">{getYearName(syllabus.academic_year_id)}</span>
+                      <span className="text-ink-3">•</span>
+                      <span className="text-sm text-ink-3">{getSubjectName(syllabus.subject_id)}</span>
+                      <span className="text-ink-3">•</span>
+                      <span className="text-sm text-ink-3">{getYearName(syllabus.academic_year_id)}</span>
                     </div>
                   </div>
                 </div>
@@ -150,7 +149,7 @@ export default function TeacherSyllabus() {
                     {syllabus.status}
                   </Badge>
                   <Link to={`/teacher/syllabus/${syllabus.id}`}>
-                    <Button variant="secondary" className="group-hover:bg-[#6D28D9] group-hover:text-white transition-all">
+                    <Button variant="secondary" className="group-hover:bg-accent group-hover:text-white transition-all">
                       View Details
                     </Button>
                   </Link>

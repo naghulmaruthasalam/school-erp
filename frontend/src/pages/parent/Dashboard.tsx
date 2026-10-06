@@ -112,36 +112,36 @@ export default function ParentDashboard() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-violet-900">Attendance</h2>
-            <p className="mb-3 text-sm text-violet-600">Full history and date-range breakdown.</p>
-            <Link to={`/parent/attendance?child=${selectedChildId}`} className="text-sm font-medium text-violet-600 group-hover:text-violet-700 transition-colors">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Attendance</h2>
+            <p className="mb-3 text-sm text-accent-fg">Full history and date-range breakdown.</p>
+            <Link to={`/parent/attendance?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
               View attendance →
             </Link>
           </Card>
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-violet-900">Homework</h2>
-            <p className="mb-3 text-sm text-violet-600">Pending and past assignments.</p>
-            <Link to={`/parent/homework?child=${selectedChildId}`} className="text-sm font-medium text-violet-600 group-hover:text-violet-700 transition-colors">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Homework</h2>
+            <p className="mb-3 text-sm text-accent-fg">Pending and past assignments.</p>
+            <Link to={`/parent/homework?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
               View homework →
             </Link>
           </Card>
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-violet-900">Exams</h2>
-            <p className="mb-3 text-sm text-violet-600">Results and report cards.</p>
-            <Link to={`/parent/exams?child=${selectedChildId}`} className="text-sm font-medium text-violet-600 group-hover:text-violet-700 transition-colors">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Exams</h2>
+            <p className="mb-3 text-sm text-accent-fg">Results and report cards.</p>
+            <Link to={`/parent/exams?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
               View exams →
             </Link>
           </Card>
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-violet-900">Fees</h2>
-            <p className="mb-3 text-sm text-violet-600">Invoices, payment status and online payment.</p>
-            <Link to={`/parent/fees?child=${selectedChildId}`} className="text-sm font-medium text-violet-600 group-hover:text-violet-700 transition-colors">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Fees</h2>
+            <p className="mb-3 text-sm text-accent-fg">Invoices, payment status and online payment.</p>
+            <Link to={`/parent/fees?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
               View fees →
             </Link>
           </Card>

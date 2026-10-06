@@ -1,5 +1,6 @@
+import DocumentImage from "../../components/DocumentImage";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Badge, Card, PageHeader, Spinner } from "../../components/ui";
 import { useMyAcademicYear, useMyClass, useMyProfile, useMySection } from "./hooks";
 import { api } from "../../api/client";
@@ -7,8 +8,8 @@ import { api } from "../../api/client";
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="animate-fade-in-up">
-      <p className="text-xs font-medium uppercase tracking-wide text-[#6D28D9] dark:text-[#A78BFA]">{label}</p>
-      <p className="mt-0.5 text-sm text-[#24113F] dark:text-white">{value || "—"}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
     </div>
   );
 }
@@ -22,28 +23,11 @@ export default function StudentProfile() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const { data: profile, isLoading, error } = useMyProfile();
   const { data: schoolClass } = useMyClass(profile?.class_id);
   const { data: section } = useMySection(profile?.section_id);
   const { data: academicYear } = useMyAcademicYear(profile?.academic_year_id);
-
-  useEffect(() => {
-    async function fetchPhotoUrl() {
-      if (profile?.photo_document_id) {
-        try {
-          const res = await api.get<{ url: string }>(`/uploads/${profile.photo_document_id}/url`);
-          setPhotoUrl(res.data.url);
-        } catch {
-          setPhotoUrl(null);
-        }
-      } else {
-        setPhotoUrl(null);
-      }
-    }
-    fetchPhotoUrl();
-  }, [profile?.photo_document_id]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -57,14 +41,10 @@ export default function StudentProfile() {
       formData.append("linked_entity_type", "student");
       formData.append("linked_entity_id", profile.id);
 
-      const uploadRes = await api.post<{ id: string }>("/uploads", formData);
+      const uploadRes = await api.post("/uploads", formData);
       const docId = uploadRes.data.id;
 
       await api.patch("/students/me", { photo_document_id: docId });
-
-      const urlRes = await api.get<{ url: string }>(`/uploads/${docId}/url`);
-      setPhotoUrl(urlRes.data.url);
-
       queryClient.invalidateQueries({ queryKey: ["student", "my-profile"] });
     } catch (err) {
       console.error("Failed to upload photo:", err);
@@ -86,7 +66,7 @@ export default function StudentProfile() {
         <div className="space-y-6">
           {/* Profile Header Card */}
           <Card className="!p-0 overflow-hidden">
-            <div className="bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] p-6">
+            <div className="bg-gradient-to-r from-accent to-accent-2 p-6">
               <div className="flex items-center gap-6">
                 {/* Profile Photo */}
                 <div className="relative group">
@@ -100,22 +80,22 @@ export default function StudentProfile() {
                   <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-4 border-white/30 overflow-hidden">
                     {uploading ? (
                       <Spinner />
-                    ) : photoUrl ? (
-                      <img
-                        src={photoUrl}
+                    ) : (
+                      <DocumentImage
+                        documentId={profile.photo_document_id}
                         alt={profile.full_name}
                         className="w-full h-full object-cover"
-                        onError={() => setPhotoUrl(null)}
+                        fallback={
+                          <span className="text-4xl font-bold text-white">
+                            {profile.full_name?.charAt(0)?.toUpperCase()}
+                          </span>
+                        }
                       />
-                    ) : (
-                      <span className="text-4xl font-bold text-white">
-                        {profile.full_name?.charAt(0)?.toUpperCase()}
-                      </span>
                     )}
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#6D28D9] hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
+                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-accent hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
                     title="Change photo"
                   >
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,32 +119,32 @@ export default function StudentProfile() {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-3 divide-x divide-[#E5DDF5] dark:divide-[#2D1B4E]">
+            <div className="grid grid-cols-3 divide-x divide-line dark:divide-line">
               <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-[#6D28D9] dark:text-[#A78BFA]">{schoolClass?.name || "—"}</p>
-                <p className="text-xs text-[#7C6F95] uppercase">Class</p>
+                <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{schoolClass?.name || "—"}</p>
+                <p className="text-xs text-ink-3 uppercase">Class</p>
               </div>
               <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-[#6D28D9] dark:text-[#A78BFA]">{section?.name || "—"}</p>
-                <p className="text-xs text-[#7C6F95] uppercase">Section</p>
+                <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{section?.name || "—"}</p>
+                <p className="text-xs text-ink-3 uppercase">Section</p>
               </div>
               <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-[#6D28D9] dark:text-[#A78BFA]">{profile.roll_number || "—"}</p>
-                <p className="text-xs text-[#7C6F95] uppercase">Roll No</p>
+                <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{profile.roll_number || "—"}</p>
+                <p className="text-xs text-ink-3 uppercase">Roll No</p>
               </div>
             </div>
           </Card>
 
           {/* Personal Details */}
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#6D28D9]/10 dark:bg-[#6D28D9]/20 rounded-xl">
-                  <svg className="w-5 h-5 text-[#6D28D9] dark:text-[#A78BFA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-xl">
+                  <svg className="w-5 h-5 text-accent-fg dark:text-accent-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Personal Details</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">Personal Details</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
@@ -176,14 +156,14 @@ export default function StudentProfile() {
 
           {/* Contact Information */}
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#059669]/10 dark:bg-[#059669]/20 rounded-xl">
-                  <svg className="w-5 h-5 text-[#059669]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Contact Information</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">Contact Information</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
@@ -195,14 +175,14 @@ export default function StudentProfile() {
 
           {/* Academic Information */}
           <Card className="!p-0 overflow-hidden">
-            <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+            <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#F59E0B]/10 dark:bg-[#F59E0B]/20 rounded-xl">
-                  <svg className="w-5 h-5 text-[#F59E0B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="p-2 bg-amber-500/10 dark:bg-amber-500/20 rounded-xl">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Academic Information</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">Academic Information</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">

@@ -23,23 +23,23 @@ async function fetchSchoolStats(schoolId: string): Promise<SchoolStats> {
 
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
-    <div className="flex justify-between py-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E] last:border-0">
-      <span className="text-sm text-[#7C6F95]">{label}</span>
-      <span className="text-sm font-medium text-[#24113F] dark:text-white">{value || "—"}</span>
+    <div className="flex justify-between py-3 border-b border-line last:border-0">
+      <span className="text-sm text-ink-3">{label}</span>
+      <span className="text-sm font-medium text-ink dark:text-white">{value || "—"}</span>
     </div>
   );
 }
 
 function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
   return (
-    <div className="p-4 bg-[#F7F5FF] dark:bg-[#1B1230] rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E]">
+    <div className="p-4 bg-surface-3 dark:bg-surface rounded-xl border border-line">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-[#6D28D9] flex items-center justify-center text-white text-lg">
+        <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white text-lg">
           {icon}
         </div>
         <div>
-          <p className="text-2xl font-bold text-[#6D28D9] dark:text-[#8B5CF6]">{value}</p>
-          <p className="text-xs text-[#7C6F95]">{label}</p>
+          <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{value}</p>
+          <p className="text-xs text-ink-3">{label}</p>
         </div>
       </div>
     </div>
@@ -72,7 +72,7 @@ export default function SchoolDetail() {
   if (schoolQuery.isError || !schoolQuery.data) {
     return (
       <div className="text-center py-12">
-        <p className="text-[#DC2626] mb-4">Failed to load school details.</p>
+        <p className="text-red-600 mb-4">Failed to load school details.</p>
         <Link to="/super-admin/schools">
           <Button variant="secondary">← Back to Schools</Button>
         </Link>
@@ -88,17 +88,17 @@ export default function SchoolDetail() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] flex items-center justify-center text-white text-2xl font-bold">
+          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center text-white text-2xl font-bold">
             {school.name.charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-[#24113F] dark:text-white">{school.name}</h1>
+              <h1 className="text-2xl font-semibold text-ink dark:text-white">{school.name}</h1>
               <Badge tone={school.is_active ? "green" : "red"}>
                 {school.is_active ? "Active" : "Inactive"}
               </Badge>
             </div>
-            <p className="text-sm text-[#7C6F95]">School Code: <span className="font-mono font-medium text-[#6D28D9]">{school.code}</span></p>
+            <p className="text-sm text-ink-3">School Code: <span className="font-mono font-medium text-accent-fg">{school.code}</span></p>
           </div>
         </div>
         <Link to="/super-admin/schools">
@@ -118,7 +118,7 @@ export default function SchoolDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Basic Information */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             School Information
           </h3>
           <div className="space-y-1">
@@ -132,7 +132,7 @@ export default function SchoolDetail() {
 
         {/* Address */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             Address Details
           </h3>
           <div className="space-y-1">
@@ -146,7 +146,7 @@ export default function SchoolDetail() {
 
         {/* System Information */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             System Information
           </h3>
           <div className="space-y-1">
@@ -159,13 +159,13 @@ export default function SchoolDetail() {
 
         {/* Quick Actions */}
         <Card>
-          <h3 className="text-lg font-semibold text-[#24113F] dark:text-white mb-4 pb-3 border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
+          <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 pb-3 border-b border-line">
             Platform Actions
           </h3>
           <div className="space-y-3">
-            <div className="p-4 bg-[#F7F5FF] dark:bg-[#1B1230] rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E]">
-              <p className="text-sm font-medium text-[#24113F] dark:text-white">School Status</p>
-              <p className="text-xs text-[#7C6F95] mb-3">
+            <div className="p-4 bg-surface-3 dark:bg-surface rounded-lg border border-line">
+              <p className="text-sm font-medium text-ink dark:text-white">School Status</p>
+              <p className="text-xs text-ink-3 mb-3">
                 {school.is_active
                   ? "This school is currently active and operational."
                   : "This school is currently inactive."}
@@ -174,8 +174,8 @@ export default function SchoolDetail() {
                 {school.is_active ? "Operational" : "Suspended"}
               </Badge>
             </div>
-            <div className="p-4 bg-[#F0E9FF] dark:bg-[#2D1B4E] rounded-lg">
-              <p className="text-xs text-[#7C6F95]">
+            <div className="p-4 bg-surface-3 rounded-lg">
+              <p className="text-xs text-ink-3">
                 <strong>Note:</strong> School data management (students, teachers, fees, etc.) is handled by the School Admin.
                 Platform admin can only view high-level statistics for monitoring purposes.
               </p>

@@ -1,13 +1,11 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import Logo from "../components/Logo";
 import type { RoleTheme } from "../theme/roles";
+import { ThemeToggle, useRoleAccent } from "../theme/ThemeContext";
 
-/** Shared visual shell for every auth page (login, forgot/reset password,
- * register): a role-tinted gradient background with slow floating blobs,
- * and a card with a rotating gradient "moving outline" matching the role's
- * colors. Falls back to the default indigo theme when no role is known yet
- * (e.g. the register/landing pages). */
+/** Shared visual shell for every auth page (forgot/reset password, register):
+ * the role-tinted liquid-glass wallpaper with a single centred glass card. */
 export default function AuthLayout({
   theme,
   title,
@@ -23,44 +21,31 @@ export default function AuthLayout({
   children: ReactNode;
   footer?: ReactNode;
 }) {
-  const glowStyle = {
-    "--glow-from": theme.glowFrom,
-    "--glow-to": theme.glowTo,
-  } as CSSProperties;
+  useRoleAccent(theme.role);
+  const HeaderIcon = IconOverride ?? theme.Icon;
 
   return (
-    <div
-      className={`relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br ${theme.from} ${theme.to} px-4 py-12`}
-    >
-      <div className="pointer-events-none absolute -left-16 -top-16 h-72 w-72 rounded-full bg-white/10 blur-3xl animate-float-slow" />
-      <div
-        className="pointer-events-none absolute -bottom-20 -right-10 h-80 w-80 rounded-full bg-white/10 blur-3xl animate-float-slow"
-        style={{ animationDelay: "2.5s" }}
-      />
-      <div
-        className="pointer-events-none absolute left-1/2 top-6 h-40 w-40 -translate-x-1/2 rounded-full bg-white/10 blur-2xl animate-float"
-        style={{ animationDelay: "1s" }}
-      />
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="absolute end-4 top-4">
+        <ThemeToggle />
+      </div>
 
       <div className="relative z-10 w-full max-w-sm animate-fade-in-up">
-        <div className="glow-border animate-pop-in" style={glowStyle}>
-          <div className="glow-border-inner p-8">
-            <div className="mb-6 flex flex-col items-center text-center">
-              <Logo size={40} showWordmark={false} className="mb-3" />
-              <div className={`mb-2 animate-float`}>
-                {IconOverride ? (
-                  <IconOverride className="w-10 h-10 text-violet-700" strokeWidth={1.5} />
-                ) : (
-                  <theme.Icon className="w-10 h-10 text-violet-700" strokeWidth={1.5} />
-                )}
-              </div>
-              <h1 className="text-lg font-semibold text-violet-900">{title}</h1>
-              {subtitle && <p className="mt-1 text-sm text-violet-600">{subtitle}</p>}
+        <div className="glass-strong animate-pop-in !rounded-[32px] p-8">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <div className="lg-icon mb-4 !h-14 !w-14 !rounded-[20px]">
+              <HeaderIcon className="h-7 w-7" strokeWidth={1.7} />
             </div>
-            {children}
+            <h1 className="text-xl font-semibold tracking-tight text-ink">{title}</h1>
+            {subtitle && <p className="mt-1 text-sm text-ink-3">{subtitle}</p>}
           </div>
+          {children}
         </div>
-        {footer && <div className="mt-4 text-center text-sm text-white/90">{footer}</div>}
+        <div className="mt-5 flex items-center justify-center gap-2 text-ink-3">
+          <Logo size={18} showWordmark={false} />
+          <span className="text-xs font-medium">Cogniitec AI School ERP</span>
+        </div>
+        {footer && <div className="mt-3 text-center text-sm text-ink-2">{footer}</div>}
       </div>
     </div>
   );

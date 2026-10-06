@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { PageHeader, Card, Spinner } from "../../components/ui";
+import { PageHeader, Card } from "../../components/ui";
 import { SyllabusViewer } from "../../components/SyllabusViewer";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
@@ -53,8 +53,8 @@ export default function StudentSyllabus() {
             <Sparkles className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-[#24113F] dark:text-white">Your Learning Journey</h3>
-            <p className="text-sm text-[#7C6F95]">
+            <h3 className="font-bold text-lg text-ink dark:text-white">Your Learning Journey</h3>
+            <p className="text-sm text-ink-3">
               Explore your syllabus, chapters, and study materials for your grade.
             </p>
           </div>

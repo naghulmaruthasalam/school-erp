@@ -70,58 +70,60 @@ export default function AiChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50">
+    <div className="fixed bottom-24 end-4 z-50 lg:bottom-6 lg:end-6">
       {open ? (
-        <div className="flex h-[28rem] w-80 flex-col overflow-hidden rounded-2xl border border-violet-200 bg-violet-50 shadow-2xl animate-scale-in">
-          <div className="flex items-center justify-between border-b border-violet-200 bg-gradient-to-r from-violet-600 to-purple-700 px-4 py-3 text-white">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse-soft" />
-              <span className="text-sm font-medium">AI Assistant</span>
+        <div className="glass-strong flex h-[min(30rem,72vh)] w-[min(21rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] animate-pop-in origin-bottom-right">
+          <div className="flex items-center justify-between px-4 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60 animate-ping" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
+              </span>
+              <span className="text-sm font-semibold tracking-tight text-ink">AI Assistant</span>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="rounded-full p-1 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 text-xs text-ink-3 transition-all hover:scale-105 hover:text-ink"
               aria-label="Close"
             >
               ✕
             </button>
           </div>
-          <div className="flex-1 space-y-3 overflow-y-auto p-3">
+          <div className="flex-1 space-y-2.5 overflow-y-auto px-3.5 pb-3">
             {turns.length === 0 && (
-              <p className="text-xs text-violet-400 animate-fade-in-up">
+              <p className="rounded-2xl bg-surface-3 px-3.5 py-3 text-[13px] leading-relaxed text-ink-2 animate-fade-in-up">
                 {placeholder}
               </p>
             )}
             {turns.map((turn, i) => (
               <div
                 key={i}
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm animate-slide-in-right ${
+                className={`max-w-[85%] px-3.5 py-2 text-sm leading-snug animate-pop-in ${
                   turn.role === "user"
-                    ? "ml-auto bg-violet-600 text-white rounded-br-md"
-                    : "bg-violet-100 text-violet-800 rounded-bl-md"
+                    ? "ms-auto rounded-[20px] rounded-ee-md bg-gradient-to-br from-accent to-accent-2 text-white shadow-md shadow-accent/25"
+                    : "rounded-[20px] rounded-es-md bg-surface-3 text-ink"
                 }`}
-                style={{ animationDelay: `${i * 50}ms` }}
+                style={{ animationDelay: `${i * 30}ms` }}
               >
                 {turn.text}
               </div>
             ))}
             {mutation.isPending && (
-              <div className="flex gap-1 p-2">
-                <div className="h-2 w-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="h-2 w-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="h-2 w-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="flex w-fit gap-1 rounded-full bg-surface-3 px-3 py-2.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-ink-3 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="h-1.5 w-1.5 rounded-full bg-ink-3 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="h-1.5 w-1.5 rounded-full bg-ink-3 animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             )}
           </div>
-          <div className="flex gap-2 border-t border-violet-200 p-3 bg-violet-100/50">
+          <div className="flex gap-2 border-t border-line p-3">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder="Type a question..."
-              className="bg-white border-violet-200"
             />
-            <Button onClick={handleSend} disabled={mutation.isPending}>
+            <Button onClick={handleSend} disabled={mutation.isPending} className="!px-4">
               Send
             </Button>
           </div>
@@ -133,29 +135,25 @@ export default function AiChatWidget() {
           className="animate-float relative group"
           aria-label="Open AI Assistant"
         >
-          {/* Cat face */}
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-500 shadow-lg shadow-purple-400/40 transition-all duration-300 group-hover:scale-110 relative">
-            {/* Cat ears */}
-            <div className="absolute -top-1.5 left-1 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] border-b-violet-400" />
-            <div className="absolute -top-1.5 right-1 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] border-b-violet-400" />
-            {/* Left eye */}
-            <div className="absolute top-4 left-2 w-2.5 h-2.5 bg-white rounded-full flex items-center justify-center overflow-hidden">
-              <div className="w-1.5 h-1.5 bg-slate-800 rounded-full transition-transform duration-75" style={{ transform: `translate(${eyePos.x}px, ${eyePos.y}px)` }} />
+          {/* Glass orb with the mascot face */}
+          <div className="glass relative grid h-14 w-14 place-items-center !rounded-full transition-transform duration-300 group-hover:scale-110">
+            <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-accent to-accent-2 shadow-[0_8px_20px_-6px_var(--accent-glow)]" />
+            <div className="absolute inset-1.5 rounded-full bg-gradient-to-b from-white/35 to-transparent" />
+            <div className="relative h-8 w-8">
+              {/* Ears */}
+              <div className="absolute -top-1 left-0.5 h-0 w-0 border-b-[9px] border-l-[5px] border-r-[5px] border-b-white/80 border-l-transparent border-r-transparent" />
+              <div className="absolute -top-1 right-0.5 h-0 w-0 border-b-[9px] border-l-[5px] border-r-[5px] border-b-white/80 border-l-transparent border-r-transparent" />
+              {/* Eyes */}
+              <div className="absolute left-1 top-2.5 flex h-2.5 w-2.5 items-center justify-center overflow-hidden rounded-full bg-surface">
+                <div className="h-1.5 w-1.5 rounded-full bg-surface transition-transform duration-75" style={{ transform: `translate(${eyePos.x}px, ${eyePos.y}px)` }} />
+              </div>
+              <div className="absolute right-1 top-2.5 flex h-2.5 w-2.5 items-center justify-center overflow-hidden rounded-full bg-surface">
+                <div className="h-1.5 w-1.5 rounded-full bg-surface transition-transform duration-75" style={{ transform: `translate(${eyePos.x}px, ${eyePos.y}px)` }} />
+              </div>
+              {/* Nose + mouth */}
+              <div className="absolute left-1/2 top-5 h-1 w-1.5 -translate-x-1/2 rounded-full bg-pink-200" />
+              <div className="absolute bottom-0.5 left-1/2 h-1.5 w-3 -translate-x-1/2 rounded-b-full border-b-2 border-pink-100" />
             </div>
-            {/* Right eye */}
-            <div className="absolute top-4 right-2 w-2.5 h-2.5 bg-white rounded-full flex items-center justify-center overflow-hidden">
-              <div className="w-1.5 h-1.5 bg-slate-800 rounded-full transition-transform duration-75" style={{ transform: `translate(${eyePos.x}px, ${eyePos.y}px)` }} />
-            </div>
-            {/* Nose */}
-            <div className="absolute top-7 left-1/2 -translate-x-1/2 w-1.5 h-1 bg-pink-300 rounded-full" />
-            {/* Mouth */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3 h-1.5 border-b-2 border-pink-200 rounded-b-full" />
-          </div>
-          {/* Chat badge */}
-          <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md border border-purple-200">
-            <svg className="w-3 h-3 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-            </svg>
           </div>
         </button>
       )}

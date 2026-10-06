@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Card, ErrorText, Input, Label, PageHeader } from "../../../components/ui";
+import FeesNav from "./FeesNav";
 import { DataTable, type Column } from "../../../components/DataTable";
 import { listAcademicYears, listClasses } from "../academics/api";
 import { createFeeStructure, listFeeCategories, listFeeStructures } from "./api";
@@ -79,6 +80,7 @@ export default function FeeStructureList() {
   return (
     <div>
       <PageHeader title="Fee Structures" subtitle="Amounts due per class, category and academic year." />
+      <FeesNav />
 
       <Card className="mb-6">
         <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-lg">
@@ -86,7 +88,7 @@ export default function FeeStructureList() {
             <Label htmlFor="fs-year">Academic Year</Label>
             <select
               id="fs-year"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={academicYearId}
               onChange={(e) => {
                 setAcademicYearId(e.target.value);
@@ -104,7 +106,7 @@ export default function FeeStructureList() {
             <Label htmlFor="fs-class-filter">Class (filter)</Label>
             <select
               id="fs-class-filter"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
             >
@@ -118,13 +120,13 @@ export default function FeeStructureList() {
           </div>
         </div>
 
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Create Fee Structure</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Create Fee Structure</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-5 sm:items-end">
           <div>
             <Label htmlFor="fs-class">Class</Label>
             <select
               id="fs-class"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={formClassId}
               onChange={(e) => setFormClassId(e.target.value)}
             >
@@ -140,7 +142,7 @@ export default function FeeStructureList() {
             <Label htmlFor="fs-category">Category</Label>
             <select
               id="fs-category"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
             >
@@ -160,7 +162,7 @@ export default function FeeStructureList() {
             <Label htmlFor="fs-frequency">Frequency</Label>
             <select
               id="fs-frequency"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as FeeFrequency)}
             >

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Button, Card, ErrorText, Input, Label, PageHeader } from "../../../components/ui";
+import FeesNav from "./FeesNav";
 import { DataTable, type Column } from "../../../components/DataTable";
 import { createFeeCategory, listFeeCategories } from "./api";
 import type { FeeCategory } from "./types";
@@ -41,9 +42,10 @@ export default function FeeCategoryList() {
   return (
     <div>
       <PageHeader title="Fee Categories" subtitle="Tuition, transport, hostel, etc." />
+      <FeesNav />
 
       <Card className="mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Create Fee Category</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Create Fee Category</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end">
           <div>
             <Label htmlFor="fc-name">Name</Label>

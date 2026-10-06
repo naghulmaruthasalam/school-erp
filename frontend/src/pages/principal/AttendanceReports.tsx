@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Select } from "../../components/ui";
+import { AttendanceLineChart } from "../../components/Charts";
 import { api } from "../../api/client";
+import { fetchAttendanceTrend } from "./api";
 
 interface AttendanceStats {
   total_students: number;
@@ -33,14 +35,12 @@ export default function AttendanceReports() {
       const params = new URLSearchParams();
       params.append("date", selectedDate);
       if (classFilter) params.append("class_id", classFilter);
-      try {
-        const { data } = await api.get<AttendanceStats>(`/attendance/stats?${params}`);
-        return data;
-      } catch {
-        return { total_students: 0, present_today: 0, absent_today: 0, attendance_percentage: 0 };
-      }
+      const { data } = await api.get<AttendanceStats>(`/attendance/stats?${params}`);
+      return data;
     },
   });
+
+  const trendQuery = useQuery({ queryKey: ["attendance-trend", 14], queryFn: () => fetchAttendanceTrend(14) });
 
   const stats = statsQuery.data || { total_students: 0, present_today: 0, absent_today: 0, attendance_percentage: 0 };
 
@@ -51,16 +51,16 @@ export default function AttendanceReports() {
       <Card className="mb-6">
         <div className="flex flex-wrap gap-4">
           <div className="w-48">
-            <label className="block text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA] mb-1">Date</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Date</label>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full rounded-lg border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-3 py-2 text-[#24113F] dark:text-white focus:border-[#6D28D9] focus:outline-none"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink dark:text-white focus:border-accent focus:outline-none"
             />
           </div>
           <div className="w-48">
-            <label className="block text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA] mb-1">Class</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
             <Select value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
               <option value="">All Classes</option>
               {classesQuery.data?.map((c) => (
@@ -76,29 +76,33 @@ export default function AttendanceReports() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
-            <p className="text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA]">Total Students</p>
-            <p className="text-3xl font-bold text-[#6D28D9] dark:text-[#8B5CF6] mt-1">{stats.total_students}</p>
+            <p className="text-sm font-medium text-ink-2">Total Students</p>
+            <p className="text-3xl font-bold text-accent-fg dark:text-accent-fg mt-1">{stats.total_students}</p>
           </Card>
           <Card>
-            <p className="text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA]">Present Today</p>
+            <p className="text-sm font-medium text-ink-2">Present Today</p>
             <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.present_today}</p>
           </Card>
           <Card>
-            <p className="text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA]">Absent Today</p>
+            <p className="text-sm font-medium text-ink-2">Absent Today</p>
             <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{stats.absent_today}</p>
           </Card>
           <Card>
-            <p className="text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA]">Attendance Rate</p>
-            <p className="text-3xl font-bold text-[#6D28D9] dark:text-[#8B5CF6] mt-1">{stats.attendance_percentage.toFixed(1)}%</p>
+            <p className="text-sm font-medium text-ink-2">Attendance Rate</p>
+            <p className="text-3xl font-bold text-accent-fg dark:text-accent-fg mt-1">{(stats.attendance_percentage ?? 0).toFixed(1)}%</p>
           </Card>
         </div>
       )}
 
       <Card className="mt-6">
-        <h3 className="font-semibold text-[#24113F] dark:text-white mb-4">Attendance Trends</h3>
-        <div className="h-64 flex items-center justify-center text-[#7C6F95]">
-          <p>Attendance trend chart will be displayed here</p>
-        </div>
+        <h3 className="font-semibold text-ink dark:text-white mb-4">Attendance Trend (last 14 days)</h3>
+        {trendQuery.isLoading ? (
+          <div className="flex h-64 items-center justify-center"><Spinner /></div>
+        ) : trendQuery.data && trendQuery.data.length > 0 ? (
+          <AttendanceLineChart data={trendQuery.data} height={260} />
+        ) : (
+          <p className="flex h-64 items-center justify-center text-sm text-ink-3">No attendance has been marked in the last 14 days.</p>
+        )}
       </Card>
     </div>
   );

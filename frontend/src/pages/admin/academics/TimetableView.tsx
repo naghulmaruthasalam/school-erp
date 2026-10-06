@@ -118,7 +118,7 @@ export default function TimetableView() {
             <Label htmlFor="tt-year">Academic Year</Label>
             <select
               id="tt-year"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={academicYearId}
               onChange={(e) => setAcademicYearId(e.target.value)}
             >
@@ -133,7 +133,7 @@ export default function TimetableView() {
             <Label htmlFor="tt-class">Class</Label>
             <select
               id="tt-class"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
             >
@@ -148,7 +148,7 @@ export default function TimetableView() {
             <Label htmlFor="tt-section">Section</Label>
             <select
               id="tt-section"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={sectionId}
               onChange={(e) => setSectionId(e.target.value)}
             >
@@ -161,13 +161,13 @@ export default function TimetableView() {
           </div>
         </div>
 
-        <h2 className="mb-4 text-sm font-semibold text-violet-900">Add Slot</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Add Slot</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7 sm:items-end">
           <div>
             <Label htmlFor="tt-day">Day</Label>
             <select
               id="tt-day"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={dayOfWeek}
               onChange={(e) => setDayOfWeek(e.target.value)}
             >
@@ -194,7 +194,7 @@ export default function TimetableView() {
             <Label htmlFor="tt-subject">Subject</Label>
             <select
               id="tt-subject"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
             >
@@ -210,7 +210,7 @@ export default function TimetableView() {
             <Label htmlFor="tt-teacher">Teacher</Label>
             <select
               id="tt-teacher"
-              className="w-full rounded-md border border-violet-300 px-3 py-2 text-sm text-violet-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={teacherId}
               onChange={(e) => setTeacherId(e.target.value)}
             >
@@ -230,22 +230,22 @@ export default function TimetableView() {
       </Card>
 
       {isLoading ? (
-        <p className="text-sm text-violet-400">Loading timetable…</p>
+        <p className="text-sm text-accent-fg">Loading timetable…</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {DAY_LABELS.map((label, dayIndex) => (
             <Card key={label}>
-              <h3 className="mb-3 text-sm font-semibold text-violet-900">{label}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-ink">{label}</h3>
               {slotsByDay[dayIndex].length === 0 ? (
-                <p className="text-xs text-violet-400">No periods scheduled.</p>
+                <p className="text-xs text-accent-fg">No periods scheduled.</p>
               ) : (
                 <ul className="space-y-2">
                   {slotsByDay[dayIndex].map((slot) => (
-                    <li key={slot.id} className="rounded-md border border-violet-100 bg-violet-50 px-3 py-2 text-xs">
-                      <p className="font-medium text-violet-900">
+                    <li key={slot.id} className="rounded-md border border-line bg-violet-50 px-3 py-2 text-xs">
+                      <p className="font-medium text-ink">
                         Period {slot.period_number} · {slot.start_time}–{slot.end_time}
                       </p>
-                      <p className="text-violet-600">
+                      <p className="text-accent-fg">
                         {subjectName(slot.subject_id)} · {teacherName(slot.teacher_id)}
                       </p>
                     </li>

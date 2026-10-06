@@ -5,7 +5,7 @@ import { api } from "../../api/client";
 import { fetchAcademicYears, fetchClasses, fetchSections, fetchSubjects } from "./api";
 import {
   Plus, Trash2, Calendar, BookOpen, Users, GraduationCap,
-  Sparkles, Building, ChevronRight, AlertCircle
+  Sparkles
 } from "lucide-react";
 
 interface AcademicYear { id: string; name: string; start_date: string; end_date: string; is_current: boolean; }
@@ -28,6 +28,8 @@ export default function AcademicSetup() {
   const [classForm, setClassForm] = useState({ name: "", academic_year_id: "", order: 0 });
   const [sectionForm, setSectionForm] = useState({ name: "", class_id: "", room_no: "" });
   const [subjectForm, setSubjectForm] = useState({ name: "", code: "" });
+  const [formError, setFormError] = useState<string | null>(null);
+  const onCreateError = (err: unknown) => setFormError(err instanceof Error ? err.message : "Failed to save.");
 
   const yearsQuery = useQuery({ queryKey: ["academic-years"], queryFn: fetchAcademicYears });
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => fetchClasses() });
@@ -36,22 +38,26 @@ export default function AcademicSetup() {
 
   const createYear = useMutation({
     mutationFn: async (p: typeof yearForm) => { await api.post("/academics/years", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["academic-years"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["academic-years"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const createClass = useMutation({
     mutationFn: async (p: typeof classForm) => { await api.post("/academics/classes", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["classes"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["classes"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const createSection = useMutation({
     mutationFn: async (p: typeof sectionForm) => { await api.post("/academics/sections", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["sections"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["sections"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const createSubject = useMutation({
     mutationFn: async (p: typeof subjectForm) => { await api.post("/academics/subjects", p); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["subjects"] }); setShowForm(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["subjects"] }); setShowForm(false); setFormError(null); },
+    onError: onCreateError,
   });
 
   const deleteClass = useMutation({
@@ -102,14 +108,14 @@ export default function AcademicSetup() {
   return (
     <div className="animate-page-enter">
       <PageHeader title="Academic Setup" subtitle="Configure academic structure">
-        <Button onClick={() => setShowForm(!showForm)} glow>
+        <Button onClick={() => { setShowForm(!showForm); setFormError(null); }} glow>
           {showForm ? "Cancel" : <><Plus className="w-4 h-4" /> Add New</>}
         </Button>
       </PageHeader>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {tabs.map((t, i) => {
+        {tabs.map((t) => {
           const count = t.key === "years" ? yearsQuery.data?.length || 0
             : t.key === "classes" ? classCount
             : t.key === "sections" ? sectionCount
@@ -117,16 +123,16 @@ export default function AcademicSetup() {
           return (
             <div
               key={t.key}
-              onClick={() => { setActiveTab(t.key); setShowForm(false); }}
+              onClick={() => { setActiveTab(t.key); setShowForm(false); setFormError(null); }}
               className={`p-4 rounded-2xl cursor-pointer transition-all duration-300 ${
                 activeTab === t.key
                   ? "bg-gradient-to-br " + t.color + " text-white shadow-xl scale-[1.02]"
-                  : "bg-white dark:bg-[#1B1230] border border-[#E5DDF5] dark:border-[#2D1B4E] hover:shadow-lg hover:-translate-y-1"
+                  : "bg-surface border border-line hover:shadow-lg hover:-translate-y-1"
               }`}
             >
-              <t.icon className={`w-6 h-6 mb-2 ${activeTab === t.key ? "text-white" : "text-[#6D28D9]"}`} />
-              <p className={`text-2xl font-bold ${activeTab === t.key ? "text-white" : "text-[#24113F] dark:text-white"}`}>{count}</p>
-              <p className={`text-sm ${activeTab === t.key ? "text-white/80" : "text-[#7C6F95]"}`}>{t.label}</p>
+              <t.icon className={`w-6 h-6 mb-2 ${activeTab === t.key ? "text-white" : "text-accent-fg"}`} />
+              <p className={`text-2xl font-bold ${activeTab === t.key ? "text-white" : "text-ink dark:text-white"}`}>{count}</p>
+              <p className={`text-sm ${activeTab === t.key ? "text-white/80" : "text-ink-3"}`}>{t.label}</p>
             </div>
           );
         })}
@@ -135,27 +141,28 @@ export default function AcademicSetup() {
       {/* Forms */}
       {showForm && activeTab === "years" && (
         <Card className="mb-6" gradient>
-          <h3 className="text-lg font-bold text-[#24113F] dark:text-white mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#6D28D9]" /> Add Academic Year
+          <h3 className="text-lg font-bold text-ink dark:text-white mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-accent-fg" /> Add Academic Year
           </h3>
           <form onSubmit={(e) => { e.preventDefault(); createYear.mutate(yearForm); }} className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Name</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Name</label>
                 <input type="text" value={yearForm.name} onChange={(e) => setYearForm({ ...yearForm, name: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" placeholder="2026-2027" required />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="2026-2027" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Start Date</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Start Date</label>
                 <input type="date" value={yearForm.start_date} onChange={(e) => setYearForm({ ...yearForm, start_date: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" required />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">End Date</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">End Date</label>
                 <input type="date" value={yearForm.end_date} onChange={(e) => setYearForm({ ...yearForm, end_date: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" required />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" required />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createYear.isPending} glow>
               {createYear.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Year
@@ -166,30 +173,31 @@ export default function AcademicSetup() {
 
       {showForm && activeTab === "classes" && (
         <Card className="mb-6" gradient>
-          <h3 className="text-lg font-bold text-[#24113F] dark:text-white mb-4 flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-[#6D28D9]" /> Add Class
+          <h3 className="text-lg font-bold text-ink dark:text-white mb-4 flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-accent-fg" /> Add Class
           </h3>
           <form onSubmit={(e) => { e.preventDefault(); createClass.mutate(classForm); }} className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Name</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Name</label>
                 <input type="text" value={classForm.name} onChange={(e) => setClassForm({ ...classForm, name: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" placeholder="Class 10" required />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="Class 10" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Academic Year</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Academic Year</label>
                 <select value={classForm.academic_year_id} onChange={(e) => setClassForm({ ...classForm, academic_year_id: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" required>
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" required>
                   <option value="">-- Select --</option>
                   {yearsQuery.data?.map((y: AcademicYear) => <option key={y.id} value={y.id}>{y.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Order</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Order</label>
                 <input type="number" value={classForm.order} onChange={(e) => setClassForm({ ...classForm, order: parseInt(e.target.value) || 0 })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createClass.isPending} glow>
               {createClass.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Class
@@ -200,30 +208,31 @@ export default function AcademicSetup() {
 
       {showForm && activeTab === "sections" && (
         <Card className="mb-6" gradient>
-          <h3 className="text-lg font-bold text-[#24113F] dark:text-white mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#6D28D9]" /> Add Section
+          <h3 className="text-lg font-bold text-ink dark:text-white mb-4 flex items-center gap-2">
+            <Users className="w-5 h-5 text-accent-fg" /> Add Section
           </h3>
           <form onSubmit={(e) => { e.preventDefault(); createSection.mutate(sectionForm); }} className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Name</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Name</label>
                 <input type="text" value={sectionForm.name} onChange={(e) => setSectionForm({ ...sectionForm, name: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" placeholder="A" required />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="A" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Class</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Class</label>
                 <select value={sectionForm.class_id} onChange={(e) => setSectionForm({ ...sectionForm, class_id: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" required>
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" required>
                   <option value="">-- Select --</option>
                   {classesQuery.data?.map((c: ClassItem) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Room No</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Room No</label>
                 <input type="text" value={sectionForm.room_no} onChange={(e) => setSectionForm({ ...sectionForm, room_no: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createSection.isPending} glow>
               {createSection.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Section
@@ -234,22 +243,23 @@ export default function AcademicSetup() {
 
       {showForm && activeTab === "subjects" && (
         <Card className="mb-6" gradient>
-          <h3 className="text-lg font-bold text-[#24113F] dark:text-white mb-4 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-[#6D28D9]" /> Add Subject
+          <h3 className="text-lg font-bold text-ink dark:text-white mb-4 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-accent-fg" /> Add Subject
           </h3>
           <form onSubmit={(e) => { e.preventDefault(); createSubject.mutate(subjectForm); }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Name</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Name</label>
                 <input type="text" value={subjectForm.name} onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" placeholder="Mathematics" required />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="Mathematics" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#24113F] dark:text-white mb-2">Code</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Code</label>
                 <input type="text" value={subjectForm.code} onChange={(e) => setSubjectForm({ ...subjectForm, code: e.target.value })}
-                  className="w-full rounded-xl border border-[#E5DDF5] dark:border-[#2D1B4E] bg-white dark:bg-[#1B1230] px-4 py-3 text-sm" placeholder="MATH" required />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="MATH" required />
               </div>
             </div>
+            {formError && <p className="text-sm font-medium text-red-600 mb-2">{formError}</p>}
             <Button type="submit" disabled={createSubject.isPending} glow>
               {createSubject.isPending ? <Spinner size="sm" /> : <Plus className="w-4 h-4" />}
               Add Subject
@@ -264,8 +274,8 @@ export default function AcademicSetup() {
           <div className="space-y-3">
             {yearsQuery.data?.length === 0 ? (
               <Card className="text-center py-12">
-                <Calendar className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-                <p className="text-[#7C6F95]">No academic years yet. Create one to get started.</p>
+                <Calendar className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+                <p className="text-ink-3">No academic years yet. Create one to get started.</p>
               </Card>
             ) : yearsQuery.data?.map((y: AcademicYear) => (
               <Card key={y.id} className="hover:shadow-lg transition-all">
@@ -275,8 +285,8 @@ export default function AcademicSetup() {
                       <Calendar className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-bold text-[#24113F] dark:text-white">{y.name}</p>
-                      <p className="text-sm text-[#7C6F95]">{y.start_date} to {y.end_date}</p>
+                      <p className="font-bold text-ink dark:text-white">{y.name}</p>
+                      <p className="text-sm text-ink-3">{y.start_date} to {y.end_date}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -302,8 +312,8 @@ export default function AcademicSetup() {
           <div className="space-y-3">
             {classesQuery.data?.length === 0 ? (
               <Card className="text-center py-12">
-                <GraduationCap className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-                <p className="text-[#7C6F95] mb-4">No classes yet. Use "Seed Classes" on an academic year to auto-create LKG to 12th.</p>
+                <GraduationCap className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+                <p className="text-ink-3 mb-4">No classes yet. Use "Seed Classes" on an academic year to auto-create LKG to 12th.</p>
               </Card>
             ) : classesQuery.data?.sort((a: ClassItem, b: ClassItem) => a.order - b.order).map((c: ClassItem) => (
               <Card key={c.id} className="hover:shadow-lg transition-all">
@@ -313,8 +323,8 @@ export default function AcademicSetup() {
                       <GraduationCap className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-bold text-[#24113F] dark:text-white">{c.name}</p>
-                      <p className="text-sm text-[#7C6F95]">{getYearName(c.academic_year_id)}</p>
+                      <p className="font-bold text-ink dark:text-white">{c.name}</p>
+                      <p className="text-sm text-ink-3">{getYearName(c.academic_year_id)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -338,8 +348,8 @@ export default function AcademicSetup() {
           <div className="space-y-3">
             {sectionsQuery.data?.length === 0 ? (
               <Card className="text-center py-12">
-                <Users className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-                <p className="text-[#7C6F95]">No sections yet. Create classes first, then add sections.</p>
+                <Users className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+                <p className="text-ink-3">No sections yet. Create classes first, then add sections.</p>
               </Card>
             ) : sectionsQuery.data?.map((s: Section) => (
               <Card key={s.id} className="hover:shadow-lg transition-all">
@@ -349,8 +359,8 @@ export default function AcademicSetup() {
                       <Users className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-bold text-[#24113F] dark:text-white">{getClassName(s.class_id)} - Section {s.name}</p>
-                      {s.room_no && <p className="text-sm text-[#7C6F95]">Room: {s.room_no}</p>}
+                      <p className="font-bold text-ink dark:text-white">{getClassName(s.class_id)} - Section {s.name}</p>
+                      {s.room_no && <p className="text-sm text-ink-3">Room: {s.room_no}</p>}
                     </div>
                   </div>
                   <button
@@ -371,8 +381,8 @@ export default function AcademicSetup() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {subjectsQuery.data?.length === 0 ? (
               <Card className="col-span-full text-center py-12">
-                <BookOpen className="w-12 h-12 mx-auto text-[#7C6F95] mb-4" />
-                <p className="text-[#7C6F95]">No subjects yet. Add subjects to assign to classes.</p>
+                <BookOpen className="w-12 h-12 mx-auto text-ink-3 mb-4" />
+                <p className="text-ink-3">No subjects yet. Add subjects to assign to classes.</p>
               </Card>
             ) : subjectsQuery.data?.map((s: Subject) => (
               <Card key={s.id} className="hover:shadow-lg transition-all group">
@@ -381,8 +391,8 @@ export default function AcademicSetup() {
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center mb-3">
                       <BookOpen className="w-5 h-5 text-white" />
                     </div>
-                    <p className="font-bold text-[#24113F] dark:text-white">{s.name}</p>
-                    <p className="text-sm text-[#7C6F95]">{s.code}</p>
+                    <p className="font-bold text-ink dark:text-white">{s.name}</p>
+                    <p className="text-sm text-ink-3">{s.code}</p>
                   </div>
                   <button
                     onClick={() => { if(confirm("Delete this subject?")) deleteSubject.mutate(s.id); }}

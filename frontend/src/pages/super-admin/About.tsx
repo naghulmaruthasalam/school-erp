@@ -11,37 +11,37 @@ export default function About() {
           <div className="flex items-center gap-4 mb-6">
             <Logo size={64} showWordmark={false} />
             <div>
-              <h2 className="text-xl font-bold text-[#24113F] dark:text-white">Cogniitec AI School ERP</h2>
-              <p className="text-sm text-[#7C6F95]">Version 1.0.0 - Platform Edition</p>
+              <h2 className="text-xl font-bold text-ink dark:text-white">Cogniitec AI School ERP</h2>
+              <p className="text-sm text-ink-3">Version 1.0.0 - Platform Edition</p>
             </div>
           </div>
 
-          <p className="text-[#4B4260] dark:text-[#D8CCEA] mb-4">
+          <p className="text-ink-2 mb-4">
             Multi-tenant school management platform powering educational institutions
             with AI-driven administration tools.
           </p>
 
-          <div className="border-t border-[#E5DDF5] dark:border-[#2D1B4E] pt-4 mt-4">
-            <h3 className="font-semibold text-[#24113F] dark:text-white mb-3">Platform Features</h3>
-            <ul className="space-y-2 text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+          <div className="border-t border-line pt-4 mt-4">
+            <h3 className="font-semibold text-ink dark:text-white mb-3">Platform Features</h3>
+            <ul className="space-y-2 text-sm text-ink-2">
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6D28D9]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                 Multi-school management
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6D28D9]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                 User administration across schools
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6D28D9]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                 Platform-wide analytics
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6D28D9]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                 Audit logging and compliance
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6D28D9]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                 School onboarding and setup
               </li>
             </ul>
@@ -49,23 +49,23 @@ export default function About() {
         </Card>
 
         <Card>
-          <h3 className="font-semibold text-[#24113F] dark:text-white mb-4">Contact & Support</h3>
+          <h3 className="font-semibold text-ink dark:text-white mb-4">Contact & Support</h3>
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-[#7C6F95]">Email</p>
-              <p className="text-[#24113F] dark:text-white">platform@cogniitec.com</p>
+              <p className="text-sm font-medium text-ink-3">Email</p>
+              <p className="text-ink dark:text-white">platform@cogniitec.com</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-[#7C6F95]">Website</p>
-              <p className="text-[#24113F] dark:text-white">www.cogniitec.com</p>
+              <p className="text-sm font-medium text-ink-3">Website</p>
+              <p className="text-ink dark:text-white">www.cogniitec.com</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-[#7C6F95]">Documentation</p>
-              <p className="text-[#24113F] dark:text-white">docs.cogniitec.com</p>
+              <p className="text-sm font-medium text-ink-3">Documentation</p>
+              <p className="text-ink dark:text-white">docs.cogniitec.com</p>
             </div>
           </div>
-          <div className="mt-6 pt-4 border-t border-[#E5DDF5] dark:border-[#2D1B4E]">
-            <p className="text-xs text-[#7C6F95]">
+          <div className="mt-6 pt-4 border-t border-line">
+            <p className="text-xs text-ink-3">
               &copy; {new Date().getFullYear()} Cogniitec Technologies. All rights reserved.
             </p>
           </div>

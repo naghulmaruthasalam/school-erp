@@ -46,7 +46,7 @@ export default function AttendancePage() {
     return (
       <div>
         <PageHeader title="Attendance" />
-        <p className="text-sm text-violet-600">Select a child above to view attendance.</p>
+        <p className="text-sm text-accent-fg">Select a child above to view attendance.</p>
       </div>
     );
   }

@@ -43,8 +43,8 @@ export default function SchoolList() {
     <div className="animate-fade-in-up">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-[#24113F] dark:text-white">Schools Management</h1>
-          <p className="mt-1 text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+          <h1 className="text-2xl font-semibold text-ink dark:text-white">Schools Management</h1>
+          <p className="mt-1 text-sm text-ink-2">
             Manage all registered schools on the platform
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function SchoolList() {
             {
               header: "School Name",
               cell: (row) => (
-                <Link to={`/super-admin/${row.id}`} className="font-medium text-[#6D28D9] hover:underline">
+                <Link to={`/super-admin/${row.id}`} className="font-medium text-accent-fg hover:underline">
                   {row.name}
                 </Link>
               ),

@@ -74,7 +74,7 @@ export default function StudentOverview() {
       <Card className="mb-6">
         <div className="flex flex-wrap gap-4">
           <div className="w-48">
-            <label className="block text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA] mb-1">Class</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
             <Select value={classFilter} onChange={(e) => { setClassFilter(e.target.value); setSectionFilter(""); }}>
               <option value="">All Classes</option>
               {classesQuery.data?.map((c) => (
@@ -83,7 +83,7 @@ export default function StudentOverview() {
             </Select>
           </div>
           <div className="w-48">
-            <label className="block text-sm font-medium text-[#4B4260] dark:text-[#D8CCEA] mb-1">Section</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Section</label>
             <Select value={sectionFilter} onChange={(e) => setSectionFilter(e.target.value)}>
               <option value="">All Sections</option>
               {filteredSections.map((s) => (
@@ -101,23 +101,23 @@ export default function StudentOverview() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#E5DDF5] dark:border-[#2D1B4E]">
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-[#6D28D9] uppercase">Admission No</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-[#6D28D9] uppercase">Name</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-[#6D28D9] uppercase">Class / Section</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-[#6D28D9] uppercase">Roll No</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-[#6D28D9] uppercase">Status</th>
+                <tr className="border-b border-line">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Admission No</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Name</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Class / Section</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Roll No</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {studentsQuery.data?.items.map((student) => (
-                  <tr key={student.id} className="border-b border-[#E5DDF5] dark:border-[#2D1B4E] hover:bg-[#F7F5FF] dark:hover:bg-[#2D1B4E]/50">
-                    <td className="py-3 px-4 text-sm text-[#24113F] dark:text-white">{student.admission_no}</td>
-                    <td className="py-3 px-4 text-sm font-medium text-[#24113F] dark:text-white">{student.full_name}</td>
-                    <td className="py-3 px-4 text-sm text-[#4B4260] dark:text-[#D8CCEA]">
+                  <tr key={student.id} className="border-b border-line hover:bg-surface-3 dark:hover:bg-[#2D1B4E]/50">
+                    <td className="py-3 px-4 text-sm text-ink dark:text-white">{student.admission_no}</td>
+                    <td className="py-3 px-4 text-sm font-medium text-ink dark:text-white">{student.full_name}</td>
+                    <td className="py-3 px-4 text-sm text-ink-2">
                       {getClassName(student.class_id)} - {getSectionName(student.section_id)}
                     </td>
-                    <td className="py-3 px-4 text-sm text-[#4B4260] dark:text-[#D8CCEA]">{student.roll_no}</td>
+                    <td className="py-3 px-4 text-sm text-ink-2">{student.roll_no}</td>
                     <td className="py-3 px-4">
                       <Badge tone={statusColors[student.status] || "gray"}>{student.status}</Badge>
                     </td>
@@ -126,7 +126,7 @@ export default function StudentOverview() {
               </tbody>
             </table>
             {studentsQuery.data?.items.length === 0 && (
-              <p className="text-center text-[#7C6F95] py-8">No students found.</p>
+              <p className="text-center text-ink-3 py-8">No students found.</p>
             )}
           </div>
         </Card>

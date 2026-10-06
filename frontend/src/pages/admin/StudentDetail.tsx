@@ -1,3 +1,4 @@
+import DocumentImage from "../../components/DocumentImage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -22,18 +23,18 @@ function CredentialsModal({ credentials, onClose }: { credentials: { username?: 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <h2 className="text-xl font-bold text-violet-900 mb-2">Student Login Credentials</h2>
-        <p className="text-sm text-violet-600 mb-4">Share these credentials with the student. They will be asked to change password on first login.</p>
+      <div className="bg-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+        <h2 className="text-xl font-bold text-ink mb-2">Student Login Credentials</h2>
+        <p className="text-sm text-accent-fg mb-4">Share these credentials with the student. They will be asked to change password on first login.</p>
 
         <div className="bg-violet-50 rounded-lg p-4 mb-4 font-mono text-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-violet-600">Login ID:</span>
-            <span className="text-violet-900 font-medium">{loginId}</span>
+            <span className="text-accent-fg">Login ID:</span>
+            <span className="text-ink font-medium">{loginId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-violet-600">Password:</span>
-            <span className="text-violet-900 font-medium">{credentials.password}</span>
+            <span className="text-accent-fg">Password:</span>
+            <span className="text-ink font-medium">{credentials.password}</span>
           </div>
         </div>
 
@@ -59,7 +60,7 @@ const STATUS_TONE: Record<StudentStatus, "gray" | "green" | "red" | "yellow"> = 
 };
 
 function selectClass(className = "") {
-  return `w-full rounded-md border border-violet-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`;
+  return `w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`;
 }
 
 export default function StudentDetail() {
@@ -217,7 +218,7 @@ export default function StudentDetail() {
 
       {/* Profile Header */}
       <Card className="!p-0 overflow-hidden mb-6">
-        <div className="bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] p-6">
+        <div className="bg-gradient-to-r from-accent to-accent-2 p-6">
           <div className="flex items-center gap-6">
             <div className="relative group">
               <input
@@ -230,20 +231,18 @@ export default function StudentDetail() {
               <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-4 border-white/30 overflow-hidden">
                 {uploading ? (
                   <Spinner />
-                ) : student.photo_document_id ? (
-                  <img
-                    src={`/api/v1/uploads/documents/${student.photo_document_id}/download`}
+                ) : (
+                  <DocumentImage
+                    documentId={student.photo_document_id}
                     alt={student.full_name}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
+                    fallback={
+                      <span className="text-4xl font-bold text-white">
+                        {student.full_name?.charAt(0)?.toUpperCase()}
+                      </span>
+                    }
                   />
-                ) : null}
-                <span className={`text-4xl font-bold text-white ${student.photo_document_id ? 'hidden' : ''}`}>
-                  {student.full_name?.charAt(0)?.toUpperCase()}
-                </span>
+                )}
               </div>
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -402,8 +401,8 @@ export default function StudentDetail() {
 
         <div className="space-y-6">
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-violet-900">Login Credentials</h2>
-            <p className="text-xs text-violet-600 mb-3">
+            <h2 className="mb-3 text-sm font-semibold text-ink">Login Credentials</h2>
+            <p className="text-xs text-accent-fg mb-3">
               {student.email ? "Generate or reset login credentials for this student." : "Add email to enable login credentials."}
             </p>
             <Button
@@ -416,7 +415,7 @@ export default function StudentDetail() {
           </Card>
 
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-violet-900">Change Status</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink">Change Status</h2>
           <form className="space-y-3" onSubmit={handleStatusSubmit}>
             <div>
               <Label>New Status</Label>
@@ -440,7 +439,7 @@ export default function StudentDetail() {
             <Button type="submit" className="w-full" disabled={!statusChoice || statusMutation.isPending}>
               {statusMutation.isPending ? "Updating..." : "Update Status"}
             </Button>
-            {statusMessage && <p className="text-sm text-gray-600">{statusMessage}</p>}
+            {statusMessage && <p className="text-sm text-ink-2">{statusMessage}</p>}
           </form>
         </Card>
       </div>
@@ -452,8 +451,8 @@ export default function StudentDetail() {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-violet-400">{label}</dt>
-      <dd className="mt-0.5 text-sm text-violet-900">{value}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-accent-fg">{label}</dt>
+      <dd className="mt-0.5 text-sm text-ink">{value}</dd>
     </div>
   );
 }

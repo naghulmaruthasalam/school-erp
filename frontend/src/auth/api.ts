@@ -15,6 +15,10 @@ export async function loginRequest(
 }
 
 export async function demoLoginRequest(role: string): Promise<TokenResponse> {
+  // Standalone demo builds have no API: hand out a placeholder session (all reads are served from demoData).
+  if (import.meta.env.VITE_STANDALONE_DEMO) {
+    return { access_token: `demo-${role}`, refresh_token: `demo-${role}`, token_type: "bearer" } as TokenResponse;
+  }
   const { data } = await api.post<TokenResponse>("/auth/demo-login", { role });
   return data;
 }

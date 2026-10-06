@@ -120,7 +120,7 @@ export default function SyllabusForm() {
 
       <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-6">
         <Card>
-          <h2 className="text-lg font-semibold text-violet-900 mb-4">Basic Information</h2>
+          <h2 className="text-lg font-semibold text-ink mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="md:col-span-2 lg:col-span-3">
               <Label>Title</Label>
@@ -136,7 +136,7 @@ export default function SyllabusForm() {
               <select
                 value={form.academic_year_id}
                 onChange={(e) => setForm({ ...form, academic_year_id: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 required
               >
                 <option value="">-- Select --</option>
@@ -150,7 +150,7 @@ export default function SyllabusForm() {
               <select
                 value={form.class_id}
                 onChange={(e) => setForm({ ...form, class_id: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 required
               >
                 <option value="">-- Select --</option>
@@ -164,7 +164,7 @@ export default function SyllabusForm() {
               <select
                 value={form.subject_id}
                 onChange={(e) => setForm({ ...form, subject_id: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 required
               >
                 <option value="">-- Select --</option>
@@ -178,7 +178,7 @@ export default function SyllabusForm() {
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value as "DRAFT" | "PUBLISHED" })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
               >
                 <option value="DRAFT">Draft</option>
                 <option value="PUBLISHED">Published</option>
@@ -189,7 +189,7 @@ export default function SyllabusForm() {
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500"
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 rows={3}
                 placeholder="Brief description..."
               />
@@ -199,23 +199,23 @@ export default function SyllabusForm() {
 
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-violet-900">Chapters</h2>
+            <h2 className="text-lg font-semibold text-ink">Chapters</h2>
             <Button type="button" variant="secondary" onClick={addChapter}>Add Chapter</Button>
           </div>
 
           {chapters.length === 0 ? (
-            <p className="text-center text-violet-400 py-4">No chapters added.</p>
+            <p className="text-center text-accent-fg py-4">No chapters added.</p>
           ) : (
             <div className="space-y-4">
               {chapters.map((ch, idx) => (
-                <div key={idx} className="border border-violet-200 rounded-lg p-4">
+                <div key={idx} className="border border-line rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-medium text-violet-500">Chapter {idx + 1}</span>
+                    <span className="text-sm font-medium text-accent-fg">Chapter {idx + 1}</span>
                     <div className="flex-1" />
-                    <button type="button" onClick={() => moveChapter(idx, -1)} className="text-violet-500 hover:text-violet-700 disabled:opacity-30" disabled={idx === 0}>
+                    <button type="button" onClick={() => moveChapter(idx, -1)} className="text-accent-fg hover:text-ink-2 disabled:opacity-30" disabled={idx === 0}>
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                     </button>
-                    <button type="button" onClick={() => moveChapter(idx, 1)} className="text-violet-500 hover:text-violet-700 disabled:opacity-30" disabled={idx === chapters.length - 1}>
+                    <button type="button" onClick={() => moveChapter(idx, 1)} className="text-accent-fg hover:text-ink-2 disabled:opacity-30" disabled={idx === chapters.length - 1}>
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </button>
                     <button type="button" onClick={() => removeChapter(idx)} className="text-red-500 hover:text-red-700">
@@ -249,7 +249,7 @@ export default function SyllabusForm() {
 
         {isEdit && (
           <Card>
-            <h2 className="text-lg font-semibold text-violet-900 mb-4">Documents</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">Documents</h2>
             <div className="flex flex-wrap items-center gap-4 mb-4">
               <input
                 type="file"
@@ -268,14 +268,14 @@ export default function SyllabusForm() {
             {documents.length > 0 ? (
               <ul className="space-y-2">
                 {documents.map((doc) => (
-                  <li key={doc.id} className="flex items-center gap-2 text-sm text-violet-700">
+                  <li key={doc.id} className="flex items-center gap-2 text-sm text-ink-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     {doc.filename}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-violet-400">No documents uploaded.</p>
+              <p className="text-sm text-accent-fg">No documents uploaded.</p>
             )}
           </Card>
         )}

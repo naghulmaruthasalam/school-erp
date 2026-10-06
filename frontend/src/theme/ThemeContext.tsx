@@ -1,5 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { Moon, Sun } from "lucide-react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Role } from "../types/auth";
+import { readStored, writeStored } from "../lib/safeStorage";
 import { useAuthStore } from "../auth/store";
 
 type Theme = "light" | "dark";
@@ -19,25 +21,32 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("theme") as Theme | null;
-      if (stored) return stored;
+      const stored = readStored("theme") as Theme | null;
+      if (stored === "light" || stored === "dark") return stored;
+      // A host page (e.g. an embedded demo) may already have chosen a theme.
+      const hosted = document.documentElement.getAttribute("data-theme");
+      if (hosted === "light" || hosted === "dark") return hosted;
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
     return "dark";
   });
 
   useEffect(() => {
-    localStorage.setItem("theme", theme);
+    writeStored("theme", theme);
     document.documentElement.classList.remove("light", "dark");
     document.documentElement.classList.add(theme);
   }, [theme]);
 
-  // Apply role-based data attribute for CSS theming
+  // Apply role-based data attribute for CSS theming. Only clears what this
+  // effect itself applied, so pre-login screens can tint the wallpaper too.
+  const appliedRole = useRef(false);
   useEffect(() => {
     if (role) {
       document.documentElement.setAttribute("data-role", role);
-    } else {
+      appliedRole.current = true;
+    } else if (appliedRole.current) {
       document.documentElement.removeAttribute("data-role");
+      appliedRole.current = false;
     }
   }, [role]);
 
@@ -117,47 +126,42 @@ export function useRoleColors() {
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const dark = theme === "dark";
 
   return (
     <button
       onClick={toggleTheme}
-      className="relative p-2 rounded-lg transition-all duration-300 hover:bg-slate-700/50"
-      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+      className="glass-icon-btn relative overflow-hidden"
+      aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
+      title={`Switch to ${dark ? "light" : "dark"} mode`}
     >
-      <div className="relative w-5 h-5">
-        {/* Sun icon */}
-        <svg
-          className={`absolute inset-0 w-5 h-5 text-amber-400 transition-all duration-300 ${
-            theme === "light" ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-0"
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-          />
-        </svg>
-        {/* Moon icon */}
-        <svg
-          className={`absolute inset-0 w-5 h-5 text-slate-300 transition-all duration-300 ${
-            theme === "dark" ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0"
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-          />
-        </svg>
-      </div>
+      <Sun
+        size={17}
+        className={`absolute text-amber-500 transition-all duration-500 [transition-timing-function:var(--ease-spring)] ${
+          dark ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+        }`}
+      />
+      <Moon
+        size={17}
+        className={`absolute text-indigo-300 transition-all duration-500 [transition-timing-function:var(--ease-spring)] ${
+          dark ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
+        }`}
+      />
     </button>
   );
+}
+
+/** Pre-login screens (role login, forgot password...) tint the wallpaper with
+ * the role's accent. Restores whatever the signed-in user's role dictates when
+ * the screen unmounts, so a successful login never loses its accent. */
+export function useRoleAccent(role: Role | null | undefined) {
+  useEffect(() => {
+    if (!role) return;
+    document.documentElement.setAttribute("data-role", role);
+    return () => {
+      const current = useAuthStore.getState().user?.role;
+      if (current) document.documentElement.setAttribute("data-role", current);
+      else document.documentElement.removeAttribute("data-role");
+    };
+  }, [role]);
 }

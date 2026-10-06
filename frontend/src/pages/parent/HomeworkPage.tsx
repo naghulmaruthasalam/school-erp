@@ -32,7 +32,7 @@ export default function HomeworkPage() {
     return (
       <div>
         <PageHeader title="Homework" />
-        <p className="text-sm text-violet-600">Select a child above to view homework.</p>
+        <p className="text-sm text-accent-fg">Select a child above to view homework.</p>
       </div>
     );
   }
@@ -46,23 +46,23 @@ export default function HomeworkPage() {
       <PageHeader title="Homework" subtitle={`Homework assignments for ${selectedChild.full_name}.`} />
 
       <Card className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-violet-900">Pending ({pendingForChild.length})</h2>
+        <h2 className="mb-3 text-sm font-semibold text-ink">Pending ({pendingForChild.length})</h2>
         {pendingQuery.isLoading ? (
           <Spinner />
         ) : pendingQuery.error ? (
           <ErrorText>Could not load pending homework.</ErrorText>
         ) : pendingForChild.length === 0 ? (
-          <p className="text-sm text-violet-400">No pending homework. All caught up.</p>
+          <p className="text-sm text-accent-fg">No pending homework. All caught up.</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-line">
             {pendingForChild.map((hw) => (
               <li key={hw.id} className="flex items-center justify-between gap-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-violet-900">{hw.title}</p>
-                  <p className="text-xs text-violet-600">
+                  <p className="text-sm font-medium text-ink">{hw.title}</p>
+                  <p className="text-xs text-accent-fg">
                     {subjectName(hw.subject_id)} — due {formatDisplayDate(hw.due_date)}
                   </p>
-                  {hw.description && <p className="mt-1 text-xs text-violet-600">{hw.description}</p>}
+                  {hw.description && <p className="mt-1 text-xs text-accent-fg">{hw.description}</p>}
                 </div>
                 <Badge tone={hw.due_date < todayIso() ? "red" : "yellow"}>
                   {hw.due_date < todayIso() ? "Overdue" : "Pending"}
@@ -73,7 +73,7 @@ export default function HomeworkPage() {
         )}
       </Card>
 
-      <h2 className="mb-3 text-sm font-semibold text-violet-900">All Homework</h2>
+      <h2 className="mb-3 text-sm font-semibold text-ink">All Homework</h2>
       <DataTable<HomeworkOut>
         columns={[
           { header: "Title", cell: (r) => r.title },

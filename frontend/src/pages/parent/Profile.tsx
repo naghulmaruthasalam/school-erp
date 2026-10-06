@@ -4,8 +4,8 @@ import { useAuthStore } from "../../auth/store";
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="animate-fade-in-up">
-      <p className="text-xs font-medium uppercase tracking-wide text-[#6D28D9] dark:text-[#A78BFA]">{label}</p>
-      <p className="mt-0.5 text-sm text-[#24113F] dark:text-white">{value || "—"}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
     </div>
   );
 }
@@ -20,7 +20,7 @@ export default function ParentProfile() {
       <div className="space-y-6">
         {/* Profile Header Card */}
         <Card className="!p-0 overflow-hidden">
-          <div className="bg-gradient-to-r from-[#059669] to-[#10B981] p-6">
+          <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 p-6">
             <div className="flex items-center gap-6">
               {/* Profile Photo */}
               <div className="relative">
@@ -52,14 +52,14 @@ export default function ParentProfile() {
 
         {/* Account Information */}
         <Card className="!p-0 overflow-hidden">
-          <div className="p-5 border-b border-[#E5DDF5] dark:border-[#2D1B4E] bg-gradient-to-r from-[#F7F5FF] to-white dark:from-[#1B1230] dark:to-[#231640]">
+          <div className="p-5 border-b border-line bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#6D28D9]/10 dark:bg-[#6D28D9]/20 rounded-xl">
-                <svg className="w-5 h-5 text-[#6D28D9] dark:text-[#A78BFA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-xl">
+                <svg className="w-5 h-5 text-accent-fg dark:text-accent-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-[#24113F] dark:text-white">Account Information</h3>
+              <h3 className="text-lg font-semibold text-ink dark:text-white">Account Information</h3>
             </div>
           </div>
           <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
@@ -70,16 +70,16 @@ export default function ParentProfile() {
         </Card>
 
         {/* Info Note */}
-        <Card className="!bg-[#F7F5FF] dark:!bg-[#231640] !border-[#6D28D9]/20">
+        <Card className="!bg-surface-3 dark:!bg-surface !border-[#6D28D9]/20">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-[#6D28D9]/10 rounded-xl">
-              <svg className="w-5 h-5 text-[#6D28D9] dark:text-[#A78BFA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="p-2 bg-accent/10 rounded-xl">
+              <svg className="w-5 h-5 text-accent-fg dark:text-accent-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <p className="font-medium text-[#24113F] dark:text-white">Linked Children</p>
-              <p className="text-sm text-[#7C6F95] mt-1">
+              <p className="font-medium text-ink dark:text-white">Linked Children</p>
+              <p className="text-sm text-ink-3 mt-1">
                 Your linked children can be selected from the dropdown at the top of the dashboard. Contact the school admin if you need to link additional children to your account.
               </p>
             </div>

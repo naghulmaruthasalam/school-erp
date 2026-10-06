@@ -1,3 +1,4 @@
+import DocumentImage from "../../components/DocumentImage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -14,7 +15,7 @@ const STATUS_TONE: Record<TeacherStatus, "gray" | "green" | "red" | "yellow"> = 
 };
 
 function selectClass(className = "") {
-  return `w-full rounded-md border border-violet-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-violet-900 dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`;
+  return `w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`;
 }
 
 export default function TeacherDetail() {
@@ -156,7 +157,7 @@ export default function TeacherDetail() {
 
       {/* Profile Header */}
       <Card className="!p-0 overflow-hidden mb-6">
-        <div className="bg-gradient-to-r from-[#2563EB] to-[#3B82F6] p-6">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6">
           <div className="flex items-center gap-6">
             <div className="relative group">
               <input
@@ -169,16 +170,17 @@ export default function TeacherDetail() {
               <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-4 border-white/30 overflow-hidden">
                 {uploading ? (
                   <Spinner />
-                ) : teacher.photo_document_id ? (
-                  <img
-                    src={`/api/v1/uploads/documents/${teacher.photo_document_id}/download`}
+                ) : (
+                  <DocumentImage
+                    documentId={teacher.photo_document_id}
                     alt={teacher.full_name}
                     className="w-full h-full object-cover"
+                    fallback={
+                      <span className="text-4xl font-bold text-white">
+                        {teacher.full_name?.charAt(0)?.toUpperCase()}
+                      </span>
+                    }
                   />
-                ) : (
-                  <span className="text-4xl font-bold text-white">
-                    {teacher.full_name?.charAt(0)?.toUpperCase()}
-                  </span>
                 )}
               </div>
               <button
@@ -268,9 +270,9 @@ export default function TeacherDetail() {
 
             <div>
               <Label>Assigned Classes/Grades</Label>
-              <p className="text-xs text-violet-500 mb-2">Classes this teacher can manage (attendance, exam results)</p>
-              <div className="flex flex-wrap gap-2 rounded-md border border-violet-200 p-3">
-                {(classes ?? []).length === 0 && <span className="text-sm text-violet-400">No classes configured yet.</span>}
+              <p className="text-xs text-accent-fg mb-2">Classes this teacher can manage (attendance, exam results)</p>
+              <div className="flex flex-wrap gap-2 rounded-md border border-line p-3">
+                {(classes ?? []).length === 0 && <span className="text-sm text-accent-fg">No classes configured yet.</span>}
                 {(classes ?? []).map((c) => {
                   const active = (form.assigned_class_ids ?? []).includes(c.id);
                   return (
@@ -279,7 +281,7 @@ export default function TeacherDetail() {
                       key={c.id}
                       onClick={() => toggleClass(c.id)}
                       className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                        active ? "border-emerald-600 bg-emerald-50 text-emerald-700" : "border-violet-300 text-gray-600 hover:bg-violet-50"
+                        active ? "border-emerald-600 bg-emerald-50 text-emerald-700" : "border-line text-ink-2 hover:bg-violet-50"
                       }`}
                     >
                       {c.name}
@@ -291,8 +293,8 @@ export default function TeacherDetail() {
 
             <div>
               <Label>Subjects</Label>
-              <div className="flex flex-wrap gap-2 rounded-md border border-violet-200 p-3">
-                {(subjects ?? []).length === 0 && <span className="text-sm text-violet-400">No subjects configured yet.</span>}
+              <div className="flex flex-wrap gap-2 rounded-md border border-line p-3">
+                {(subjects ?? []).length === 0 && <span className="text-sm text-accent-fg">No subjects configured yet.</span>}
                 {(subjects ?? []).map((s) => {
                   const active = (form.subject_ids ?? []).includes(s.id);
                   return (
@@ -301,7 +303,7 @@ export default function TeacherDetail() {
                       key={s.id}
                       onClick={() => toggleSubject(s.id)}
                       className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                        active ? "border-violet-600 bg-violet-50 text-violet-700" : "border-violet-300 text-gray-600 hover:bg-violet-50"
+                        active ? "border-violet-600 bg-violet-50 text-ink-2" : "border-line text-ink-2 hover:bg-violet-50"
                       }`}
                     >
                       {s.name}
@@ -358,8 +360,8 @@ export default function TeacherDetail() {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-violet-400">{label}</dt>
-      <dd className="mt-0.5 text-sm text-violet-900">{value}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-accent-fg">{label}</dt>
+      <dd className="mt-0.5 text-sm text-ink">{value}</dd>
     </div>
   );
 }

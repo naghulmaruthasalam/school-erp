@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Badge, StatTile } from "../../components/ui";
 import { api } from "../../api/client";
+import type { PageResponse } from "../../types/common";
 import { fetchClasses, fetchSections, listStudents } from "./api";
 
 interface AttendanceRecord {
   id: string;
   student_id: string;
-  student_name: string;
   date: string;
   status: string;
   remarks: string | null;
@@ -31,17 +31,21 @@ export default function AttendanceList() {
     queryKey: ["attendance", selectedSection, selectedDate],
     queryFn: async () => {
       if (!selectedSection) return [];
-      const { data } = await api.get<AttendanceRecord[]>("/attendance/student", {
-        params: { section_id: selectedSection, date: selectedDate },
+      const { data } = await api.get<PageResponse<AttendanceRecord>>("/attendance/students", {
+        params: { section_id: selectedSection, date_from: selectedDate, date_to: selectedDate, page_size: 500 },
       });
-      return data;
+      return data.items;
     },
     enabled: !!selectedSection && !!selectedDate,
   });
 
   const markMutation = useMutation({
     mutationFn: async (payload: { student_id: string; date: string; status: string }) => {
-      const { data } = await api.post("/attendance/student", payload);
+      const { data } = await api.post("/attendance/students", {
+        section_id: selectedSection,
+        date: payload.date,
+        records: [{ student_id: payload.student_id, status: payload.status }],
+      });
       return data;
     },
     onSuccess: () => {
@@ -79,11 +83,11 @@ export default function AttendanceList() {
       <Card className="mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Section</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Section</label>
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
+              className="rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
             >
               <option value="">-- Select --</option>
               {sectionsQuery.data?.map((section) => (
@@ -94,12 +98,12 @@ export default function AttendanceList() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Date</label>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
+              className="rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
             />
           </div>
         </div>
@@ -127,8 +131,8 @@ export default function AttendanceList() {
                   return (
                     <div key={student.id} className="flex items-center justify-between p-3 bg-violet-50 rounded-lg">
                       <div>
-                        <p className="font-medium text-violet-900">{student.full_name}</p>
-                        <p className="text-sm text-violet-600">{student.admission_no}</p>
+                        <p className="font-medium text-ink">{student.full_name}</p>
+                        <p className="text-sm text-accent-fg">{student.admission_no}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {status && <Badge className={statusColors[status]}>{status}</Badge>}
@@ -141,7 +145,7 @@ export default function AttendanceList() {
                               className={`px-2 py-1 text-xs rounded ${
                                 status === s
                                   ? statusColors[s]
-                                  : "bg-gray-100 text-gray-600 hover:bg-violet-100"
+                                  : "bg-surface-3 text-ink-2 hover:bg-violet-100"
                               }`}
                             >
                               {s.charAt(0)}
@@ -153,7 +157,7 @@ export default function AttendanceList() {
                   );
                 })}
                 {studentsQuery.data?.items.length === 0 && (
-                  <p className="text-center text-violet-400 py-4">No students in this section.</p>
+                  <p className="text-center text-accent-fg py-4">No students in this section.</p>
                 )}
               </div>
             </Card>
@@ -163,7 +167,7 @@ export default function AttendanceList() {
 
       {!selectedSection && (
         <Card>
-          <p className="text-center text-violet-400 py-8">Select a section to view/mark attendance.</p>
+          <p className="text-center text-accent-fg py-8">Select a section to view/mark attendance.</p>
         </Card>
       )}
     </div>

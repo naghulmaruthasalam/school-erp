@@ -5,7 +5,7 @@ import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
 import {
   BookOpen, Search, Plus, Users, AlertTriangle, BookMarked, RotateCcw,
-  Trash2, Edit3, Calendar, DollarSign, CheckCircle, XCircle, Clock
+  CheckCircle, Clock
 } from "lucide-react";
 
 interface Book {
@@ -196,8 +196,8 @@ export default function LibraryList() {
             <div className={`absolute top-3 right-3 w-10 h-10 rounded-xl bg-${stat.color}-500/20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
               <stat.icon className={`w-5 h-5 text-${stat.color}-600`} />
             </div>
-            <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">
+            <p className="text-sm font-medium text-ink-3">{stat.label}</p>
+            <p className="text-2xl font-bold text-ink mt-1">
               {statsQuery.isLoading ? <Spinner /> : stat.value}
             </p>
           </div>
@@ -208,13 +208,13 @@ export default function LibraryList() {
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab("books")}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === "books" ? "bg-violet-600 text-white shadow-lg shadow-violet-500/30" : "bg-white text-slate-600 hover:bg-violet-50"}`}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === "books" ? "bg-violet-600 text-white shadow-lg shadow-violet-500/30" : "bg-surface text-ink-2 hover:bg-violet-50"}`}
         >
           <BookOpen className="w-4 h-4 inline-block mr-2" />Books Catalog
         </button>
         <button
           onClick={() => setActiveTab("issues")}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === "issues" ? "bg-violet-600 text-white shadow-lg shadow-violet-500/30" : "bg-white text-slate-600 hover:bg-violet-50"}`}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === "issues" ? "bg-violet-600 text-white shadow-lg shadow-violet-500/30" : "bg-surface text-ink-2 hover:bg-violet-50"}`}
         >
           <RotateCcw className="w-4 h-4 inline-block mr-2" />Issued Books ({issuesQuery.data?.total ?? 0})
         </button>
@@ -224,17 +224,17 @@ export default function LibraryList() {
       {activeTab === "books" && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-violet-900 flex items-center gap-2">
+            <h3 className="font-semibold text-ink flex items-center gap-2">
               <BookOpen className="w-5 h-5" /> Books Catalog
             </h3>
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
               <input
                 type="text"
                 placeholder="Search books..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 rounded-lg border border-violet-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                className="pl-10 pr-4 py-2 rounded-lg border border-line focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
               />
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function LibraryList() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-sm text-slate-500 border-b border-slate-100">
+                  <tr className="text-left text-sm text-ink-3 border-b border-line">
                     <th className="pb-3 font-medium">Book</th>
                     <th className="pb-3 font-medium">Category</th>
                     <th className="pb-3 font-medium">Location</th>
@@ -255,23 +255,23 @@ export default function LibraryList() {
                 </thead>
                 <tbody>
                   {booksQuery.data?.items.map((book) => (
-                    <tr key={book.id} className="border-b border-slate-50 hover:bg-violet-50/50 transition-colors">
+                    <tr key={book.id} className="border-b border-line hover:bg-violet-50/50 transition-colors">
                       <td className="py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-12 rounded bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                             {book.title.charAt(0)}
                           </div>
                           <div>
-                            <p className="font-medium text-slate-800">{book.title}</p>
-                            <p className="text-sm text-slate-500">{book.author}</p>
-                            {book.isbn && <p className="text-xs text-slate-400">ISBN: {book.isbn}</p>}
+                            <p className="font-medium text-ink">{book.title}</p>
+                            <p className="text-sm text-ink-3">{book.author}</p>
+                            {book.isbn && <p className="text-xs text-ink-3">ISBN: {book.isbn}</p>}
                           </div>
                         </div>
                       </td>
                       <td className="py-4">
                         <Badge tone="violet">{book.category || "General"}</Badge>
                       </td>
-                      <td className="py-4 text-sm text-slate-600">
+                      <td className="py-4 text-sm text-ink-2">
                         {book.rack_number && `Rack ${book.rack_number}`}
                         {book.shelf_number && ` / Shelf ${book.shelf_number}`}
                         {!book.rack_number && !book.shelf_number && "—"}
@@ -298,7 +298,7 @@ export default function LibraryList() {
                 </tbody>
               </table>
               {booksQuery.data?.items.length === 0 && (
-                <p className="text-center text-slate-400 py-12">No books found. Add your first book!</p>
+                <p className="text-center text-ink-3 py-12">No books found. Add your first book!</p>
               )}
             </div>
           )}
@@ -308,7 +308,7 @@ export default function LibraryList() {
       {/* Issues Tab */}
       {activeTab === "issues" && (
         <Card>
-          <h3 className="font-semibold text-violet-900 flex items-center gap-2 mb-4">
+          <h3 className="font-semibold text-ink flex items-center gap-2 mb-4">
             <RotateCcw className="w-5 h-5" /> Pending Returns
           </h3>
           {issuesQuery.isLoading ? (
@@ -317,7 +317,7 @@ export default function LibraryList() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-sm text-slate-500 border-b border-slate-100">
+                  <tr className="text-left text-sm text-ink-3 border-b border-line">
                     <th className="pb-3 font-medium">Book</th>
                     <th className="pb-3 font-medium">Borrower</th>
                     <th className="pb-3 font-medium">Issue Date</th>
@@ -328,16 +328,16 @@ export default function LibraryList() {
                 </thead>
                 <tbody>
                   {issuesQuery.data?.items.map((issue) => (
-                    <tr key={issue.id} className="border-b border-slate-50 hover:bg-violet-50/50 transition-colors">
-                      <td className="py-4 font-medium text-slate-800">{issue.book_title}</td>
+                    <tr key={issue.id} className="border-b border-line hover:bg-violet-50/50 transition-colors">
+                      <td className="py-4 font-medium text-ink">{issue.book_title}</td>
                       <td className="py-4">
-                        <p className="text-slate-800">{issue.borrower_name}</p>
-                        <p className="text-xs text-slate-500">{issue.borrower_type}</p>
+                        <p className="text-ink">{issue.borrower_name}</p>
+                        <p className="text-xs text-ink-3">{issue.borrower_type}</p>
                       </td>
-                      <td className="py-4 text-sm text-slate-600">
+                      <td className="py-4 text-sm text-ink-2">
                         {new Date(issue.issue_date).toLocaleDateString()}
                       </td>
-                      <td className="py-4 text-sm text-slate-600">
+                      <td className="py-4 text-sm text-ink-2">
                         {new Date(issue.due_date).toLocaleDateString()}
                       </td>
                       <td className="py-4 text-center">
@@ -358,7 +358,7 @@ export default function LibraryList() {
                 </tbody>
               </table>
               {issuesQuery.data?.items.length === 0 && (
-                <p className="text-center text-slate-400 py-12">No pending returns.</p>
+                <p className="text-center text-ink-3 py-12">No pending returns.</p>
               )}
             </div>
           )}
@@ -370,57 +370,57 @@ export default function LibraryList() {
         <form onSubmit={(e) => { e.preventDefault(); addBookMutation.mutate(bookForm); }} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-violet-700 mb-1">Title *</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Title *</label>
               <input type="text" value={bookForm.title} onChange={(e) => setBookForm({ ...bookForm, title: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Author *</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Author *</label>
               <input type="text" value={bookForm.author} onChange={(e) => setBookForm({ ...bookForm, author: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">ISBN</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">ISBN</label>
               <input type="text" value={bookForm.isbn} onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Publisher</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Publisher</label>
               <input type="text" value={bookForm.publisher} onChange={(e) => setBookForm({ ...bookForm, publisher: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Category</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Category</label>
               <select value={bookForm.category} onChange={(e) => setBookForm({ ...bookForm, category: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500">
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500">
                 <option value="">Select Category</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Subject</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Subject</label>
               <input type="text" value={bookForm.subject} onChange={(e) => setBookForm({ ...bookForm, subject: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">No. of Copies</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">No. of Copies</label>
               <input type="number" min={1} value={bookForm.total_copies} onChange={(e) => setBookForm({ ...bookForm, total_copies: parseInt(e.target.value) || 1 })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Rack Number</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Rack Number</label>
               <input type="text" value={bookForm.rack_number} onChange={(e) => setBookForm({ ...bookForm, rack_number: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Shelf Number</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Shelf Number</label>
               <input type="text" value={bookForm.shelf_number} onChange={(e) => setBookForm({ ...bookForm, shelf_number: e.target.value })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Price</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Price</label>
               <input type="number" step="0.01" value={bookForm.price} onChange={(e) => setBookForm({ ...bookForm, price: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-4">
@@ -436,18 +436,18 @@ export default function LibraryList() {
       <Modal open={showIssueModal} onClose={() => { setShowIssueModal(false); setSelectedBook(null); }} title={`Issue: ${selectedBook?.title}`}>
         <form onSubmit={(e) => { e.preventDefault(); issueBookMutation.mutate(); }} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Borrower Type</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Borrower Type</label>
             <select value={issueForm.borrower_type} onChange={(e) => setIssueForm({ ...issueForm, borrower_type: e.target.value })}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500">
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500">
               <option value="STUDENT">Student</option>
               <option value="TEACHER">Teacher</option>
             </select>
           </div>
           {issueForm.borrower_type === "STUDENT" && (
             <div>
-              <label className="block text-sm font-medium text-violet-700 mb-1">Select Student</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">Select Student</label>
               <select value={issueForm.borrower_id} onChange={(e) => handleStudentSelect(e.target.value)}
-                className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required>
+                className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required>
                 <option value="">-- Select Student --</option>
                 {studentsQuery.data?.items.map(s => (
                   <option key={s.id} value={s.id}>{s.full_name} ({s.admission_no})</option>
@@ -458,21 +458,21 @@ export default function LibraryList() {
           {issueForm.borrower_type === "TEACHER" && (
             <>
               <div>
-                <label className="block text-sm font-medium text-violet-700 mb-1">Teacher Name</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Teacher Name</label>
                 <input type="text" value={issueForm.borrower_name} onChange={(e) => setIssueForm({ ...issueForm, borrower_name: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-violet-700 mb-1">Teacher ID</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">Teacher ID</label>
                 <input type="text" value={issueForm.borrower_id} onChange={(e) => setIssueForm({ ...issueForm, borrower_id: e.target.value })}
-                  className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
+                  className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" required />
               </div>
             </>
           )}
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Loan Period (days)</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Loan Period (days)</label>
             <input type="number" min={1} max={90} value={issueForm.days} onChange={(e) => setIssueForm({ ...issueForm, days: parseInt(e.target.value) || 14 })}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="secondary" onClick={() => setShowIssueModal(false)}>Cancel</Button>
@@ -495,19 +495,19 @@ export default function LibraryList() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Fine Amount</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Fine Amount</label>
             <input type="number" step="0.01" min={0} value={returnForm.fine_amount} onChange={(e) => setReturnForm({ ...returnForm, fine_amount: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" />
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="fine_paid" checked={returnForm.fine_paid} onChange={(e) => setReturnForm({ ...returnForm, fine_paid: e.target.checked })}
-              className="rounded border-violet-300 text-violet-600 focus:ring-violet-500" />
-            <label htmlFor="fine_paid" className="text-sm text-violet-700">Fine Paid</label>
+              className="rounded border-line text-accent-fg focus:ring-violet-500" />
+            <label htmlFor="fine_paid" className="text-sm text-ink-2">Fine Paid</label>
           </div>
           <div>
-            <label className="block text-sm font-medium text-violet-700 mb-1">Remarks</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">Remarks</label>
             <textarea value={returnForm.remarks} onChange={(e) => setReturnForm({ ...returnForm, remarks: e.target.value })}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:ring-violet-500" rows={2} />
+              className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500" rows={2} />
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="secondary" onClick={() => setShowReturnModal(false)}>Cancel</Button>
