@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
-import { BookOpen, ChevronRight, PlayCircle, ClipboardCheck, FileText, Lightbulb, ListChecks, MessageSquareText, NotebookPen, PencilLine } from "lucide-react";
+import { BookOpen, ChevronRight, Download, ExternalLink, PlayCircle, ClipboardCheck, FileText, Lightbulb, ListChecks, MessageSquareText, NotebookPen, PencilLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -47,6 +47,36 @@ function LessonVideo({ url }: { url: string }) {
   return <video controls preload="metadata" playsInline src={url} onError={() => setFailed(true)} className="w-full max-h-[26rem] rounded-xl bg-black" />;
 }
 
+/** The chapter's notes from the database as a PDF to read here, open in a tab or save. */
+function ChapterPdf({ syllabusId, index, language, fallback }: { syllabusId: string; index: number; language: string; fallback: React.ReactNode }) {
+  const { t } = useLanguage();
+  const pdf = useQuery({
+    queryKey: ["syllabus", "pdf", syllabusId, index, language],
+    queryFn: async () => (await api.get<Blob>(`/syllabus/${syllabusId}/chapters/${index}/pdf`, { params: { lang: language }, responseType: "blob" })).data,
+    enabled: !import.meta.env.VITE_STANDALONE_DEMO,
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+  const url = useMemo(() => (pdf.data ? URL.createObjectURL(pdf.data) : null), [pdf.data]);
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+  if (import.meta.env.VITE_STANDALONE_DEMO) return <>{fallback}</>;
+  if (pdf.isLoading) return <div className="flex justify-center py-8"><Spinner /></div>;
+  if (!url) return <p className="rounded-xl bg-surface p-3 text-sm text-ink-3">{t("lead.browser.pdfFailed")}</p>;
+  return (
+    <div className="space-y-2" data-testid="chapter-pdf">
+      <div className="flex flex-wrap gap-2">
+        <a href={url} target="_blank" rel="noopener noreferrer"><Button size="sm" variant="secondary" type="button"><ExternalLink size={15} /> {t("lead.browser.openPdf")}</Button></a>
+        <a href={url} download={`chapter-${index + 1}.pdf`}><Button size="sm" variant="secondary" type="button"><Download size={15} /> {t("lead.browser.downloadPdf")}</Button></a>
+      </div>
+      <iframe src={url} title={t("lead.browser.pdfNotes")} className="h-[32rem] w-full rounded-xl bg-white" />
+      <details className="rounded-xl bg-surface p-3 text-sm">
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-ink-3">{t("lead.browser.readAsText")}</summary>
+        <div className="mt-2">{fallback}</div>
+      </details>
+    </div>
+  );
+}
+
 /** Class -> Subject -> Chapter, read from the syllabus in the database and scoped to what the user may see. */
 export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
   const { t, te, fmtDate, fmtNumber, language } = useLanguage();
@@ -57,6 +87,7 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
   const [classId, setClassId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [chapterId, setChapterId] = useState("");
+  const [view, setView] = useState<"pdf" | "video">("pdf");
 
   const cls: TreeClass | undefined = classes.find((c) => c.id === classId) ?? classes[0];
   const subject: TreeSubject | undefined = cls?.subjects.find((s) => s.id === subjectId) ?? cls?.subjects[0];
@@ -72,6 +103,8 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
   useEffect(() => {
     if (subject && !chapter && subject.chapters.length > 0) setChapterId(subject.chapters[0].id);
   }, [subject, chapter]);
+
+  useEffect(() => { setView("pdf"); }, [chapter?.id]);
 
   const detail = useQuery({
     queryKey: ["syllabus", "detail", subject?.syllabus_id, language],
@@ -171,36 +204,48 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
                   </div>
                 )}
 
+                <div className="flex flex-wrap gap-2" role="tablist" aria-label={t("lead.browser.pdfNotes")}>
+                  <button type="button" role="tab" aria-selected={view === "pdf"} data-testid="show-pdf"
+                    className={clsx("lg-chip cursor-pointer !px-4 !py-2 text-sm", view === "pdf" && "!bg-accent !text-white")} onClick={() => setView("pdf")}>
+                    <FileText size={16} /> <span data-no-translate>{t("lead.browser.pdf")}</span>
+                  </button>
+                  <button type="button" role="tab" aria-selected={view === "video"} data-testid="show-video"
+                    className={clsx("lg-chip cursor-pointer !px-4 !py-2 text-sm", view === "video" && "!bg-accent !text-white", !full?.video_url && !detail.isLoading && "opacity-60")} onClick={() => setView("video")}>
+                    <PlayCircle size={16} /> {t("lead.browser.video")}
+                    {full?.duration_minutes ? <span className="font-normal opacity-80">· {t("lead.browser.minutes", { n: fmtNumber(full.duration_minutes) })}</span> : null}
+                  </button>
+                </div>
+
                 {detail.isLoading && <Spinner size="sm" />}
-                {full?.video_url && (
-                  <div data-testid="chapter-video">
-                    <p className="mb-1.5 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
-                      <PlayCircle size={14} /> {t("lead.browser.video")}
-                      {full.duration_minutes ? <span className="font-normal normal-case">{t("lead.browser.minutes", { n: fmtNumber(full.duration_minutes) })}</span> : null}
-                    </p>
-                    {full.video_language && full.video_language !== language && (
-                      <p className="mb-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                        {t(full.video_language === "ar" ? "lead.browser.videoOnlyArabic" : "lead.browser.videoOnlyEnglish")}
-                      </p>
-                    )}
-                    {/* keyed by link, so switching language swaps the video instead of reusing the player */}
-                    <LessonVideo key={full.video_url} url={full.video_url} />
-                  </div>
+                {view === "video" && (
+                  full?.video_url ? (
+                    <div data-testid="chapter-video">
+                      {full.video_language && full.video_language !== language && (
+                        <p className="mb-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                          {t(full.video_language === "ar" ? "lead.browser.videoOnlyArabic" : "lead.browser.videoOnlyEnglish")}
+                        </p>
+                      )}
+                      {/* keyed by link, so switching language swaps the video instead of reusing the player */}
+                      <LessonVideo key={full.video_url} url={full.video_url} />
+                    </div>
+                  ) : !detail.isLoading && <p className="rounded-xl bg-surface p-3 text-sm text-ink-3" data-testid="no-video">{t("lead.browser.noVideo")}</p>
                 )}
 
-                {full?.content ? (
+                {view === "pdf" && (full?.content || chapter.topics.length > 0) ? (
                   <div>
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{t("shell.syllabusBrowser.notes")}</p>
-                    {full.content_language && full.content_language !== language && (
+                    {full?.content_language && full.content_language !== language && (
                       <p className="mb-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                         {t(full.content_language === "ar" ? "lead.browser.onlyArabic" : "lead.browser.onlyEnglish")}
                       </p>
                     )}
-                    <div className="max-h-[28rem] overflow-y-auto rounded-xl bg-surface p-3 text-sm leading-relaxed text-ink-2" dir={full.content_language === "ar" ? "rtl" : "ltr"}>
-                      <Markdown>{full.content}</Markdown>
-                    </div>
+                    <ChapterPdf syllabusId={subject!.syllabus_id} index={Number(chapter.id.split("-").pop())} language={language}
+                      fallback={
+                        <div className="max-h-[28rem] overflow-y-auto rounded-xl bg-surface p-3 text-sm leading-relaxed text-ink-2" dir={full?.content_language === "ar" ? "rtl" : "ltr"}>
+                          <Markdown>{full?.content ?? ""}</Markdown>
+                        </div>
+                      } />
                   </div>
-                ) : !detail.isLoading && (
+                ) : view === "pdf" && !detail.isLoading && (
                   <p className="rounded-xl bg-surface p-3 text-sm text-ink-3">{t("lead.browser.noNotes")}</p>
                 )}
 

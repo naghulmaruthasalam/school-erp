@@ -36,6 +36,11 @@ export async function fetchSubjects(): Promise<Subject[]> {
   return data;
 }
 
+export async function fetchMyTeacher(): Promise<{ id: string; assigned_class_ids?: string[] }> {
+  const { data } = await api.get("/teachers/me");
+  return data;
+}
+
 export async function fetchMyTimetable(teacherId: string): Promise<TimetableSlot[]> {
   const { data } = await api.get<TimetableSlot[]>("/academics/timetable", {
     params: { teacher_id: teacherId },

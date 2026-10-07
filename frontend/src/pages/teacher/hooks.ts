@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../auth/store";
-import { fetchClasses, fetchMyTimetable, fetchSections, fetchSubjects } from "./api";
+import { fetchClasses, fetchMyTeacher, fetchMyTimetable, fetchSections, fetchSubjects } from "./api";
 
 /** The current teacher's own teacher_id (from /auth/me, cached in the auth store). */
 export function useOwnTeacherId(): string | null {
@@ -28,11 +28,25 @@ export function useSubjects() {
   return useQuery({ queryKey: ["teacher", "subjects"], queryFn: fetchSubjects });
 }
 
-/** The distinct section_ids this teacher teaches, derived from their timetable slots. */
+const gradeOf = (name?: string) => (name ?? "").match(/\d+/)?.[0] ?? (name ?? "").trim().toLowerCase();
+
+/**
+ * The section_ids this teacher teaches: the ones on their timetable, plus every section of the grades
+ * they are assigned to (a duplicate "Grade 6" / "Class 6" record counts as the same grade). A teacher
+ * whose timetable is not set up yet can still pick a section.
+ */
 export function useMySectionIds(): string[] {
   const { data: slots } = useMyTimetable();
-  if (!slots) return [];
-  return Array.from(new Set(slots.map((s) => s.section_id)));
+  const { data: sections } = useSections();
+  const { data: classes } = useClasses();
+  const teacherId = useOwnTeacherId();
+  const { data: me } = useQuery({ queryKey: ["teacher", "me"], queryFn: fetchMyTeacher, enabled: !!teacherId });
+  const ids = new Set((slots ?? []).map((s) => s.section_id));
+  const grades = new Set((me?.assigned_class_ids ?? []).map((id) => gradeOf(classes?.find((c) => c.id === id)?.name)));
+  (sections ?? []).forEach((sec) => {
+    if (grades.has(gradeOf(classes?.find((c) => c.id === sec.class_id)?.name))) ids.add(sec.id);
+  });
+  return Array.from(ids);
 }
 
 /** Builds a "Class Name - Section Name" label for a section_id. */

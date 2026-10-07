@@ -343,3 +343,55 @@ async def test_textbooks_stamped_with_an_unknown_school_id_are_still_found(clien
     as_teacher()
     chapters = (await client.get("/api/v1/curriculum/chapters", params={"grade": 6, "subject": "Social Studies"})).json()["chapters"]
     assert [c["title"] for c in chapters] == ["Maps"]
+
+
+# ------------------------------------------------------------------ chapter notes as a PDF
+
+@pytest.mark.asyncio
+async def test_chapter_notes_download_as_a_pdf_in_each_language(client, library):
+    await run_import(client)
+    syl = next(s for s in await Syllabus.find(Syllabus.school_id == SCHOOL).to_list() if s.subject_id == library["ss"])
+    texts = {}
+    for lang in ("en", "ar"):
+        r = await client.get(f"/api/v1/syllabus/{syl.id}/chapters/0/pdf", params={"lang": lang})
+        assert r.status_code == 200, r.text
+        assert r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
+        assert r.headers["content-disposition"].startswith("inline")
+        from io import BytesIO
+        from pypdf import PdfReader
+        texts[lang] = " ".join(p.extract_text() or "" for p in PdfReader(BytesIO(r.content)).pages)
+    assert texts["en"] != texts["ar"]
+    r = await client.get(f"/api/v1/syllabus/{syl.id}/chapters/0/pdf", params={"download": "true"})
+    assert r.headers["content-disposition"].startswith("attachment")
+    assert (await client.get(f"/api/v1/syllabus/{syl.id}/chapters/99/pdf")).status_code == 404
+
+
+def test_pdf_builder_handles_arabic_and_long_notes():
+    from app.services.chapter_pdf import build_chapter_pdf
+
+    pdf = build_chapter_pdf(title="الخريطة", subtitle="Class 6 · Social Studies", description="وصف", topics=["الرموز", "الأسماء"],
+                            notes="## عنوان\n" + "نص طويل عن الخريطة والرموز. " * 400 + "\n- نقطة\n| a | b |\n|---|---|\n| 1 | 2 |", topics_label="المواضيع")
+    assert pdf.startswith(b"%PDF") and len(pdf) > 5000
+
+
+@pytest.mark.asyncio
+async def test_teacher_assigned_to_a_grade_can_assign_homework_to_its_duplicate_record(client, library):
+    """The teacher is assigned to "Class 6"; the school also has a duplicate "Grade 6" record with the real section."""
+    from app.models.academic import Section
+    from app.models.teacher import Teacher
+    from tests.test_copilot import TEACHER_ID
+
+    section = Section(school_id=SCHOOL, class_id=library["dup"], name="A")
+    await section.insert()
+    teacher = await Teacher.get(PydanticObjectId(TEACHER_ID))
+    teacher.assigned_class_ids = [library["c6"]]
+    await teacher.save()
+    as_teacher()
+    today = dt.date.today()
+    body = {"section_id": str(section.id), "subject_id": library["ss"], "title": "Maps", "assigned_date": today.isoformat(),
+            "due_date": (today + dt.timedelta(days=2)).isoformat()}
+    r = await client.post("/api/v1/homework", json=body)
+    assert r.status_code == 201, r.text
+    other = Section(school_id=SCHOOL, class_id="ffffffffffffffffffffffff", name="B")
+    await other.insert()
+    assert (await client.post("/api/v1/homework", json={**body, "section_id": str(other.id)})).status_code in (403, 404)

@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from urllib.parse import quote
+
+from fastapi import Response
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
@@ -155,6 +158,21 @@ async def get_syllabus(
     lang: Lang = Depends(get_lang),
 ) -> SyllabusOut:
     return await syllabus_service.get_syllabus(current, syllabus_id, lang)
+
+
+@router.get("/{syllabus_id}/chapters/{chapter_index}/pdf")
+async def chapter_pdf(
+    syllabus_id: str,
+    chapter_index: int,
+    download: bool = False,
+    current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
+) -> Response:
+    """The chapter's notes from the database as a PDF to read (inline) or save (?download=true)."""
+    data, name = await syllabus_service.chapter_pdf(current, syllabus_id, chapter_index, lang)
+    disposition = "attachment" if download else "inline"
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"{disposition}; filename=\"chapter.pdf\"; filename*=UTF-8''{quote(name)}"})
 
 
 @router.patch("/{syllabus_id}", response_model=SyllabusOut)

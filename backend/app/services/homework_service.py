@@ -23,6 +23,8 @@ from app.schemas.homework import (
 
 _STAFF_WRITE_ROLES = (Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL)
 
+from app.services.academic_keys import equivalent_class_ids
+
 
 async def _verify_teacher_section_access(current: CurrentUser, section_id: str) -> None:
     """Ensure a teacher has access to the section's class. Admins/Principals have full access."""
@@ -38,7 +40,10 @@ async def _verify_teacher_section_access(current: CurrentUser, section_id: str) 
         if section is None:
             raise NotFoundError(f"Section {section_id} not found")
         if section.class_id not in teacher.assigned_class_ids:
-            raise PermissionDeniedError("You are not assigned to this class/grade")
+            # A duplicate record of the same grade ("Grade 6" vs "Class 6") counts as the same class.
+            same_grade = await equivalent_class_ids(current.school_id, section.class_id)
+            if not set(same_grade) & set(teacher.assigned_class_ids):
+                raise PermissionDeniedError("You are not assigned to this class/grade")
 
 
 def to_homework_out(doc: Homework) -> HomeworkOut:

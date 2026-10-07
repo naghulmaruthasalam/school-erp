@@ -212,6 +212,30 @@ async def get_syllabus(current: CurrentUser, syllabus_id: str, lang: str = "en")
     return (await _outs([syllabus], lang))[0]
 
 
+async def chapter_pdf(current: CurrentUser, syllabus_id: str, index: int, lang: str = "en") -> tuple[bytes, str]:
+    """(PDF bytes, file name) of one chapter's notes in `lang`, for anyone allowed to read the syllabus."""
+    from app.models.academic import Class, Subject
+    from app.services.chapter_pdf import build_chapter_pdf
+
+    syllabus = await _get_syllabus_or_404(current, syllabus_id)
+    await _check_syllabus_read_access(current, syllabus)
+    if not 0 <= index < len(syllabus.chapters):
+        raise NotFoundError("Chapter not found")
+    loc = syllabus.chapters[index].localized(lang)
+    cls = await Class.get(syllabus.class_id) if len(syllabus.class_id) == 24 else None
+    subject = await Subject.get(syllabus.subject_id) if len(syllabus.subject_id) == 24 else None
+    notes = loc.content or ""
+    if not notes.strip():
+        notes = "\n".join(f"- {t}" for t in loc.topics) or (loc.description or loc.name)
+    data = build_chapter_pdf(
+        title=loc.name,
+        subtitle=" · ".join(x for x in (cls.name if cls else None, subject.name if subject else None) if x),
+        description=loc.description, topics=loc.topics if loc.content else [], notes=notes,
+        topics_label="المواضيع" if (loc.content_language or lang) == "ar" else "Topics",
+    )
+    return data, f"{loc.name}.pdf"
+
+
 async def get_syllabus_model(current: CurrentUser, syllabus_id: str) -> Syllabus:
     """Get raw syllabus model for internal updates (e.g., video upload)."""
     if current.role not in _STAFF_WRITE_ROLES:

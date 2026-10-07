@@ -99,6 +99,26 @@ def main():
     else:
         print("SKIP video lessons: none attached yet (run load-videos / linux-load-videos.sh)")
 
+    # 2b: chapter notes as a PDF (read from the database, in the UI language)
+    code, tree = call(b, "GET", "/syllabus/tree", student)
+    subjects = [s_ for c in (tree.get("classes", []) if code == 200 else []) for s_ in c["subjects"] if s_["chapters"]]
+    syl = next((s_ for s_ in subjects if "social" in s_["name"].lower()), subjects[0] if subjects else None)
+    if syl:
+        sizes = {}
+        for lang in ("en", "ar"):
+            req = urllib.request.Request(f"{b}/syllabus/{syl['syllabus_id']}/chapters/0/pdf", headers={"Authorization": f"Bearer {student}", "Accept-Language": lang})
+            try:
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    body = r.read()
+                    sizes[lang] = len(body) if body.startswith(b"%PDF") else 0
+            except Exception:
+                sizes[lang] = 0
+        check("chapter notes download as a PDF (English and Arabic)", all(sizes.values()), f"{sizes}")
+
+    # 2c: a teacher can pick a section to assign homework to
+    code, secs = call(b, "GET", "/academics/sections", teacher)
+    check("teacher can list sections for homework", code == 200 and len(secs) > 0, f"HTTP {code}")
+
     # 3: curriculum library
     for lang in ("en", "ar"):
         code, data = call(b, "GET", "/curriculum/chapters?grade=6&subject=Social%20Studies", teacher, lang=lang)

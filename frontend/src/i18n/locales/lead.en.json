@@ -169,7 +169,14 @@
       "minutes": "{n} min",
       "videoOnlyArabic": "This lesson's video is only available in Arabic for now.",
       "videoOnlyEnglish": "This lesson's video is only available in English for now.",
-      "openVideo": "Open the video in a new tab"
+      "openVideo": "Open the video in a new tab",
+      "pdf": "PDF",
+      "pdfNotes": "Chapter notes (PDF)",
+      "downloadPdf": "Download PDF",
+      "openPdf": "Open in new tab",
+      "pdfFailed": "The PDF could not be loaded. Please try again.",
+      "noVideo": "No video has been added for this chapter yet.",
+      "readAsText": "Read as text"
     },
     "theme": {
       "toLight": "Switch to light mode",
