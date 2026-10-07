@@ -6,6 +6,7 @@ import { openDocument } from "../../api/files";
 import { fetchSectionRoster, getHomework, listHomeworkSubmissions } from "./api";
 import { sectionLabel, useClasses, useSections, useSubjects } from "./hooks";
 import type { HomeworkSubmissionStatus } from "./types";
+import Markdown from "../../copilot/Markdown";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 const STATUS_TONE: Record<HomeworkSubmissionStatus, "gray" | "green" | "yellow"> = {
@@ -61,7 +62,7 @@ export default function TeacherHomeworkSubmissions() {
 
       {homework?.description && (
         <Card className="mb-6">
-          <p className="text-sm text-ink-2">{homework.description}</p>
+          <div dir="auto"><Markdown>{homework.description}</Markdown></div>
           <p className="mt-2 text-xs text-accent-fg">
             {t("teacher.homeworkSubmissions.assignedDue", { assigned: fmtDate(homework.assigned_date), due: fmtDate(homework.due_date) })}
           </p>

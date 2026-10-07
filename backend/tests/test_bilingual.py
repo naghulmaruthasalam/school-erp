@@ -329,3 +329,17 @@ async def test_school_with_only_skeleton_maths_gets_the_library_notes_and_the_mi
     assert any(ch["has_content"] for ch in maths_chapters.values())  # ... and the textbook's chapters (with notes) were added
     assert maths_chapters["Knowing Our Numbers"]["has_video"]  # the existing external video link survives
     assert await Class.find(Class.school_id == SCHOOL).count() == 3  # the fixture's Class 8 and 9 plus Class 6: no class was invented
+
+
+@pytest.mark.asyncio
+async def test_textbooks_stamped_with_an_unknown_school_id_are_still_found(client, school):
+    """ingest_curriculum --school-id demo-school (an id that is no school) must not hide the library from every school."""
+    from app.models.curriculum import CurriculumUnit
+
+    await CurriculumUnit(school_id="demo-school", grade=6, subject="Social Studies", language="en", unit_number=1, unit_title_en="Maps",
+                         full_text="A map is a drawing of the Earth's surface on paper.").insert()
+    await CurriculumUnit(school_id="5c0000000000000000000002", grade=6, subject="Social Studies", language="en", unit_number=9, unit_title_en="Other school",
+                         full_text="This unit belongs to a different school and must stay hidden.").insert()
+    as_teacher()
+    chapters = (await client.get("/api/v1/curriculum/chapters", params={"grade": 6, "subject": "Social Studies"})).json()["chapters"]
+    assert [c["title"] for c in chapters] == ["Maps"]

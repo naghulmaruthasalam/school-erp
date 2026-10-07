@@ -4,6 +4,7 @@ import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import { fetchClasses, fetchSections, fetchSubjects, listTeachers } from "./api";
 import type { PageResponse } from "../../types/common";
+import Markdown from "../../copilot/Markdown";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Homework {
@@ -194,7 +195,7 @@ export default function HomeworkList() {
                     <h3 className="font-semibold text-ink">{hw.title}</h3>
                     <Badge tone={hw.status === "ACTIVE" ? "green" : hw.status === "COMPLETED" ? "violet" : "gray"}>{te("status", hw.status)}</Badge>
                   </div>
-                  <p className="text-sm text-ink-2 mb-2">{hw.description}</p>
+                  <div className="mb-2" dir="auto"><Markdown>{hw.description}</Markdown></div>
                   <div className="flex items-center gap-4 text-xs text-accent-fg">
                     <span>{getSectionName(hw.section_id)}</span>
                     <span>{getSubjectName(hw.subject_id)}</span>

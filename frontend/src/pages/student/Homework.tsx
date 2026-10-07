@@ -7,6 +7,7 @@ import { DataTable, Pagination, type Column } from "../../components/DataTable";
 import { fetchHomework, fetchHomeworkSubmissions, fetchPendingHomework, updateHomeworkSubmission } from "./api";
 import { useMyProfile, useSubjects, subjectMap } from "./hooks";
 import { openCopilot } from "../../copilot/events";
+import Markdown from "../../copilot/Markdown";
 import type { Homework, PendingHomework } from "./types";
 import { BookOpen, Calendar, Clock, Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Star, Award, X, Sparkles, ThumbsUp, Target } from "lucide-react";
 
@@ -283,7 +284,7 @@ function MarkSubmittedButton({ homeworkId, studentId, onSubmitted }: { homeworkI
 function PendingHomeworkCard({ hw, subjectName, studentId, classId, onSubmitted }: { hw: PendingHomework; subjectName: string; studentId: string; classId?: string; onSubmitted: () => void }) {
   const { t, te } = useLanguage();
   const formatDate = useFormatDate();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true); // the questions are the point of the card: shown open
   const overdue = hw.due_date < new Date().toISOString().slice(0, 10);
   const dueToday = hw.due_date === new Date().toISOString().slice(0, 10);
 
@@ -334,12 +335,8 @@ function PendingHomeworkCard({ hw, subjectName, studentId, classId, onSubmitted 
                 {expanded ? t("studentHomework.hideInstructions") : t("studentHomework.viewInstructions")}
               </button>
               {expanded && (
-                <div className="mt-3 p-4 rounded-xl bg-surface-3 dark:bg-surface-2 text-sm text-ink-2 leading-relaxed max-h-60 overflow-y-auto">
-                  {hw.description.split('\n').map((line, i) => (
-                    <p key={i} className={line.trim() === '' ? 'h-2' : 'mb-2'}>
-                      {line.replace(/\*\*/g, '').replace(/\*/g, '').replace(/---/g, '').trim()}
-                    </p>
-                  ))}
+                <div className="mt-3 p-4 rounded-xl bg-surface-3 dark:bg-surface-2 max-h-[28rem] overflow-y-auto" dir="auto">
+                  <Markdown>{hw.description}</Markdown>
                 </div>
               )}
             </div>

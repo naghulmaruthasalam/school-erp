@@ -7,6 +7,7 @@ import { formatDisplayDate, todayIso } from "./dates";
 import { useSubjects } from "./hooks";
 import { useSelectedChild } from "./SelectedChildContext";
 import type { HomeworkOut } from "./types";
+import Markdown from "../../copilot/Markdown";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 const PAGE_SIZE = 20;
@@ -64,7 +65,7 @@ export default function HomeworkPage() {
                   <p className="text-xs text-accent-fg">
                     {t("parent.homework.subjectDue", { subject: subjectName(hw.subject_id), date: formatDisplayDate(hw.due_date) })}
                   </p>
-                  {hw.description && <p className="mt-1 text-xs text-accent-fg">{hw.description}</p>}
+                  {hw.description && <div className="mt-1 text-xs" dir="auto"><Markdown>{hw.description}</Markdown></div>}
                 </div>
                 <Badge tone={hw.due_date < todayIso() ? "red" : "yellow"}>
                   {hw.due_date < todayIso() ? t("fees.overdue") : t("homework.pending")}

@@ -18,11 +18,20 @@ def unit_language(u: CurriculumUnit) -> str:
 
 
 async def load_units(school_id: str | None, grade: int | None = None, subject: str | None = None) -> list[CurriculumUnit]:
-    """Units visible to a school: the shared library (no school) plus the school's own."""
-    query: dict = {"$or": [{"school_id": None}, {"school_id": school_id}]} if school_id else {"school_id": None}
+    """Units visible to a school: the shared library plus the school's own. A unit is hidden only when it was loaded for a
+    DIFFERENT, existing school. Units stamped with a school id that matches no school (e.g. ingest --school-id demo-school,
+    or an old id) are treated as shared, so a mislabelled load never makes the textbooks vanish."""
+    from app.models.tenant import Tenant
+
+    query: dict = {}
     if grade is not None:
         query["grade"] = grade
     units = await CurriculumUnit.find(query).sort(+CurriculumUnit.unit_number).to_list()
+    stamped = {u.school_id for u in units if u.school_id and u.school_id != school_id}
+    other_schools: set[str] = set()
+    if stamped:
+        other_schools = {str(t.id) for t in await Tenant.find_all().to_list()} & stamped
+    units = [u for u in units if not u.school_id or u.school_id == school_id or u.school_id not in other_schools]
     if subject:
         want = subject_key(subject)
         units = [u for u in units if subject_key(u.subject) == want]
@@ -124,6 +133,20 @@ async def sync_to_syllabus(
 
 _last_checked: dict[str, float] = {}
 CHECK_EVERY_SECONDS = 60
+
+
+async def sync_all_schools(*, create_missing: bool = True, only_missing: bool = False) -> list[dict]:
+    """Run the library -> syllabus sync for every school (used by scripts.load_textbooks). One report per school."""
+    from app.models.tenant import Tenant
+
+    reports = []
+    for tenant in await Tenant.find_all().to_list():
+        try:
+            rep = await sync_to_syllabus(str(tenant.id), "library-sync", dry_run=False, create_missing=create_missing, only_missing=only_missing)
+        except Exception as exc:  # noqa: BLE001 - one school's problem must not stop the others
+            rep = {"problems": [f"{type(exc).__name__}: {exc}"], "totals": {}}
+        reports.append({"school": f"{tenant.name} ({tenant.code})", "school_id": str(tenant.id), **rep})
+    return reports
 
 
 async def ensure_synced(school_id: str | None) -> None:

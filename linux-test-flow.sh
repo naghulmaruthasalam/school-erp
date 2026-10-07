@@ -12,7 +12,7 @@ echo "== 2/4 demo school + users (skipped if it already exists) =="
 python -m scripts.seed_sample_data
 
 echo "== 3/4 textbook library (English + Arabic) =="
-python -m scripts.ingest_curriculum cls6_all_units_mongodb.ndjson
+python -m scripts.load_textbooks cls6_all_units_mongodb.ndjson
 SID=$(python - <<'PY'
 import asyncio
 from app.core.database import init_db, close_db

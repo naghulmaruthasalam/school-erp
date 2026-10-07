@@ -20,6 +20,7 @@ from app.core.enums import DocumentModule
 from app.core.s3 import build_object_key, upload_bytes
 from app.models.academic import Class, Subject
 from app.models.syllabus import ChapterText, Syllabus
+from app.models.tenant import Tenant
 from app.services.academic_keys import class_key, subject_key
 
 
@@ -34,7 +35,7 @@ def duration_minutes(path: Path) -> int | None:
 
 async def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("school_id")
+    ap.add_argument("school_id", nargs="?", help="omit to apply to every school that has that syllabus")
     ap.add_argument("--grade", required=True)
     ap.add_argument("--subject", required=True)
     ap.add_argument("--unit", type=int, required=True, help="chapter number (1 = first chapter)")
@@ -46,13 +47,16 @@ async def main() -> None:
 
     await init_db()
     try:
-        classes = {str(c.id) for c in await Class.find(Class.school_id == args.school_id).to_list() if class_key(c.name) == class_key(args.grade)}
-        subjects = {str(s.id) for s in await Subject.find(Subject.school_id == args.school_id).to_list()
-                    if subject_key(s.name, s.code) == subject_key(args.subject)}
-        syllabi = [s for s in await Syllabus.find(Syllabus.school_id == args.school_id).to_list()
-                   if s.class_id in classes and s.subject_id in subjects]
+        school_filter = [args.school_id] if args.school_id else [str(t.id) for t in await Tenant.find_all().to_list()]
+        syllabi = []
+        for sid in school_filter:
+            classes = {str(c.id) for c in await Class.find(Class.school_id == sid).to_list() if class_key(c.name) == class_key(args.grade)}
+            subjects = {str(s.id) for s in await Subject.find(Subject.school_id == sid).to_list()
+                        if subject_key(s.name, s.code) == subject_key(args.subject)}
+            syllabi += [s for s in await Syllabus.find(Syllabus.school_id == sid).to_list() if s.class_id in classes and s.subject_id in subjects]
         if not syllabi:
-            raise SystemExit("No syllabus for that class and subject. Run sync_curriculum / import the syllabus first.")
+            raise SystemExit("No syllabus for that class and subject. Run load_textbooks first, then try again "
+                             "(python -m scripts.diagnose_content shows what exists).")
         done = 0
         for syl in syllabi:
             chapter = next((c for c in syl.chapters if c.order == args.unit), None)
@@ -64,7 +68,7 @@ async def main() -> None:
                 path = Path(file)
                 if not path.is_file():
                     raise SystemExit(f"File not found: {file}")
-                key = build_object_key(args.school_id, DocumentModule.SYLLABUS_DOCUMENT, path.name)
+                key = build_object_key(syl.school_id, DocumentModule.SYLLABUS_DOCUMENT, path.name)
                 upload_bytes(key, path.read_bytes(), mimetypes.guess_type(path.name)[0] or "video/mp4")
                 minutes = duration_minutes(path)
                 if lang == "en":
