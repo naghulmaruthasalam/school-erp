@@ -15,7 +15,7 @@ chmod +x *.sh
 ./linux-local.sh reset               # (optional) wipe the local test database and start clean
 ./linux-diagnose.sh                  # if something is missing: report of schools/classes/subjects/notes/videos
 ```
-Local MongoDB comes from Docker (`docker run mongo:7`, done for you) or an installed `mongod`. Logins after the test seed:
+Local MongoDB comes from Podman/Docker (`docker.io/library/mongo:7`, done for you; on Fedora `sudo dnf install -y podman` if missing) or an installed `mongod`. Logins after the test seed:
 school code `DEMO`; student `DEMO-STU-001` / `Student@123`; teacher `DEMO-TCH-001` / `Teacher@123`; principal `principal@demo` /
 `Principal@123`; admin `admin@demo` / `Admin@123`; parent `9876543210` / `Parent@123`.
 
