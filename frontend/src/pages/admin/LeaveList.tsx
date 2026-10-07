@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Badge, Button, Card, PageHeader, Select, Spinner } from "../../components/ui";
 import { DataTable, Pagination } from "../../components/DataTable";
 import { api } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface LeaveRequest {
   id: string;
@@ -45,6 +46,7 @@ async function reviewLeave(leaveId: string, action: string, notes?: string) {
 }
 
 export default function LeaveList() {
+  const { t, te, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
@@ -84,8 +86,8 @@ export default function LeaveList() {
   return (
     <div className="animate-fade-in-up">
       <PageHeader
-        title="Leave Management"
-        subtitle="Manage leave requests from students and teachers."
+        title={t("admin.leave.title")}
+        subtitle={t("admin.leave.subtitle")}
       />
 
       <Card className="mb-6">
@@ -98,11 +100,11 @@ export default function LeaveList() {
                 setPage(1);
               }}
             >
-              <option value="">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="CANCELLED">Cancelled</option>
+              <option value="">{t("admin.leave.allStatus")}</option>
+              <option value="PENDING">{t("admin.statusLabel.PENDING")}</option>
+              <option value="APPROVED">{t("admin.statusLabel.APPROVED")}</option>
+              <option value="REJECTED">{t("admin.statusLabel.REJECTED")}</option>
+              <option value="CANCELLED">{t("admin.statusLabel.CANCELLED")}</option>
             </Select>
           </div>
           <div className="w-48">
@@ -113,9 +115,9 @@ export default function LeaveList() {
                 setPage(1);
               }}
             >
-              <option value="">All Types</option>
-              <option value="student">Students</option>
-              <option value="teacher">Teachers</option>
+              <option value="">{t("admin.leave.allTypes")}</option>
+              <option value="student">{t("admin.leave.students")}</option>
+              <option value="teacher">{t("admin.leave.teachers")}</option>
             </Select>
           </div>
         </div>
@@ -129,27 +131,27 @@ export default function LeaveList() {
         <>
           <DataTable<LeaveRequest>
             columns={[
-              { header: "Requester", cell: (row) => row.requester_name },
+              { header: t("admin.leave.requester"), cell: (row) => row.requester_name },
               {
-                header: "Type",
+                header: t("admin.common.type"),
                 cell: (row) => (
                   <Badge tone="violet">
-                    {row.requester_type === "student" ? "Student" : "Teacher"}
+                    {row.requester_type === "student" ? t("admin.leave.student") : t("admin.leave.teacher")}
                   </Badge>
                 ),
               },
-              { header: "Leave Type", cell: (row) => row.leave_type },
+              { header: t("admin.leave.leaveType"), cell: (row) => te("leaveType", row.leave_type) },
               {
-                header: "Duration",
+                header: t("admin.leave.duration"),
                 cell: (row) => (
                   <span>
-                    {new Date(row.start_date).toLocaleDateString()} -{" "}
-                    {new Date(row.end_date).toLocaleDateString()}
+                    {fmtDate(row.start_date)} -{" "}
+                    {fmtDate(row.end_date)}
                   </span>
                 ),
               },
               {
-                header: "Reason",
+                header: t("admin.leave.reason"),
                 cell: (row) => (
                   <span className="max-w-[200px] truncate block" title={row.reason}>
                     {row.reason}
@@ -157,11 +159,11 @@ export default function LeaveList() {
                 ),
               },
               {
-                header: "Status",
-                cell: (row) => <Badge tone={getStatusTone(row.status)}>{row.status}</Badge>,
+                header: t("admin.common.status"),
+                cell: (row) => <Badge tone={getStatusTone(row.status)}>{te("status", row.status)}</Badge>,
               },
               {
-                header: "Actions",
+                header: t("admin.common.actions"),
                 cell: (row) =>
                   row.status === "PENDING" ? (
                     <div className="flex gap-2">
@@ -172,7 +174,7 @@ export default function LeaveList() {
                         }
                         disabled={reviewMutation.isPending}
                       >
-                        Approve
+                        {t("admin.leave.approve")}
                       </Button>
                       <Button
                         variant="danger"
@@ -181,7 +183,7 @@ export default function LeaveList() {
                         }
                         disabled={reviewMutation.isPending}
                       >
-                        Reject
+                        {t("admin.leave.reject")}
                       </Button>
                     </div>
                   ) : (
@@ -191,7 +193,7 @@ export default function LeaveList() {
             ]}
             rows={data?.items ?? []}
             rowKey={(row) => row.id}
-            emptyLabel="No leave requests found."
+            emptyLabel={t("admin.leave.empty")}
           />
           <div className="mt-4">
             <Pagination

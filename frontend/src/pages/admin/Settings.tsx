@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner } from "../../components/ui";
 import { api } from "../../api/client";
 import { useAuthStore } from "../../auth/store";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface SchoolSettings {
   id: string;
@@ -22,6 +23,7 @@ interface SchoolSettings {
 }
 
 export default function Settings() {
+  const { t, language } = useLanguage();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [activeTab, setActiveTab] = useState<"school" | "profile" | "preferences">("school");
@@ -55,7 +57,7 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-settings"] });
-      alert("School settings updated!");
+      alert(t("admin.settings.updated"));
     },
   });
 
@@ -64,35 +66,35 @@ export default function Settings() {
       await api.post("/auth/change-password", payload);
     },
     onSuccess: () => {
-      alert("Password changed successfully!");
+      alert(t("admin.settings.passwordChanged"));
       setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
     },
     onError: () => {
-      alert("Failed to change password. Check your current password.");
+      alert(t("admin.settings.passwordFailed"));
     },
   });
 
   const tabs = [
-    { key: "school", label: "School Info" },
-    { key: "profile", label: "My Profile" },
-    { key: "preferences", label: "Preferences" },
+    { key: "school", labelKey: "admin.settings.tabSchool" },
+    { key: "profile", labelKey: "admin.settings.tabProfile" },
+    { key: "preferences", labelKey: "admin.settings.tabPreferences" },
   ] as const;
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Settings" subtitle="Manage school and account settings" />
+      <PageHeader title={t("admin.settings.title")} subtitle={t("admin.settings.subtitle")} />
 
       <Card className="mb-6">
         <div className="flex gap-2">
-          {tabs.map((t) => (
+          {tabs.map((tb) => (
             <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
+              key={tb.key}
+              onClick={() => setActiveTab(tb.key)}
               className={`px-4 py-2 rounded-lg font-medium ${
-                activeTab === t.key ? "bg-violet-600 text-white" : "text-accent-fg hover:bg-violet-50"
+                activeTab === tb.key ? "bg-violet-600 text-white" : "text-accent-fg hover:bg-violet-50"
               }`}
             >
-              {t.label}
+              {t(tb.labelKey)}
             </button>
           ))}
         </div>
@@ -103,7 +105,7 @@ export default function Settings() {
           <div className="flex justify-center py-12"><Spinner /></div>
         ) : (
           <Card>
-            <h3 className="font-semibold text-ink mb-4">School Information</h3>
+            <h3 className="font-semibold text-ink mb-4">{t("admin.settings.schoolInfo")}</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -113,7 +115,7 @@ export default function Settings() {
             >
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">School Name</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.schoolName")}</label>
                   <input
                     type="text"
                     defaultValue={schoolQuery.data?.name}
@@ -122,7 +124,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">School Code</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.schoolCode")}</label>
                   <input
                     type="text"
                     defaultValue={schoolQuery.data?.code}
@@ -131,7 +133,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("common.email")}</label>
                   <input
                     type="email"
                     defaultValue={schoolQuery.data?.email}
@@ -140,7 +142,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.phone")}</label>
                   <input
                     type="text"
                     defaultValue={schoolQuery.data?.phone}
@@ -149,7 +151,7 @@ export default function Settings() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-ink-2 mb-1">Address</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.address")}</label>
                   <input
                     type="text"
                     defaultValue={schoolQuery.data?.address}
@@ -158,7 +160,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">City</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.city")}</label>
                   <input
                     type="text"
                     defaultValue={schoolQuery.data?.city}
@@ -167,7 +169,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">State</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.state")}</label>
                   <input
                     type="text"
                     defaultValue={schoolQuery.data?.state}
@@ -176,7 +178,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">Pincode</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.pincode")}</label>
                   <input
                     type="text"
                     defaultValue={schoolQuery.data?.pincode}
@@ -185,7 +187,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">Website</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.website")}</label>
                   <input
                     type="url"
                     defaultValue={schoolQuery.data?.website}
@@ -195,7 +197,7 @@ export default function Settings() {
                 </div>
               </div>
               <Button type="submit" disabled={updateSchoolMutation.isPending}>
-                {updateSchoolMutation.isPending ? "Saving..." : "Save Changes"}
+                {updateSchoolMutation.isPending ? t("admin.common.saving") : t("admin.common.saveChanges")}
               </Button>
             </form>
           </Card>
@@ -205,10 +207,10 @@ export default function Settings() {
       {activeTab === "profile" && (
         <div className="space-y-6">
           <Card>
-            <h3 className="font-semibold text-ink mb-4">Profile Information</h3>
+            <h3 className="font-semibold text-ink mb-4">{t("admin.settings.profileInfo")}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.fullName")}</label>
                 <input
                   type="text"
                   value={profileForm.full_name}
@@ -217,7 +219,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Email</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("common.email")}</label>
                 <input
                   type="email"
                   value={profileForm.email}
@@ -229,12 +231,12 @@ export default function Settings() {
           </Card>
 
           <Card>
-            <h3 className="font-semibold text-ink mb-4">Change Password</h3>
+            <h3 className="font-semibold text-ink mb-4">{t("admin.settings.changePassword")}</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 if (passwordForm.new_password !== passwordForm.confirm_password) {
-                  alert("Passwords don't match!");
+                  alert(t("admin.settings.passwordMismatch"));
                   return;
                 }
                 updatePasswordMutation.mutate(passwordForm);
@@ -243,7 +245,7 @@ export default function Settings() {
             >
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">Current Password</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.currentPassword")}</label>
                   <input
                     type="password"
                     value={passwordForm.current_password}
@@ -253,7 +255,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">New Password</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.newPassword")}</label>
                   <input
                     type="password"
                     value={passwordForm.new_password}
@@ -264,7 +266,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink-2 mb-1">Confirm Password</label>
+                  <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.settings.confirmPassword")}</label>
                   <input
                     type="password"
                     value={passwordForm.confirm_password}
@@ -275,7 +277,7 @@ export default function Settings() {
                 </div>
               </div>
               <Button type="submit" disabled={updatePasswordMutation.isPending}>
-                {updatePasswordMutation.isPending ? "Changing..." : "Change Password"}
+                {updatePasswordMutation.isPending ? t("admin.settings.changing") : t("admin.settings.changePassword")}
               </Button>
             </form>
           </Card>
@@ -284,27 +286,27 @@ export default function Settings() {
 
       {activeTab === "preferences" && (
         <Card>
-          <h3 className="font-semibold text-ink mb-4">Display Preferences</h3>
+          <h3 className="font-semibold text-ink mb-4">{t("admin.settings.displayPrefs")}</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-violet-50 rounded-lg">
               <div>
-                <p className="font-medium text-ink">Dark Mode</p>
-                <p className="text-sm text-accent-fg">Use the theme toggle in the sidebar</p>
+                <p className="font-medium text-ink">{t("admin.settings.darkMode")}</p>
+                <p className="text-sm text-accent-fg">{t("admin.settings.darkModeHint")}</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-4 bg-violet-50 rounded-lg">
               <div>
-                <p className="font-medium text-ink">Language</p>
-                <p className="text-sm text-accent-fg">Currently only English is supported</p>
+                <p className="font-medium text-ink">{t("admin.settings.language")}</p>
+                <p className="text-sm text-accent-fg">{t("admin.settings.languageHint")}</p>
               </div>
               <select className="rounded-lg border border-line px-3 py-2" disabled>
-                <option>English</option>
+                <option>{language === "ar" ? t("common.arabic") : t("common.english")}</option>
               </select>
             </div>
             <div className="flex items-center justify-between p-4 bg-violet-50 rounded-lg">
               <div>
-                <p className="font-medium text-ink">Date Format</p>
-                <p className="text-sm text-accent-fg">How dates are displayed</p>
+                <p className="font-medium text-ink">{t("admin.settings.dateFormat")}</p>
+                <p className="text-sm text-accent-fg">{t("admin.settings.dateFormatHint")}</p>
               </div>
               <select className="rounded-lg border border-line px-3 py-2">
                 <option>DD/MM/YYYY</option>

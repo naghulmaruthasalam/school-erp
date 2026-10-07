@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Badge, Select } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Student {
   id: string;
@@ -26,6 +27,7 @@ interface Section {
 }
 
 export default function StudentOverview() {
+  const { t, te } = useLanguage();
   const [classFilter, setClassFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("");
 
@@ -56,8 +58,8 @@ export default function StudentOverview() {
     },
   });
 
-  const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || "";
-  const getSectionName = (id: string) => sectionsQuery.data?.find((s) => s.id === id)?.name || "";
+  const getClassName = (id: string) => te("class", classesQuery.data?.find((c) => c.id === id)?.name || "");
+  const getSectionName = (id: string) => te("section", sectionsQuery.data?.find((s) => s.id === id)?.name || "");
 
   const filteredSections = sectionsQuery.data?.filter((s) => !classFilter || s.class_id === classFilter) || [];
 
@@ -69,25 +71,25 @@ export default function StudentOverview() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Student Overview" subtitle="View all enrolled students" />
+      <PageHeader title={t("principal.students.title")} subtitle={t("principal.students.subtitle")} />
 
       <Card className="mb-6">
         <div className="flex flex-wrap gap-4">
           <div className="w-48">
-            <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.common.class")}</label>
             <Select value={classFilter} onChange={(e) => { setClassFilter(e.target.value); setSectionFilter(""); }}>
-              <option value="">All Classes</option>
+              <option value="">{t("principal.common.allClasses")}</option>
               {classesQuery.data?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{te("class", c.name)}</option>
               ))}
             </Select>
           </div>
           <div className="w-48">
-            <label className="block text-sm font-medium text-ink-2 mb-1">Section</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.common.section")}</label>
             <Select value={sectionFilter} onChange={(e) => setSectionFilter(e.target.value)}>
-              <option value="">All Sections</option>
+              <option value="">{t("principal.students.allSections")}</option>
               {filteredSections.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>{te("section", s.name)}</option>
               ))}
             </Select>
           </div>
@@ -102,11 +104,11 @@ export default function StudentOverview() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-line">
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Admission No</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Name</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Class / Section</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Roll No</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-accent-fg uppercase">Status</th>
+                  <th className="text-start py-3 px-4 text-xs font-semibold text-accent-fg uppercase">{t("principal.students.admissionNo")}</th>
+                  <th className="text-start py-3 px-4 text-xs font-semibold text-accent-fg uppercase">{t("principal.common.name")}</th>
+                  <th className="text-start py-3 px-4 text-xs font-semibold text-accent-fg uppercase">{t("principal.students.classSection")}</th>
+                  <th className="text-start py-3 px-4 text-xs font-semibold text-accent-fg uppercase">{t("principal.students.rollNo")}</th>
+                  <th className="text-start py-3 px-4 text-xs font-semibold text-accent-fg uppercase">{t("principal.common.status")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,14 +121,14 @@ export default function StudentOverview() {
                     </td>
                     <td className="py-3 px-4 text-sm text-ink-2">{student.roll_no}</td>
                     <td className="py-3 px-4">
-                      <Badge tone={statusColors[student.status] || "gray"}>{student.status}</Badge>
+                      <Badge tone={statusColors[student.status] || "gray"}>{te("status", student.status)}</Badge>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {studentsQuery.data?.items.length === 0 && (
-              <p className="text-center text-ink-3 py-8">No students found.</p>
+              <p className="text-center text-ink-3 py-8">{t("principal.students.empty")}</p>
             )}
           </div>
         </Card>

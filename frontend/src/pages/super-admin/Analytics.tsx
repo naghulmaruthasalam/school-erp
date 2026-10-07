@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, Spinner } from "../../components/ui";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { fetchPlatformStats, fetchUsersByRole, listSchools, exportDataToCsv } from "./api";
 
 const UsersIcon = () => (
@@ -40,10 +41,10 @@ function MetricCard({ title, value, subtitle, icon, gradient, delay, trend }: Me
   return (
     <div className="animate-fade-in-up" style={{ animationDelay: delay }}>
       <div className={`relative overflow-hidden rounded-2xl p-6 ${gradient} group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl`}>
-        <div className="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8">
+        <div className="absolute top-0 end-0 w-32 h-32 transform translate-x-8 rtl:-translate-x-8 -translate-y-8">
           <div className="w-full h-full rounded-full bg-white/10 animate-pulse-soft" />
         </div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 transform -translate-x-6 translate-y-6">
+        <div className="absolute bottom-0 start-0 w-24 h-24 transform -translate-x-6 rtl:translate-x-6 translate-y-6">
           <div className="w-full h-full rounded-full bg-white/5" />
         </div>
         <div className="relative z-10">
@@ -69,12 +70,13 @@ function MetricCard({ title, value, subtitle, icon, gradient, delay, trend }: Me
 }
 
 function AnimatedProgressBar({ label, value, max, color, delay }: { label: string; value: number; max: number; color: string; delay: string }) {
+  const { fmtNumber } = useLanguage();
   const percentage = max > 0 ? (value / max) * 100 : 0;
   return (
     <div className="animate-fade-in-up group" style={{ animationDelay: delay }}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-ink-2">{label}</span>
-        <span className="text-sm font-bold text-ink dark:text-white">{value.toLocaleString()}</span>
+        <span className="text-sm font-bold text-ink dark:text-white">{fmtNumber(value)}</span>
       </div>
       <div className="h-3 bg-surface-3 rounded-full overflow-hidden">
         <div
@@ -89,6 +91,11 @@ function AnimatedProgressBar({ label, value, max, color, delay }: { label: strin
 }
 
 export default function Analytics() {
+  const { t, te, fmtNumber } = useLanguage();
+  const roleLabel = (role: string) => {
+    const label = te("role", role);
+    return label === role ? role.replace("_", " ") : label;
+  };
   const statsQuery = useQuery({
     queryKey: ["super-admin", "stats"],
     queryFn: fetchPlatformStats,
@@ -121,8 +128,8 @@ export default function Analytics() {
       {/* Hero Section */}
       <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-[#3B82F6] to-[#60A5FA] p-8">
         <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#818CF8]/30 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-0 end-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 rtl:-translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
+        <div className="absolute bottom-0 start-0 w-64 h-64 bg-[#818CF8]/30 rounded-full blur-3xl transform -translate-x-1/2 rtl:translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
 
         <div className="relative z-10 flex items-start justify-between">
           <div>
@@ -131,12 +138,12 @@ export default function Analytics() {
                 <SparklesIcon />
               </div>
               <span className="text-white/80 text-sm font-medium px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm">
-                AI-Powered Insights
+                {t("superAdmin.analytics.aiInsights")}
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Platform Analytics</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">{t("superAdmin.analytics.title")}</h1>
             <p className="text-white/70 max-w-lg">
-              Comprehensive overview of platform performance with intelligent metrics and trends
+              {t("superAdmin.analytics.subtitle")}
             </p>
           </div>
           <Button
@@ -154,10 +161,10 @@ export default function Analytics() {
               exportDataToCsv(exportData, "platform-analytics.csv");
             }}
           >
-            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 me-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Export Report
+            {t("superAdmin.analytics.exportReport")}
           </Button>
         </div>
       </div>
@@ -165,9 +172,9 @@ export default function Analytics() {
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard
-          title="Total Schools"
+          title={t("superAdmin.analytics.totalSchools")}
           value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_schools ?? 0}
-          subtitle={`${statsQuery.data?.active_schools ?? 0} active`}
+          subtitle={t("superAdmin.analytics.activeCount", { n: fmtNumber(statsQuery.data?.active_schools ?? 0) })}
           icon={
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
@@ -178,18 +185,18 @@ export default function Analytics() {
           trend={{ value: "+12%", up: true }}
         />
         <MetricCard
-          title="Total Users"
+          title={t("superAdmin.analytics.totalUsers")}
           value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_users ?? 0}
-          subtitle={`${statsQuery.data?.active_users ?? 0} active`}
+          subtitle={t("superAdmin.analytics.activeCount", { n: fmtNumber(statsQuery.data?.active_users ?? 0) })}
           icon={<UsersIcon />}
           gradient="bg-gradient-to-br from-blue-600 to-[#1D4ED8]"
           delay="0.15s"
           trend={{ value: "+24%", up: true }}
         />
         <MetricCard
-          title="Students"
-          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalStudents.toLocaleString()}
-          subtitle="Across all schools"
+          title={t("superAdmin.analytics.students")}
+          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : fmtNumber(totalStudents)}
+          subtitle={t("superAdmin.analytics.acrossSchools")}
           icon={
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -199,9 +206,9 @@ export default function Analytics() {
           delay="0.2s"
         />
         <MetricCard
-          title="Teachers"
-          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalTeachers.toLocaleString()}
-          subtitle="Across all schools"
+          title={t("superAdmin.analytics.teachers")}
+          value={usersQuery.isLoading ? <Spinner className="!text-white" /> : fmtNumber(totalTeachers)}
+          subtitle={t("superAdmin.analytics.acrossSchools")}
           icon={
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -223,13 +230,13 @@ export default function Analytics() {
                     <UsersIcon />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-ink dark:text-white">User Distribution</h3>
-                    <p className="text-xs text-ink-3">By role across platform</p>
+                    <h3 className="text-lg font-semibold text-ink dark:text-white">{t("superAdmin.analytics.userDistribution")}</h3>
+                    <p className="text-xs text-ink-3">{t("superAdmin.analytics.byRole")}</p>
                   </div>
                 </div>
                 {usersQuery.data && (
                   <Button variant="secondary" onClick={() => exportDataToCsv(usersQuery.data!, "users-distribution.csv")}>
-                    Export
+                    {t("superAdmin.analytics.export")}
                   </Button>
                 )}
               </div>
@@ -251,7 +258,7 @@ export default function Analytics() {
                     return (
                       <AnimatedProgressBar
                         key={item.role}
-                        label={item.role.replace("_", " ")}
+                        label={roleLabel(item.role)}
                         value={item.count}
                         max={maxUserCount}
                         color={colors[idx % colors.length]}
@@ -261,7 +268,7 @@ export default function Analytics() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-ink-3 text-center py-8">No user data available.</p>
+                <p className="text-sm text-ink-3 text-center py-8">{t("superAdmin.analytics.noUserData")}</p>
               )}
             </div>
           </Card>
@@ -277,8 +284,8 @@ export default function Analytics() {
                     <GlobeIcon />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-ink dark:text-white">Schools by Region</h3>
-                    <p className="text-xs text-ink-3">Geographic distribution</p>
+                    <h3 className="text-lg font-semibold text-ink dark:text-white">{t("superAdmin.analytics.schoolsByRegion")}</h3>
+                    <p className="text-xs text-ink-3">{t("superAdmin.analytics.geoDistribution")}</p>
                   </div>
                 </div>
               </div>
@@ -304,17 +311,17 @@ export default function Analytics() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           </div>
-                          <span className="font-medium text-ink dark:text-white">{state}</span>
+                          <span className="font-medium text-ink dark:text-white">{state === "Unknown" ? t("superAdmin.analytics.unknown") : state}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-bold text-emerald-600">{count}</span>
-                          <span className="text-sm text-ink-3">{count === 1 ? 'school' : 'schools'}</span>
+                          <span className="text-sm text-ink-3">{count === 1 ? t("superAdmin.analytics.school") : t("superAdmin.analytics.schools")}</span>
                         </div>
                       </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-sm text-ink-3 text-center py-8">No school data available.</p>
+                <p className="text-sm text-ink-3 text-center py-8">{t("superAdmin.analytics.noSchoolData")}</p>
               )}
             </div>
           </Card>
@@ -330,17 +337,17 @@ export default function Analytics() {
                 <LightBulbIcon />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-ink dark:text-white">Platform Insights</h3>
-                <p className="text-xs text-ink-3">Key performance indicators</p>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">{t("superAdmin.analytics.platformInsights")}</h3>
+                <p className="text-xs text-ink-3">{t("superAdmin.analytics.kpis")}</p>
               </div>
             </div>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-accent/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.45s" }}>
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-accent/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
+                <div className="absolute top-0 end-0 w-20 h-20 bg-gradient-to-br from-accent/10 to-transparent rounded-full transform translate-x-6 rtl:-translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-ink-3 mb-2">Avg Users / School</p>
+                  <p className="text-sm text-ink-3 mb-2">{t("superAdmin.analytics.avgUsers")}</p>
                   <p className="text-3xl font-bold bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
                     {statsQuery.data?.total_schools
                       ? Math.round((statsQuery.data.total_users ?? 0) / statsQuery.data.total_schools)
@@ -350,27 +357,27 @@ export default function Analytics() {
               </div>
 
               <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-[#059669]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.5s" }}>
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#059669]/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
+                <div className="absolute top-0 end-0 w-20 h-20 bg-gradient-to-br from-[#059669]/10 to-transparent rounded-full transform translate-x-6 rtl:-translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-ink-3 mb-2">Student:Teacher Ratio</p>
+                  <p className="text-sm text-ink-3 mb-2">{t("superAdmin.analytics.ratio")}</p>
                   <p className="text-3xl font-bold text-emerald-600">
-                    {totalTeachers > 0 ? `${Math.round(totalStudents / totalTeachers)}:1` : "N/A"}
+                    {totalTeachers > 0 ? `${Math.round(totalStudents / totalTeachers)}:1` : t("superAdmin.analytics.na")}
                   </p>
                 </div>
               </div>
 
               <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-[#2563EB]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.55s" }}>
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#2563EB]/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
+                <div className="absolute top-0 end-0 w-20 h-20 bg-gradient-to-br from-[#2563EB]/10 to-transparent rounded-full transform translate-x-6 rtl:-translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-ink-3 mb-2">School Admins</p>
+                  <p className="text-sm text-ink-3 mb-2">{t("superAdmin.analytics.schoolAdmins")}</p>
                   <p className="text-3xl font-bold text-blue-600">{totalAdmins}</p>
                 </div>
               </div>
 
               <div className="animate-scale-in group relative p-6 bg-gradient-to-br from-surface-2 to-white dark:from-surface-2 dark:to-surface rounded-2xl border border-line hover:border-[#DC2626]/50 transition-all duration-300 hover:shadow-lg overflow-hidden" style={{ animationDelay: "0.6s" }}>
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#DC2626]/10 to-transparent rounded-full transform translate-x-6 -translate-y-6" />
+                <div className="absolute top-0 end-0 w-20 h-20 bg-gradient-to-br from-[#DC2626]/10 to-transparent rounded-full transform translate-x-6 rtl:-translate-x-6 -translate-y-6" />
                 <div className="relative">
-                  <p className="text-sm text-ink-3 mb-2">Inactive Schools</p>
+                  <p className="text-sm text-ink-3 mb-2">{t("superAdmin.analytics.inactiveSchools")}</p>
                   <p className="text-3xl font-bold text-red-600">
                     {statsQuery.data?.inactive_schools ?? 0}
                   </p>

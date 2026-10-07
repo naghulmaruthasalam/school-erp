@@ -6,9 +6,11 @@ import { listSyllabus } from "../admin/syllabusApi";
 import SyllabusBrowser from "../../components/SyllabusBrowser";
 import SyllabusImportDialog from "../../components/SyllabusImportDialog";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { Plus, Filter, BookOpen, GraduationCap, FileText, Sparkles, Upload } from "lucide-react";
 
 export default function TeacherSyllabus() {
+  const { t, te } = useLanguage();
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [importOpen, setImportOpen] = useState(false);
@@ -25,30 +27,30 @@ export default function TeacherSyllabus() {
   const subjectsQuery = useQuery({ queryKey: ["subjects"], queryFn: fetchSubjects });
   const yearsQuery = useQuery({ queryKey: ["academicYears"], queryFn: fetchAcademicYears });
 
-  const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || id;
-  const getSubjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name || id;
+  const getClassName = (id: string) => te("class", classesQuery.data?.find((c) => c.id === id)?.name) || id;
+  const getSubjectName = (id: string) => te("subject", subjectsQuery.data?.find((s) => s.id === id)?.name) || id;
   const getYearName = (id: string) => yearsQuery.data?.find((y) => y.id === id)?.name || id;
 
   const totalSyllabus = syllabusQuery.data?.items?.length || 0;
   const publishedCount = syllabusQuery.data?.items?.filter((s: any) => s.status === "PUBLISHED").length || 0;
 
   const stats = [
-    { icon: BookOpen, label: "Total Syllabus", value: totalSyllabus, color: "from-violet-500 to-purple-600" },
-    { icon: FileText, label: "Published", value: publishedCount, color: "from-emerald-500 to-teal-600" },
-    { icon: GraduationCap, label: "Classes", value: classesQuery.data?.length || 0, color: "from-blue-500 to-cyan-600" },
+    { icon: BookOpen, label: t("teacher.syllabus.totalSyllabus"), value: totalSyllabus, color: "from-violet-500 to-purple-600" },
+    { icon: FileText, label: t("teacher.syllabus.published"), value: publishedCount, color: "from-emerald-500 to-teal-600" },
+    { icon: GraduationCap, label: t("teacher.syllabus.classes"), value: classesQuery.data?.length || 0, color: "from-blue-500 to-cyan-600" },
   ];
 
   return (
     <div className="animate-page-enter">
-      <PageHeader title="Syllabus Management" subtitle="Manage and upload course curriculum">
+      <PageHeader title={t("syllabus.management")} subtitle={t("syllabus.manageAndUpload")}>
         <Button variant="secondary" className="flex items-center gap-2" onClick={() => setImportOpen(true)}>
           <Upload size={18} />
-          Import
+          {t("teacher.syllabus.import")}
         </Button>
         <Link to="/teacher/syllabus/new">
           <Button glow className="flex items-center gap-2">
             <Plus size={18} />
-            Create Syllabus
+            {t("syllabus.createSyllabus")}
           </Button>
         </Link>
       </PageHeader>
@@ -60,7 +62,7 @@ export default function TeacherSyllabus() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         {stats.map((s, i) => (
           <div key={i} className={`relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br ${s.color} text-white shadow-lg`}>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8 blur-2xl" />
+            <div className="absolute top-0 end-0 w-24 h-24 bg-white/10 rounded-full -me-8 -mt-8 blur-2xl" />
             <s.icon className="w-7 h-7 mb-3 drop-shadow-lg" />
             <p className="text-3xl font-bold">{s.value}</p>
             <p className="text-sm text-white/80">{s.label}</p>
@@ -74,32 +76,32 @@ export default function TeacherSyllabus() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
             <Filter size={16} className="text-white" />
           </div>
-          <h3 className="font-bold text-ink dark:text-white">Filter Syllabus</h3>
+          <h3 className="font-bold text-ink dark:text-white">{t("teacher.syllabus.filter")}</h3>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Class</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("syllabus.class")}</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:ring-2 focus:ring-accent/30 transition-all [&>option]:bg-surface [&>option]:dark:bg-surface-3 [&>option]:text-ink [&>option]:dark:text-white"
             >
-              <option value="">All Classes</option>
+              <option value="">{t("syllabus.allClasses")}</option>
               {classesQuery.data?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{te("class", c.name)}</option>
               ))}
             </select>
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Subject</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("syllabus.subject")}</label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
               className="w-full rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:ring-2 focus:ring-accent/30 transition-all [&>option]:bg-surface [&>option]:dark:bg-surface-3 [&>option]:text-ink [&>option]:dark:text-white"
             >
-              <option value="">All Subjects</option>
+              <option value="">{t("syllabus.allSubjects")}</option>
               {subjectsQuery.data?.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>{te("subject", s.name)}</option>
               ))}
             </select>
           </div>
@@ -119,11 +121,11 @@ export default function TeacherSyllabus() {
               <BookOpen className="w-10 h-10 text-accent-fg" />
             </div>
           </div>
-          <p className="text-lg font-bold text-ink dark:text-white mb-2">No syllabus found</p>
-          <p className="text-ink-3 mb-6">Create one to get started with your course curriculum.</p>
+          <p className="text-lg font-bold text-ink dark:text-white mb-2">{t("syllabus.noSyllabus")}</p>
+          <p className="text-ink-3 mb-6">{t("teacher.syllabus.createFirstHint")}</p>
           <Link to="/teacher/syllabus/new">
             <Button glow>
-              <Sparkles className="w-4 h-4" /> Create Your First Syllabus
+              <Sparkles className="w-4 h-4" /> {t("teacher.syllabus.createFirst")}
             </Button>
           </Link>
         </Card>
@@ -156,11 +158,11 @@ export default function TeacherSyllabus() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge tone={syllabus.status === "PUBLISHED" ? "green" : syllabus.status === "DRAFT" ? "amber" : "gray"}>
-                    {syllabus.status}
+                    {te("status", syllabus.status)}
                   </Badge>
                   <Link to={`/teacher/syllabus/${syllabus.id}`}>
                     <Button variant="secondary" className="group-hover:bg-accent group-hover:text-white transition-all">
-                      View Details
+                      {t("teacher.syllabus.viewDetails")}
                     </Button>
                   </Link>
                 </div>

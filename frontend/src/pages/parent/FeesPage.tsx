@@ -6,6 +6,7 @@ import { Button } from "../../components/ui";
 import { fetchInvoices, initiatePayUPayment } from "./api";
 import { formatDisplayDate } from "./dates";
 import { useSelectedChild } from "./SelectedChildContext";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { InvoiceOut, InvoiceStatus, PayUInitiateResponse } from "./types";
 
 const STATUS_TONE: Record<InvoiceStatus, "green" | "red" | "yellow" | "gray"> = {
@@ -73,6 +74,7 @@ function usePaymentReturnBanner(queryKeyPrefix: unknown[]) {
 }
 
 export default function FeesPage() {
+  const { t, te } = useLanguage();
   const { selectedChild, selectedChildId } = useSelectedChild();
   const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
@@ -87,8 +89,8 @@ export default function FeesPage() {
   if (!selectedChild) {
     return (
       <div>
-        <PageHeader title="Fees" />
-        <p className="text-sm text-accent-fg">Select a child above to view fees.</p>
+        <PageHeader title={t("navigation.fees")} />
+        <p className="text-sm text-accent-fg">{t("parent.fees.selectChild")}</p>
       </div>
     );
   }
@@ -108,7 +110,7 @@ export default function FeesPage() {
       });
       submitPayUForm(payu); // navigates the browser to PayU — nothing runs after this
     } catch {
-      setPayError("Could not start the payment. Online payments may not be configured for this school yet — please pay at the school office.");
+      setPayError(t("parent.fees.payFailed"));
       setPayingInvoiceId(null);
     }
   }
@@ -116,20 +118,20 @@ export default function FeesPage() {
   return (
     <div>
       <PageHeader
-        title="Fees"
-        subtitle={`Invoices for ${child.full_name}. Total outstanding: ₹${totalOutstanding.toFixed(2)}.`}
+        title={t("navigation.fees")}
+        subtitle={t("parent.fees.subtitle", { name: child.full_name, total: `₹${totalOutstanding.toFixed(2)}` })}
       />
 
-      {invoicesQuery.error && <ErrorText>Could not load invoices.</ErrorText>}
+      {invoicesQuery.error && <ErrorText>{t("parent.fees.loadError")}</ErrorText>}
       {payError && <ErrorText>{payError}</ErrorText>}
       {banner === "success" && (
         <Card className="mb-4 border-green-200 bg-green-50">
-          <p className="text-sm text-green-700">Payment successful — thank you!</p>
+          <p className="text-sm text-green-700">{t("parent.fees.paymentSuccess")}</p>
         </Card>
       )}
       {banner === "failed" && (
         <Card className="mb-4 border-red-200 bg-red-50">
-          <p className="text-sm text-red-700">Payment was not completed. Please try again.</p>
+          <p className="text-sm text-red-700">{t("parent.fees.paymentFailed")}</p>
         </Card>
       )}
 
@@ -138,17 +140,17 @@ export default function FeesPage() {
       ) : (
         <DataTable<InvoiceOut>
           columns={[
-            { header: "Due Date", cell: (r) => formatDisplayDate(r.due_date) },
-            { header: "Total Amount", cell: (r) => `₹${r.total_amount.toFixed(2)}` },
-            { header: "Paid", cell: (r) => `₹${r.amount_paid.toFixed(2)}` },
-            { header: "Outstanding", cell: (r) => `₹${r.outstanding_amount.toFixed(2)}` },
-            { header: "Status", cell: (r) => <Badge tone={STATUS_TONE[r.status]}>{r.status.replace("_", " ")}</Badge> },
+            { header: t("parent.fees.dueDate"), cell: (r) => formatDisplayDate(r.due_date) },
+            { header: t("parent.fees.totalAmount"), cell: (r) => `₹${r.total_amount.toFixed(2)}` },
+            { header: t("parent.fees.paid"), cell: (r) => `₹${r.amount_paid.toFixed(2)}` },
+            { header: t("parent.fees.outstanding"), cell: (r) => `₹${r.outstanding_amount.toFixed(2)}` },
+            { header: t("parent.fees.status"), cell: (r) => <Badge tone={STATUS_TONE[r.status]}>{te("status", r.status.replace("_", " "))}</Badge> },
             {
               header: "",
               cell: (r) =>
                 r.outstanding_amount > 0 && r.status !== "CANCELLED" ? (
                   <Button onClick={() => handlePayNow(r)} disabled={payingInvoiceId === r.id}>
-                    {payingInvoiceId === r.id ? "Redirecting…" : "Pay Now"}
+                    {payingInvoiceId === r.id ? t("parent.fees.redirecting") : t("parent.fees.payNow")}
                   </Button>
                 ) : null,
             },
@@ -156,7 +158,7 @@ export default function FeesPage() {
           rows={invoices}
           isLoading={invoicesQuery.isLoading}
           rowKey={(r) => r.id}
-          emptyLabel="No invoices found for this child."
+          emptyLabel={t("parent.fees.empty")}
         />
       )}
     </div>

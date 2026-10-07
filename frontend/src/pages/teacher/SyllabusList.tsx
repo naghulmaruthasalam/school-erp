@@ -4,8 +4,10 @@ import { Link } from "react-router-dom";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { fetchClasses, fetchSubjects } from "./api";
 import { listTeacherSyllabus } from "./syllabusApi";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function SyllabusList() {
+  const { t, te, fmtDate } = useLanguage();
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
 
@@ -20,42 +22,42 @@ export default function SyllabusList() {
     }),
   });
 
-  const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || id;
-  const getSubjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name || id;
+  const getClassName = (id: string) => te("class", classesQuery.data?.find((c) => c.id === id)?.name) || id;
+  const getSubjectName = (id: string) => te("subject", subjectsQuery.data?.find((s) => s.id === id)?.name) || id;
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Syllabus" subtitle="Manage curriculum for your subjects">
+      <PageHeader title={t("teacher.syllabus.listTitle")} subtitle={t("teacher.syllabus.listSubtitle")}>
         <Link to="/teacher/syllabus/new">
-          <Button>Create Syllabus</Button>
+          <Button>{t("syllabus.createSyllabus")}</Button>
         </Link>
       </PageHeader>
 
       <Card className="mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("syllabus.class")}</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
-              <option value="">All Classes</option>
+              <option value="">{t("syllabus.allClasses")}</option>
               {classesQuery.data?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{te("class", c.name)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Subject</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("syllabus.subject")}</label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
-              <option value="">All Subjects</option>
+              <option value="">{t("syllabus.allSubjects")}</option>
               {subjectsQuery.data?.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>{te("subject", s.name)}</option>
               ))}
             </select>
           </div>
@@ -78,13 +80,13 @@ export default function SyllabusList() {
                     </div>
                     <p className="text-sm text-ink-2 mb-2 line-clamp-2">{syl.description}</p>
                     <div className="flex items-center gap-4 text-xs text-accent-fg">
-                      <span>{syl.chapters_count} chapters</span>
+                      <span>{t("teacher.syllabus.chaptersCount", { n: syl.chapters_count })}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{syl.status}</Badge>
+                  <div className="text-end">
+                    <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{te("status", syl.status)}</Badge>
                     <p className="text-xs text-accent-fg mt-2">
-                      Updated: {new Date(syl.updated_at).toLocaleDateString()}
+                      {t("teacher.syllabus.updated", { date: fmtDate(syl.updated_at) })}
                     </p>
                   </div>
                 </div>
@@ -92,7 +94,7 @@ export default function SyllabusList() {
             </Link>
           ))}
           {syllabusQuery.data?.items.length === 0 && (
-            <Card><p className="text-center text-accent-fg py-8">No syllabus found for your subjects.</p></Card>
+            <Card><p className="text-center text-accent-fg py-8">{t("teacher.syllabus.noneForSubjects")}</p></Card>
           )}
         </div>
       )}

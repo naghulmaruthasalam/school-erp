@@ -5,14 +5,15 @@ from app.copilot.deps import copilot_teacher, guard_llm
 from app.copilot.qpg import service
 from app.copilot.qpg.schemas import BankItemIn, ExportRequest, GenerateRequest
 from app.core.deps import CurrentUser
+from app.core.lang import Lang, get_lang
 
 router = APIRouter(prefix="/copilot/qpg", tags=["copilot"])
 
 
 @router.get("/options")
-async def options(current: CurrentUser = Depends(copilot_teacher)) -> dict:
+async def options(current: CurrentUser = Depends(copilot_teacher), lang: Lang = Depends(get_lang)) -> dict:
     """Classes -> subjects -> chapters the teacher may use, with the question types and mark limits for each class."""
-    return await service.options(current)
+    return await service.options(current, lang)
 
 
 @router.post("/generate")

@@ -5,6 +5,7 @@ import { Badge, Button, Card, PageHeader, Select, Spinner, StatTile } from "../.
 import { AttendanceLineChart, ClassFeeBarChart, FeeCollectionBarChart, StudentDistributionPie } from "../../components/Charts";
 import { api } from "../../api/client";
 import { timeAgo } from "../../lib/time";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { PageResponse } from "../../types/common";
 
 interface AttendanceStats {
@@ -56,7 +57,7 @@ interface PaymentRow {
 
 type ReportId = "overview" | "attendance" | "fees" | "students";
 
-const rupees = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+const makeRupees = (locale: string) => (n: number) => new Intl.NumberFormat(locale, { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 const today = () => new Date().toISOString().slice(0, 10);
 
 function downloadCsv(filename: string, rows: (string | number)[][]) {
@@ -70,6 +71,13 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
 }
 
 export default function Reports() {
+  const { t, te, language } = useLanguage();
+  const rupees = makeRupees(language === "ar" ? "ar-OM-u-nu-latn" : "en-IN");
+  const optLabel = (prefix: string, v: string) => {
+    const k = `${prefix}.${v}`;
+    const r = t(k);
+    return r === k ? v.replace("_", " ") : r;
+  };
   const [activeReport, setActiveReport] = useState<ReportId>("overview");
   const [selectedSection, setSelectedSection] = useState("");
   const [date, setDate] = useState(today());
@@ -132,8 +140,8 @@ export default function Reports() {
     })),
   });
 
-  const className = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name ?? "";
-  const sectionLabel = (s: Section) => `${className(s.class_id)} - ${s.name}`.trim();
+  const className = (id: string) => te("class", classesQuery.data?.find((c) => c.id === id)?.name);
+  const sectionLabel = (s: Section) => `${className(s.class_id)} - ${te("section", s.name)}`.trim();
 
   const students = studentsQuery.data?.items ?? [];
   const att = attendanceQuery.data;
@@ -142,11 +150,11 @@ export default function Reports() {
   const female = students.filter((s) => (s.gender ?? "").toUpperCase().startsWith("F")).length;
   const pct = (n: number) => (students.length ? Math.round((n / students.length) * 100) : 0);
 
-  const tabs: { id: ReportId; label: string; icon: typeof PieChart }[] = [
-    { id: "overview", label: "Overview", icon: PieChart },
-    { id: "attendance", label: "Attendance", icon: UserCheck },
-    { id: "fees", label: "Fee Collection", icon: IndianRupee },
-    { id: "students", label: "Student Analytics", icon: GraduationCap },
+  const tabs: { id: ReportId; labelKey: string; icon: typeof PieChart }[] = [
+    { id: "overview", labelKey: "admin.reports.tabOverview", icon: PieChart },
+    { id: "attendance", labelKey: "admin.reports.tabAttendance", icon: UserCheck },
+    { id: "fees", labelKey: "admin.reports.tabFees", icon: IndianRupee },
+    { id: "students", labelKey: "admin.reports.tabStudents", icon: GraduationCap },
   ];
 
   function exportCsv() {
@@ -173,25 +181,25 @@ export default function Reports() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Reports & Analytics" subtitle="Comprehensive school performance insights">
+      <PageHeader title={t("admin.reports.title")} subtitle={t("admin.reports.subtitle")}>
         <Button variant="secondary" className="gap-2" onClick={() => window.print()}>
-          <Printer className="h-4 w-4" /> Print / Save PDF
+          <Printer className="h-4 w-4" /> {t("admin.reports.print")}
         </Button>
         <Button variant="secondary" className="gap-2" onClick={exportCsv}>
-          <FileText className="h-4 w-4" /> Export CSV
+          <FileText className="h-4 w-4" /> {t("admin.reports.exportCsv")}
         </Button>
       </PageHeader>
 
       <div className="lg-seg mb-6 !flex !w-fit max-w-full flex-wrap !rounded-[22px] !p-1.5">
-        {tabs.map((t) => (
+        {tabs.map((tb) => (
           <button
-            key={t.id}
-            aria-pressed={activeReport === t.id}
-            onClick={() => setActiveReport(t.id)}
+            key={tb.id}
+            aria-pressed={activeReport === tb.id}
+            onClick={() => setActiveReport(tb.id)}
             className="flex items-center gap-2 !rounded-2xl !px-4 !py-2 !text-sm"
           >
-            <t.icon className="h-4 w-4" />
-            {t.label}
+            <tb.icon className="h-4 w-4" />
+            {t(tb.labelKey)}
           </button>
         ))}
       </div>
@@ -199,16 +207,16 @@ export default function Reports() {
       <Card className="mb-6" animate={false}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[200px]">
-            <label className="mb-1.5 block text-[13px] font-medium text-ink-2">Section</label>
+            <label className="mb-1.5 block text-[13px] font-medium text-ink-2">{t("admin.common.section")}</label>
             <Select value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)}>
-              <option value="">All sections</option>
+              <option value="">{t("admin.reports.allSections")}</option>
               {sectionsQuery.data?.map((s) => (
                 <option key={s.id} value={s.id}>{sectionLabel(s)}</option>
               ))}
             </Select>
           </div>
           <div>
-            <label className="mb-1.5 block text-[13px] font-medium text-ink-2">Date</label>
+            <label className="mb-1.5 block text-[13px] font-medium text-ink-2">{t("admin.common.date")}</label>
             <input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value || today())} className="lg-field" />
           </div>
         </div>
@@ -217,52 +225,52 @@ export default function Reports() {
       {activeReport === "overview" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatTile label="Active Students" value={studentsQuery.isLoading ? "…" : students.length} icon={<Users size={20} />} color="blue" />
+            <StatTile label={t("admin.reports.activeStudents")} value={studentsQuery.isLoading ? "…" : students.length} icon={<Users size={20} />} color="blue" />
             <StatTile
-              label="Attendance"
+              label={t("admin.reports.attendance")}
               value={attendanceQuery.isLoading ? "…" : att && att.marked ? `${att.attendance_rate}%` : "—"}
-              hint={att && att.marked ? `${att.marked} of ${att.total_students} marked` : "Not marked yet"}
+              hint={att && att.marked ? t("admin.reports.markedOf", { marked: att.marked, total: att.total_students }) : t("admin.reports.notMarkedYet")}
               icon={<UserCheck size={20} />}
               color="green"
             />
-            <StatTile label="Fees Collected" value={fee ? rupees(fee.total_collected) : "…"} hint={fee ? `${fee.collection_rate}% of billed` : undefined} icon={<IndianRupee size={20} />} color="purple" />
-            <StatTile label="Subjects" value={subjectsQuery.data?.length ?? "…"} hint={`${classesQuery.data?.length ?? 0} classes`} icon={<GraduationCap size={20} />} color="orange" />
+            <StatTile label={t("admin.reports.feesCollected")} value={fee ? rupees(fee.total_collected) : "…"} hint={fee ? t("admin.reports.pctOfBilled", { pct: fee.collection_rate }) : undefined} icon={<IndianRupee size={20} />} color="purple" />
+            <StatTile label={t("admin.reports.subjects")} value={subjectsQuery.data?.length ?? "…"} hint={t("admin.reports.classesCount", { n: classesQuery.data?.length ?? 0 })} icon={<GraduationCap size={20} />} color="orange" />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card animate={false}>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold text-ink">Attendance Trend</h3>
-                <Badge tone="violet">Last 7 days</Badge>
+                <h3 className="font-semibold text-ink">{t("admin.reports.attendanceTrend")}</h3>
+                <Badge tone="violet">{t("admin.reports.last7Days")}</Badge>
               </div>
               {trendQuery.isLoading ? (
                 <div className="flex h-56 items-center justify-center"><Spinner /></div>
               ) : trendQuery.data && trendQuery.data.length > 0 ? (
                 <AttendanceLineChart data={trendQuery.data} height={230} />
               ) : (
-                <p className="flex h-56 items-center justify-center text-sm text-ink-3">No attendance marked in the last 7 days.</p>
+                <p className="flex h-56 items-center justify-center text-sm text-ink-3">{t("admin.reports.noAttendance7")}</p>
               )}
             </Card>
             <Card animate={false}>
-              <h3 className="mb-4 font-semibold text-ink">Students by Class</h3>
+              <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.studentsByClass")}</h3>
               {distributionQuery.isLoading ? (
                 <div className="flex h-56 items-center justify-center"><Spinner /></div>
               ) : distributionQuery.data && distributionQuery.data.length > 0 ? (
-                <StudentDistributionPie data={distributionQuery.data} height={230} />
+                <StudentDistributionPie data={distributionQuery.data.map((d) => ({ ...d, name: te("class", d.name) }))} height={230} />
               ) : (
-                <p className="flex h-56 items-center justify-center text-sm text-ink-3">No students enrolled yet.</p>
+                <p className="flex h-56 items-center justify-center text-sm text-ink-3">{t("admin.reports.noStudentsEnrolled")}</p>
               )}
             </Card>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Card animate={false}>
-              <h3 className="mb-4 font-semibold text-ink">Today's Summary</h3>
+              <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.todaySummary")}</h3>
               <div className="space-y-2.5">
                 {[
-                  { label: "Present", value: att?.present_today ?? 0, tone: "#30c25a" },
-                  { label: "Late", value: att?.late_today ?? 0, tone: "#ff9f0a" },
-                  { label: "Absent", value: att?.absent_today ?? 0, tone: "#ff453a" },
+                  { label: t("admin.reports.present"), value: att?.present_today ?? 0, tone: "#30c25a" },
+                  { label: t("admin.reports.late"), value: att?.late_today ?? 0, tone: "#ff9f0a" },
+                  { label: t("admin.reports.absent"), value: att?.absent_today ?? 0, tone: "#ff453a" },
                 ].map((row) => (
                   <div key={row.label} className="glass-row !justify-between">
                     <span className="flex items-center gap-2 text-sm text-ink-2">
@@ -275,15 +283,15 @@ export default function Reports() {
               </div>
             </Card>
             <Card animate={false}>
-              <h3 className="mb-4 font-semibold text-ink">Fee Collection</h3>
+              <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.feeCollection")}</h3>
               {fee ? (
                 <div className="space-y-4">
                   <div>
-                    <div className="mb-1 flex justify-between text-sm"><span className="text-ink-3">Collected</span><span className="tabular font-medium text-green-600 dark:text-green-400">{rupees(fee.total_collected)}</span></div>
+                    <div className="mb-1 flex justify-between text-sm"><span className="text-ink-3">{t("admin.reports.collected")}</span><span className="tabular font-medium text-green-600 dark:text-green-400">{rupees(fee.total_collected)}</span></div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-3"><div className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400" style={{ width: `${fee.collection_rate}%` }} /></div>
                   </div>
                   <div>
-                    <div className="mb-1 flex justify-between text-sm"><span className="text-ink-3">Pending</span><span className="tabular font-medium text-red-600 dark:text-red-400">{rupees(fee.total_pending)}</span></div>
+                    <div className="mb-1 flex justify-between text-sm"><span className="text-ink-3">{t("admin.reports.pending")}</span><span className="tabular font-medium text-red-600 dark:text-red-400">{rupees(fee.total_pending)}</span></div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-3"><div className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-400" style={{ width: `${100 - fee.collection_rate}%` }} /></div>
                   </div>
                 </div>
@@ -298,17 +306,17 @@ export default function Reports() {
       {activeReport === "attendance" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatTile label="Enrolled" value={att?.total_students ?? "…"} icon={<Users size={20} />} color="blue" />
-            <StatTile label="Present" value={att?.present_today ?? "…"} icon={<UserCheck size={20} />} color="green" />
-            <StatTile label="Absent" value={att?.absent_today ?? "…"} icon={<Users size={20} />} color="pink" />
-            <StatTile label="Attendance Rate" value={att ? `${att.attendance_rate}%` : "…"} hint={att ? `${att.marked} marked` : undefined} icon={<PieChart size={20} />} color="purple" />
+            <StatTile label={t("admin.reports.enrolled")} value={att?.total_students ?? "…"} icon={<Users size={20} />} color="blue" />
+            <StatTile label={t("admin.reports.present")} value={att?.present_today ?? "…"} icon={<UserCheck size={20} />} color="green" />
+            <StatTile label={t("admin.reports.absent")} value={att?.absent_today ?? "…"} icon={<Users size={20} />} color="pink" />
+            <StatTile label={t("admin.reports.attendanceRate")} value={att ? `${att.attendance_rate}%` : "…"} hint={att ? t("admin.reports.nMarked", { n: att.marked }) : undefined} icon={<PieChart size={20} />} color="purple" />
           </div>
           <Card animate={false}>
-            <h3 className="mb-4 font-semibold text-ink">Attendance by Section</h3>
+            <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.attendanceBySection")}</h3>
             <div className="overflow-x-auto">
               <table className="lg-table">
                 <thead>
-                  <tr><th>Section</th><th className="!text-center">Enrolled</th><th className="!text-center">Present</th><th className="!text-center">Absent</th><th className="!text-center">Rate</th></tr>
+                  <tr><th>{t("admin.reports.section")}</th><th className="!text-center">{t("admin.reports.enrolled")}</th><th className="!text-center">{t("admin.reports.present")}</th><th className="!text-center">{t("admin.reports.absent")}</th><th className="!text-center">{t("admin.reports.rate")}</th></tr>
                 </thead>
                 <tbody>
                   {(sectionsQuery.data ?? []).map((section, i) => {
@@ -320,13 +328,13 @@ export default function Reports() {
                         <td className="text-center text-green-600 dark:text-green-400">{d?.present_today ?? "…"}</td>
                         <td className="text-center text-red-600 dark:text-red-400">{d?.absent_today ?? "…"}</td>
                         <td className="text-center">
-                          {d && d.marked > 0 ? <Badge tone={d.attendance_rate >= 90 ? "green" : d.attendance_rate >= 75 ? "yellow" : "red"}>{d.attendance_rate}%</Badge> : <span className="text-ink-3">Not marked</span>}
+                          {d && d.marked > 0 ? <Badge tone={d.attendance_rate >= 90 ? "green" : d.attendance_rate >= 75 ? "yellow" : "red"}>{d.attendance_rate}%</Badge> : <span className="text-ink-3">{t("admin.reports.notMarked")}</span>}
                         </td>
                       </tr>
                     );
                   })}
                   {sectionsQuery.data?.length === 0 && (
-                    <tr><td colSpan={5} className="!py-8 text-center text-ink-3">No sections have been set up yet.</td></tr>
+                    <tr><td colSpan={5} className="!py-8 text-center text-ink-3">{t("admin.reports.noSections")}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -338,36 +346,36 @@ export default function Reports() {
       {activeReport === "fees" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatTile label="Billed" value={fee ? rupees(fee.total_expected) : "…"} icon={<FileText size={20} />} color="blue" />
-            <StatTile label="Collected" value={fee ? rupees(fee.total_collected) : "…"} hint={fee ? `${fee.collection_rate}% collected` : undefined} icon={<IndianRupee size={20} />} color="green" />
-            <StatTile label="Pending" value={fee ? rupees(fee.total_pending) : "…"} icon={<IndianRupee size={20} />} color="orange" />
-            <StatTile label="Overdue Invoices" value={fee?.overdue_invoices ?? "…"} hint={fee ? `of ${fee.total_invoices} invoices` : undefined} icon={<FileText size={20} />} color="pink" />
+            <StatTile label={t("admin.reports.billed")} value={fee ? rupees(fee.total_expected) : "…"} icon={<FileText size={20} />} color="blue" />
+            <StatTile label={t("admin.reports.collected")} value={fee ? rupees(fee.total_collected) : "…"} hint={fee ? t("admin.reports.pctCollected", { pct: fee.collection_rate }) : undefined} icon={<IndianRupee size={20} />} color="green" />
+            <StatTile label={t("admin.reports.pending")} value={fee ? rupees(fee.total_pending) : "…"} icon={<IndianRupee size={20} />} color="orange" />
+            <StatTile label={t("admin.reports.overdueInvoices")} value={fee?.overdue_invoices ?? "…"} hint={fee ? t("admin.reports.ofInvoices", { n: fee.total_invoices }) : undefined} icon={<FileText size={20} />} color="pink" />
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card animate={false}>
-              <h3 className="mb-4 font-semibold text-ink">Collection by Month</h3>
-              {monthlyQuery.data && monthlyQuery.data.length > 0 ? <FeeCollectionBarChart data={monthlyQuery.data} height={240} /> : <p className="flex h-60 items-center justify-center text-sm text-ink-3">No payments recorded yet.</p>}
+              <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.collectionByMonth")}</h3>
+              {monthlyQuery.data && monthlyQuery.data.length > 0 ? <FeeCollectionBarChart data={monthlyQuery.data.map((m) => ({ ...m, month: te("month", m.month) }))} height={240} /> : <p className="flex h-60 items-center justify-center text-sm text-ink-3">{t("admin.reports.noPayments")}</p>}
             </Card>
             <Card animate={false}>
-              <h3 className="mb-4 font-semibold text-ink">Collection by Class</h3>
-              {byClassQuery.data && byClassQuery.data.length > 0 ? <ClassFeeBarChart data={byClassQuery.data} height={240} /> : <p className="flex h-60 items-center justify-center text-sm text-ink-3">No invoices raised yet.</p>}
+              <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.collectionByClass")}</h3>
+              {byClassQuery.data && byClassQuery.data.length > 0 ? <ClassFeeBarChart data={byClassQuery.data.map((c) => ({ ...c, name: te("class", c.name) }))} height={240} /> : <p className="flex h-60 items-center justify-center text-sm text-ink-3">{t("admin.reports.noInvoicesRaised")}</p>}
             </Card>
           </div>
           <Card animate={false}>
-            <h3 className="mb-4 font-semibold text-ink">Recent Payments</h3>
+            <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.recentPayments")}</h3>
             <div className="overflow-x-auto">
               <table className="lg-table">
-                <thead><tr><th>Student</th><th>Method</th><th>When</th><th className="!text-end">Amount</th></tr></thead>
+                <thead><tr><th>{t("admin.reports.student")}</th><th>{t("admin.reports.method")}</th><th>{t("admin.reports.when")}</th><th className="!text-end">{t("admin.reports.amount")}</th></tr></thead>
                 <tbody>
                   {paymentsQuery.data?.items.map((p) => (
                     <tr key={p.id}>
                       <td className="font-medium">{p.student_name ?? "—"}</td>
-                      <td>{p.payment_method.replace("_", " ")}</td>
+                      <td>{optLabel("admin.paymentMethod", p.payment_method)}</td>
                       <td className="text-ink-3">{timeAgo(p.payment_date)}</td>
                       <td className="tabular text-end font-medium">{rupees(p.amount)}</td>
                     </tr>
                   ))}
-                  {paymentsQuery.data?.items.length === 0 && <tr><td colSpan={4} className="!py-8 text-center text-ink-3">No payments yet.</td></tr>}
+                  {paymentsQuery.data?.items.length === 0 && <tr><td colSpan={4} className="!py-8 text-center text-ink-3">{t("admin.reports.noPaymentsYet")}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -378,37 +386,37 @@ export default function Reports() {
       {activeReport === "students" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatTile label="Enrolled" value={students.length} icon={<Users size={20} />} color="blue" />
-            <StatTile label="Boys" value={`${pct(male)}%`} hint={`${male} students`} icon={<Users size={20} />} color="purple" />
-            <StatTile label="Girls" value={`${pct(female)}%`} hint={`${female} students`} icon={<Users size={20} />} color="pink" />
-            <StatTile label="Classes" value={classesQuery.data?.length ?? "…"} icon={<GraduationCap size={20} />} color="green" />
+            <StatTile label={t("admin.reports.enrolled")} value={students.length} icon={<Users size={20} />} color="blue" />
+            <StatTile label={t("admin.reports.boys")} value={`${pct(male)}%`} hint={t("admin.reports.nStudents", { n: male })} icon={<Users size={20} />} color="purple" />
+            <StatTile label={t("admin.reports.girls")} value={`${pct(female)}%`} hint={t("admin.reports.nStudents", { n: female })} icon={<Users size={20} />} color="pink" />
+            <StatTile label={t("admin.reports.classes")} value={classesQuery.data?.length ?? "…"} icon={<GraduationCap size={20} />} color="green" />
           </div>
           <Card animate={false}>
-            <h3 className="mb-4 font-semibold text-ink">Students by Class</h3>
+            <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.studentsByClass")}</h3>
             {distributionQuery.data && distributionQuery.data.length > 0 ? (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
                 {distributionQuery.data.map((d) => (
                   <div key={d.name} className="glass-row !flex-col !items-start !gap-0.5 !rounded-2xl !p-4">
                     <p className="tabular text-2xl font-semibold text-ink">{d.value}</p>
-                    <p className="text-sm text-ink-3">{d.name}</p>
+                    <p className="text-sm text-ink-3">{te("class", d.name)}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-ink-3">No students enrolled yet.</p>
+              <p className="text-sm text-ink-3">{t("admin.reports.noStudentsEnrolled")}</p>
             )}
           </Card>
           <Card animate={false}>
-            <h3 className="mb-4 font-semibold text-ink">Students</h3>
+            <h3 className="mb-4 font-semibold text-ink">{t("admin.reports.students")}</h3>
             <div className="overflow-x-auto">
               <table className="lg-table">
-                <thead><tr><th>Student</th><th>Admission No</th><th className="!text-center">Status</th></tr></thead>
+                <thead><tr><th>{t("admin.reports.student")}</th><th>{t("admin.reports.admissionNo")}</th><th className="!text-center">{t("admin.common.status")}</th></tr></thead>
                 <tbody>
                   {students.slice(0, 10).map((s) => (
                     <tr key={s.id}>
                       <td className="font-medium">{s.full_name}</td>
                       <td className="text-ink-2">{s.admission_no}</td>
-                      <td className="text-center"><Badge tone={s.status === "ACTIVE" ? "green" : "gray"}>{s.status}</Badge></td>
+                      <td className="text-center"><Badge tone={s.status === "ACTIVE" ? "green" : "gray"}>{te("status", s.status)}</Badge></td>
                     </tr>
                   ))}
                 </tbody>

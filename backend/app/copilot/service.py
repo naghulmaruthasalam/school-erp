@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator
 
 from app.copilot import llm, safety, sessions
 from app.copilot.grounding import StudyContext, build_study_context
+from app.core.lang import normalize_lang
 from app.copilot.off_topic import inappropriate_reply, off_topic_reply
 from app.copilot.profiles import EXPLAIN_RULES, FORMAT_RULES, SAFETY_RULES, Profile
 from app.core.config import get_settings
@@ -37,7 +38,9 @@ async def context_for_session(current: CurrentUser, session: CopilotSession) -> 
     if session.mode != "study":
         return None
     c = session.context
-    return await build_study_context(current, c["class_id"], c.get("subject_id"), c.get("chapter"), c.get("student_id"))
+    return await build_study_context(
+        current, c["class_id"], c.get("subject_id"), c.get("chapter"), c.get("student_id"), lang=normalize_lang(session.language),
+    )
 
 
 def _system_prompt(profile: Profile, ctx: StudyContext, language: str) -> str:

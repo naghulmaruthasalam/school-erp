@@ -5,8 +5,10 @@ import { SyllabusViewer } from "../../components/SyllabusViewer";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
 import { Filter } from "lucide-react";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function PrincipalSyllabus() {
+  const { t, te } = useLanguage();
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
 
@@ -22,15 +24,15 @@ export default function PrincipalSyllabus() {
   const subjectsQuery = useQuery({ queryKey: ["subjects"], queryFn: fetchSubjects });
   const yearsQuery = useQuery({ queryKey: ["academicYears"], queryFn: fetchAcademicYears });
 
-  const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || id;
-  const getSubjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name || id;
+  const getClassName = (id: string) => te("class", classesQuery.data?.find((c) => c.id === id)?.name || id);
+  const getSubjectName = (id: string) => te("subject", subjectsQuery.data?.find((s) => s.id === id)?.name || id);
   const getYearName = (id: string) => yearsQuery.data?.find((y) => y.id === id)?.name || id;
 
   return (
     <div className="animate-fade-in-up">
       <PageHeader
-        title="Syllabus Overview"
-        subtitle="Review all course curricula across the school"
+        title={t("principal.syllabus.title")}
+        subtitle={t("principal.syllabus.subtitle")}
       />
 
       <Card className={`mb-6 `}>
@@ -38,31 +40,31 @@ export default function PrincipalSyllabus() {
           <Filter size={18} className={"text-ink-3"} />
           <div>
             <label className={`block text-sm font-medium mb-1 text-ink-2`}>
-              Class
+              {t("principal.common.class")}
             </label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className={`rounded-lg border px-3 py-2 border-line focus:border-violet-500`}
             >
-              <option value="">All Classes</option>
+              <option value="">{t("principal.common.allClasses")}</option>
               {classesQuery.data?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{te("class", c.name)}</option>
               ))}
             </select>
           </div>
           <div>
             <label className={`block text-sm font-medium mb-1 text-ink-2`}>
-              Subject
+              {t("principal.syllabus.subject")}
             </label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
               className={`rounded-lg border px-3 py-2 border-line focus:border-violet-500`}
             >
-              <option value="">All Subjects</option>
+              <option value="">{t("principal.syllabus.allSubjects")}</option>
               {subjectsQuery.data?.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>{te("subject", s.name)}</option>
               ))}
             </select>
           </div>
@@ -76,7 +78,7 @@ export default function PrincipalSyllabus() {
         getSubjectName={getSubjectName}
         getYearName={getYearName}
         getDocumentUrl={getSyllabusDocumentUrl}
-        emptyMessage="No syllabus available. Ask teachers to create and publish syllabi."
+        emptyMessage={t("principal.syllabus.empty")}
       />
     </div>
   );

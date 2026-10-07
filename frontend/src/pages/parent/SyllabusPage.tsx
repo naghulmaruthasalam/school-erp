@@ -4,8 +4,10 @@ import { SyllabusViewer } from "../../components/SyllabusViewer";
 import SyllabusBrowser from "../../components/SyllabusBrowser";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function ParentSyllabusPage() {
+  const { t, te } = useLanguage();
   const syllabusQuery = useQuery({
     queryKey: ["parent", "syllabus"],
     queryFn: () => listSyllabus({ status: "PUBLISHED" }),
@@ -19,8 +21,8 @@ export default function ParentSyllabusPage() {
   const subjects = Array.isArray(subjectsQuery.data) ? subjectsQuery.data : [];
   const years = Array.isArray(yearsQuery.data) ? yearsQuery.data : [];
 
-  const getClassName = (id: string) => classes.find((c) => c.id === id)?.name ?? id;
-  const getSubjectName = (id: string) => subjects.find((s) => s.id === id)?.name ?? id;
+  const getClassName = (id: string) => te("class", classes.find((c) => c.id === id)?.name ?? id);
+  const getSubjectName = (id: string) => te("subject", subjects.find((s) => s.id === id)?.name ?? id);
   const getYearName = (id: string) => years.find((y) => y.id === id)?.name ?? id;
 
   const isLoading = syllabusQuery.isLoading || classesQuery.isLoading || subjectsQuery.isLoading || yearsQuery.isLoading;
@@ -29,8 +31,8 @@ export default function ParentSyllabusPage() {
   if (hasError) {
     return (
       <div className="animate-fade-in-up">
-        <PageHeader title="Course Syllabus" subtitle="View your child's curriculum and study materials" />
-        <ErrorText>Could not load syllabus. Please try again later.</ErrorText>
+        <PageHeader title={t("parent.syllabus.title")} subtitle={t("parent.syllabus.subtitle")} />
+        <ErrorText>{t("parent.syllabus.loadError")}</ErrorText>
       </div>
     );
   }
@@ -38,8 +40,8 @@ export default function ParentSyllabusPage() {
   return (
     <div className="animate-fade-in-up">
       <PageHeader
-        title="Course Syllabus"
-        subtitle="View your child's curriculum and study materials"
+        title={t("parent.syllabus.title")}
+        subtitle={t("parent.syllabus.subtitle")}
       />
 
       <SyllabusBrowser role="parent" />
@@ -51,7 +53,7 @@ export default function ParentSyllabusPage() {
         getSubjectName={getSubjectName}
         getYearName={getYearName}
         getDocumentUrl={getSyllabusDocumentUrl}
-        emptyMessage="No syllabus available for your child's classes yet."
+        emptyMessage={t("parent.syllabus.empty")}
       />
     </div>
   );

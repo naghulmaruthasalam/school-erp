@@ -5,10 +5,12 @@ import { Button, ErrorText, PasswordInput, Label } from "../components/ui";
 import { ROLE_THEMES } from "../theme/roles";
 import AuthLayout from "./AuthLayout";
 import { resetPasswordRequest } from "./api";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const theme = ROLE_THEMES.SCHOOL_ADMIN;
 
 export default function ResetPasswordPage() {
+  const { t } = useLanguage();
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
   const navigate = useNavigate();
@@ -27,11 +29,11 @@ export default function ResetPasswordPage() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (newPassword.length < 8) {
-      setValidationError("Password must be at least 8 characters.");
+      setValidationError(t("shell.auth.passwordMin"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setValidationError("Passwords do not match.");
+      setValidationError(t("shell.auth.passwordMismatch"));
       return;
     }
     setValidationError("");
@@ -40,31 +42,31 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <AuthLayout theme={theme} title="Invalid reset link">
+      <AuthLayout theme={theme} title={t("shell.reset.invalidTitle")}>
         <p className="text-center text-sm text-accent-fg">
-          This link is missing its reset token. Please request a new one.
+          {t("shell.reset.missingToken")}
         </p>
         <Link
           to="/forgot-password"
           className="mt-4 block text-center text-sm font-medium text-accent-fg hover:underline"
         >
-          Request a new link
+          {t("shell.reset.requestNew")}
         </Link>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout theme={theme} title="Set a new password" subtitle="Choose a new password for your account.">
+    <AuthLayout theme={theme} title={t("shell.reset.title")} subtitle={t("shell.reset.subtitle")}>
       {mutation.isSuccess ? (
         <div className="text-center">
-          <p className="text-sm text-ink-2">Your password has been reset.</p>
-          <p className="mt-1 text-xs text-accent-fg">Redirecting you to sign in…</p>
+          <p className="text-sm text-ink-2">{t("shell.reset.done")}</p>
+          <p className="mt-1 text-xs text-accent-fg">{t("shell.reset.redirecting")}</p>
         </div>
       ) : (
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="new_password">New password</Label>
+            <Label htmlFor="new_password">{t("shell.reset.newPassword")}</Label>
             <PasswordInput
               id="new_password"
               required
@@ -73,7 +75,7 @@ export default function ResetPasswordPage() {
             />
           </div>
           <div>
-            <Label htmlFor="confirm_password">Confirm password</Label>
+            <Label htmlFor="confirm_password">{t("shell.reset.confirmPassword")}</Label>
             <PasswordInput
               id="confirm_password"
               required
@@ -82,10 +84,10 @@ export default function ResetPasswordPage() {
             />
           </div>
           <ErrorText>
-            {validationError || (mutation.isError ? "This reset link is invalid or has expired." : "")}
+            {validationError || (mutation.isError ? t("shell.reset.invalidOrExpired") : "")}
           </ErrorText>
           <Button type="submit" className="w-full" disabled={mutation.isPending}>
-            {mutation.isPending ? "Saving…" : "Reset password"}
+            {mutation.isPending ? t("shell.reset.saving") : t("shell.reset.submit")}
           </Button>
         </form>
       )}

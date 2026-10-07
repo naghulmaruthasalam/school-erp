@@ -1,0 +1,479 @@
+{
+  "copilot": {
+    "allTools": "جميع الأدوات",
+    "picker": {
+      "child": "الطفل",
+      "chooseChild": "اختر طفلاً…",
+      "class": "الصف",
+      "chooseClass": "اختر الصف…",
+      "subject": "المادة",
+      "chooseSubject": "اختر المادة…",
+      "anySubject": "أي مادة",
+      "chapter": "الوحدة",
+      "chooseChapter": "اختر الوحدة…",
+      "wholeSubject": "المادة كاملة"
+    },
+    "results": {
+      "copied": "تم النسخ",
+      "copy": "نسخ",
+      "print": "طباعة / PDF",
+      "answer": "الإجابة",
+      "score": "النتيجة: {score} / {total}",
+      "showAnswer": "عرض الإجابة",
+      "export": "تصدير",
+      "renderingPdf": "جاري إنشاء PDF…",
+      "downloadPdf": "تنزيل PDF",
+      "saving": "جاري الحفظ…",
+      "downloadText": "تنزيل كنص",
+      "savedToFiles": "تم الحفظ في ملفاتك: {name}"
+    },
+    "tool": {
+      "noChild": "لا يوجد طفل مرتبط",
+      "approxMinutes": "~{n} دقيقة",
+      "check": "ما يجب التحقق منه",
+      "createHomework": "إنشاء هذا الواجب",
+      "result": "النتيجة",
+      "working": "جاري العمل…",
+      "generate": "إنشاء",
+      "aiWriting": "الذكاء الاصطناعي يكتب هذا الآن، وقد يستغرق بضع ثوانٍ…"
+    },
+    "worksheet": {
+      "reading": "جاري قراءة الوحدة…",
+      "findAgain": "البحث عن المواضيع مجدداً",
+      "find": "البحث عن المواضيع في هذه الوحدة",
+      "pick": "اختر حتى 3 مواضيع وأنواع الأنشطة التي تريدها.",
+      "writing": "جاري كتابة ورقة العمل…",
+      "generateOne": "إنشاء ورقة العمل (عدد المواضيع: {n})",
+      "generateMany": "إنشاء ورقة العمل (عدد المواضيع: {n})"
+    },
+    "export": {
+      "schoolName": "اسم المدرسة",
+      "title": "العنوان",
+      "examTitle": "عنوان الامتحان",
+      "date": "التاريخ",
+      "timeAllowed": "الزمن المخصص"
+    },
+    "lessonPlan": {
+      "reread": "إعادة قراءة المواضيع",
+      "breakDown": "تقسيم الوحدة إلى مواضيع",
+      "topics": "المواضيع بترتيب التدريس (موضوع في كل سطر، ويمكنك التعديل)",
+      "startDate": "تاريخ البدء",
+      "finishBy": "تاريخ الانتهاء",
+      "teachingDays": "أيام التدريس (بفارق لا يتجاوز 30 يوماً)",
+      "dayDate": "تاريخ اليوم {n}",
+      "dayMinutes": "دقائق اليوم {n}",
+      "min": "دقيقة",
+      "removeDay": "إزالة اليوم",
+      "addDay": "إضافة يوم",
+      "planning": "جاري التخطيط…",
+      "generate": "إنشاء خطة الدرس",
+      "datesHint": "يجب أن يقع كل يوم تدريس بين تاريخي البدء والانتهاء.",
+      "title": "خطة الدرس: {chapter}",
+      "minutesShort": "{n} دقيقة",
+      "teacherNote": "ملاحظة المعلم",
+      "pacing": "وتيرة التدريس",
+      "noSessions": "لم يتم إرجاع أي حصص. حاول مرة أخرى أو عدّل التواريخ."
+    },
+    "qp": {
+      "loadingClasses": "جاري تحميل صفوفك…",
+      "noClasses": "لا توجد صفوف ذات منهج مسندة إليك بعد.",
+      "chaptersAndQuestions": "الوحدات والأسئلة",
+      "marksOfTotal": "{n} / {total} درجة",
+      "noChapters": "لا توجد وحدات لهذه المادة بعد.",
+      "markOne": "الدرجة: {n}",
+      "markMany": "الدرجات: {n}",
+      "fewer": "أسئلة أقل: {type}",
+      "more": "أسئلة أكثر: {type}",
+      "building": "جاري إعداد الورقة…",
+      "generate": "إنشاء ورقة الأسئلة",
+      "overLimit": "إحدى الوحدات تجاوزت حد الدرجات.",
+      "picking": "جاري الاختيار من بنك الأسئلة وكتابة الأسئلة الناقصة…",
+      "hideBank": "إخفاء بنك الأسئلة لهذه المادة",
+      "showBank": "عرض بنك الأسئلة لهذه المادة",
+      "recentPapers": "الأوراق الأخيرة",
+      "marksN": "{n} درجة",
+      "deletePaper": "حذف الورقة",
+      "opening": "جاري الفتح…",
+      "newPaper": "ورقة جديدة",
+      "newSaved": "أسئلة جديدة حُفظت في بنك الأسئلة: {n}",
+      "showAnswers": "عرض الإجابات",
+      "section": "القسم {letter}",
+      "markEachOne": "الدرجة لكل سؤال: {n}",
+      "markEachMany": "الدرجة لكل سؤال: {n}",
+      "keyPoints": "النقاط الرئيسية",
+      "questionPaper": "ورقة الأسئلة",
+      "answerKey": "نموذج الإجابة",
+      "bank": "بنك الأسئلة",
+      "bankChapter": "وحدة بنك الأسئلة",
+      "bankHint": "تُختار أسئلة الأوراق من هنا أولاً. وتُكتب الأسئلة الناقصة بواسطة الذكاء الاصطناعي من ملاحظات الوحدة وتُحفظ هنا.",
+      "removeFromBank": "إزالة من البنك",
+      "bankEmpty": "لا توجد أسئلة لهذه الوحدة بعد.",
+      "addQuestion": "إضافة سؤال",
+      "questionType": "نوع السؤال",
+      "question": "السؤال",
+      "optionCorrect": "الخيار {n} هو الصحيح",
+      "option": "الخيار {n}",
+      "modelAnswer": "الإجابة النموذجية",
+      "addToBank": "إضافة إلى البنك"
+    },
+    "grading": {
+      "addPages": "إضافة صفحات أخرى",
+      "removeFile": "إزالة {name}",
+      "loadingPapers": "جاري تحميل أوراقك…",
+      "noPapers": "أنشئ ورقة أسئلة أولاً (الأدوات ← ورقة الأسئلة). تُصحَّح أوراق الإجابة وفق أسئلتها ونموذج إجابتها.",
+      "questionCount": "عدد الأسئلة: {n}",
+      "oneStudent": "طالب واحد",
+      "severalStudents": "عدة طلاب",
+      "answerSheet": "ورقة الإجابة",
+      "studentName": "اسم الطالب",
+      "choosePhotos": "اختر صوراً أو ملف PDF",
+      "pagesHint": "الصفحات بترتيب القراءة. JPG أو PNG أو WEBP أو PDF، حتى 20 صفحة.",
+      "grading": "جاري التصحيح…",
+      "grade": "تصحيح ورقة الإجابة",
+      "busy": "جاري قراءة الصفحات وتصحيح كل سؤال. قد يستغرق ذلك دقيقة…",
+      "classSet": "مجموعة الصف",
+      "student": "طالب",
+      "studentNName": "اسم الطالب {n}",
+      "removeStudent": "إزالة الطالب {n}",
+      "choosePages": "اختر الصفحات",
+      "uploading": "جاري الرفع…",
+      "gradeOne": "تصحيح إجابات الطلاب (العدد: {n})",
+      "gradeMany": "تصحيح إجابات الطلاب (العدد: {n})",
+      "questionOf": "السؤال {n} من {total}",
+      "status": {
+        "queued": "في الانتظار",
+        "grading": "جاري التصحيح",
+        "done": "تم",
+        "failed": "فشل"
+      },
+      "gradedSheets": "الأوراق المصحّحة",
+      "nothingGraded": "لم تُصحَّح أي إجابات لورقة الأسئلة هذه بعد.",
+      "toCheck": "للمراجعة: {n}",
+      "qShort": "س{n}",
+      "check": "مراجعة",
+      "edited": "معدّل",
+      "marksFor": "درجة السؤال {n}",
+      "studentWrote": "كتب الطالب",
+      "nothing": "لا شيء",
+      "saveChanges": "حفظ التغييرات"
+    },
+    "listSeparator": "، ",
+    "loading": "جاري التحميل…",
+    "errors": {
+      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+      "network": "تعذر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى."
+    },
+    "unavailable": {
+      "unreachable": "تعذر على Copilot الوصول إلى الخادم حالياً.",
+      "title": "Copilot غير جاهز بعد",
+      "retry": "حاول مرة أخرى"
+    },
+    "open": "فتح مساعد Copilot الذكي",
+    "close": "إغلاق",
+    "replyLanguage": "لغة الرد",
+    "tabs": {
+      "chat": "المحادثة",
+      "tools": "الأدوات",
+      "history": "السجل"
+    },
+    "modes": {
+      "school": "مدرستي",
+      "study": "مساعدة دراسية"
+    },
+    "aiKeyMissing": "تتطلب المساعدة الدراسية ضبط مفتاح الذكاء الاصطناعي على الخادم. أما «مدرستي» فتعمل بدونه.",
+    "thinking": "جاري التفكير",
+    "input": {
+      "placeholder": "اكتب سؤالاً…",
+      "chooseClass": "اختر صفاً للبدء"
+    },
+    "send": "إرسال",
+    "welcome": {
+      "school": "مرحباً! أنا {title}. اسألني عن معلوماتك المدرسية، مثل الحضور والواجبات المنزلية والجدول الدراسي والنتائج.",
+      "study": "مرحباً! أنا {title}. {tagline}. اختر المادة والوحدة أدناه ثم اسألني ما تشاء."
+    },
+    "history": {
+      "chats": "المحادثات",
+      "files": "الملفات",
+      "noChats": "لا توجد محادثات بعد. ستظهر محادثاتك هنا.",
+      "newChatTitle": "محادثة جديدة",
+      "deleteChat": "حذف المحادثة",
+      "newChat": "محادثة جديدة",
+      "noFiles": "لا توجد ملفات بعد. تُحفظ هنا أوراق العمل وخطط الدروس وأوراق الأسئلة والتقارير التي تصدّرها.",
+      "sizeKb": "{n} ك.ب",
+      "download": "تنزيل الملف",
+      "deleteFile": "حذف الملف"
+    },
+    "kinds": {
+      "worksheet": "ورقة عمل",
+      "lesson_plan": "خطة درس",
+      "question_paper": "ورقة أسئلة",
+      "answer_key": "نموذج إجابة",
+      "grading_report": "تقرير التصحيح"
+    },
+    "languages": {
+      "English": "الإنجليزية",
+      "Arabic": "العربية",
+      "Hindi": "الهندية",
+      "Tamil": "التاميلية"
+    },
+    "qtypes": {
+      "mcq": "اختيار من متعدد",
+      "short": "إجابة قصيرة",
+      "state_precisely": "اذكر بدقة",
+      "answer_in_brief": "أجب باختصار",
+      "long": "إجابة طويلة"
+    },
+    "facts": {
+      "pending_homework": "واجبات معلقة",
+      "invoices": "الفواتير",
+      "exams_with_results": "امتحانات لها نتائج"
+    },
+    "profiles": {
+      "STUDENT": {
+        "title": "رفيق الدراسة",
+        "tagline": "يشرح الدروس ويختبرك ويتابع المهام المستحقة"
+      },
+      "PARENT": {
+        "title": "رفيق ولي الأمر",
+        "tagline": "يساعدك على فهم تقدم طفلك ودعم تعلمه في المنزل"
+      },
+      "TEACHER": {
+        "title": "مساعد المعلم",
+        "tagline": "مساعدة في الوحدات وأوراق العمل وخطط الدروس واختبارات الصف"
+      },
+      "PRINCIPAL": {
+        "title": "رؤى المدرسة",
+        "tagline": "نظرات عامة على الحضور والرسوم والأداء الأكاديمي في المدرسة"
+      },
+      "SCHOOL_ADMIN": {
+        "title": "مساعد العمليات",
+        "tagline": "عمليات المدرسة والقبول والرسوم والموظفون في لمحة"
+      },
+      "SUPER_ADMIN": {
+        "title": "مساعد المنصة",
+        "tagline": "أسئلة على مستوى المنصة"
+      }
+    },
+    "tools": {
+      "explain": {
+        "title": "اشرح لي",
+        "description": "شرح وحدة دراسية أو كلمة صعبة على شكل قصة أو أمثلة أو تشبيه أو بكلمات بسيطة.",
+        "fields": {
+          "style": {
+            "label": "كيف تريد أن يكون الشرح؟"
+          },
+          "concept": {
+            "label": "فكرة أو مصطلح محدد (اختياري)",
+            "help": "اتركه فارغاً لشرح الوحدة كاملة"
+          }
+        },
+        "options": {
+          "style": {
+            "simple": "بكلمات بسيطة",
+            "story": "قصة",
+            "analogy": "تشبيه",
+            "example": "أمثلة من الحياة",
+            "worked": "أمثلة محلولة",
+            "steps": "خطوة بخطوة",
+            "memory": "حيل للحفظ"
+          }
+        }
+      },
+      "quiz": {
+        "title": "اختبار تدريبي",
+        "description": "أسئلة مع الإجابات والتوضيحات حول وحدة دراسية.",
+        "fields": {
+          "count": {
+            "label": "عدد الأسئلة"
+          },
+          "difficulty": {
+            "label": "مستوى الصعوبة"
+          },
+          "question_type": {
+            "label": "نوع الأسئلة"
+          }
+        },
+        "options": {
+          "difficulty": {
+            "easy": "سهل",
+            "medium": "متوسط",
+            "hard": "صعب"
+          },
+          "question_type": {
+            "mixed": "متنوعة",
+            "mcq": "اختيار من متعدد",
+            "short": "إجابة قصيرة"
+          }
+        }
+      },
+      "study_plan": {
+        "title": "خطة المذاكرة",
+        "description": "خطة يومية مبنية على مواعيد تسليم الواجبات والامتحانات.",
+        "fields": {
+          "days": {
+            "label": "عدد أيام الخطة"
+          },
+          "minutes_per_day": {
+            "label": "دقائق المذاكرة يومياً"
+          },
+          "focus": {
+            "label": "هل هناك ما تريد التركيز عليه؟ (اختياري)"
+          }
+        }
+      },
+      "child_report": {
+        "title": "ملخص تقدم الطفل",
+        "description": "الحضور والواجبات والنتائج والرسوم موضحة ببساطة مع نصائح للمساعدة في المنزل.",
+        "fields": {
+          "student_id": {
+            "label": "الطفل"
+          },
+          "days": {
+            "label": "المدة (بالأيام)"
+          }
+        }
+      },
+      "homework_ideas": {
+        "title": "أفكار للواجبات المنزلية",
+        "description": "مهام واجبات مناسبة للوحدة، جاهزة للإسناد إلى الصف بنقرة واحدة.",
+        "fields": {
+          "count": {
+            "label": "عدد الأفكار"
+          },
+          "kind": {
+            "label": "نوع المهمة"
+          },
+          "minutes": {
+            "label": "دقائق لكل مهمة"
+          }
+        },
+        "options": {
+          "kind": {
+            "written": "كتابية",
+            "practical": "عملية",
+            "project": "مشروع صغير",
+            "reading": "قراءة وتأمل",
+            "mixed": "متنوعة"
+          }
+        }
+      },
+      "worksheet": {
+        "title": "منشئ أوراق العمل",
+        "description": "اختر مواضيع وأنشطة من الوحدة واحصل على ورقة عمل قابلة للطباعة."
+      },
+      "lesson_plan": {
+        "title": "خطة الدرس",
+        "description": "خطة تدريس يومية للوحدة على مدى التواريخ التي تختارها."
+      },
+      "question_paper": {
+        "title": "ورقة الأسئلة",
+        "description": "أنشئ ورقة أسئلة من بنك الأسئلة مع توزيع الدرجات على الوحدات، ثم صدّر الورقة ونموذج الإجابة بصيغة PDF."
+      },
+      "grading": {
+        "title": "تصحيح أوراق الإجابة",
+        "description": "ارفع أوراق الإجابة الممسوحة ضوئياً أو المصوّرة لتحصل على الدرجات والملاحظات وتقرير مقابل ورقة الأسئلة التي أنشأتها."
+      },
+      "parent_note": {
+        "title": "رسالة إلى ولي الأمر",
+        "description": "صياغة رسالة إلى ولي الأمر: شكر أو قلق أو تذكير أو طلب اجتماع.",
+        "fields": {
+          "purpose": {
+            "label": "الغرض"
+          },
+          "student_name": {
+            "label": "اسم الطالب (اختياري)"
+          },
+          "tone": {
+            "label": "الأسلوب"
+          },
+          "details": {
+            "label": "ما الذي تريد أن تقوله الرسالة؟"
+          }
+        },
+        "options": {
+          "purpose": {
+            "general": "عام",
+            "appreciation": "شكر وتقدير",
+            "concern": "قلق",
+            "reminder": "تذكير",
+            "meeting_request": "طلب اجتماع",
+            "homework_follow_up": "متابعة الواجبات"
+          },
+          "tone": {
+            "warm": "ودّي",
+            "formal": "رسمي",
+            "firm_but_kind": "حازم ولطيف"
+          }
+        }
+      },
+      "announcement": {
+        "title": "مسودة إعلان",
+        "description": "صياغة إشعار لأولياء الأمور أو الطلاب أو الموظفين.",
+        "fields": {
+          "topic": {
+            "label": "الموضوع"
+          },
+          "audience": {
+            "label": "الجمهور المستهدف"
+          },
+          "tone": {
+            "label": "الأسلوب"
+          },
+          "details": {
+            "label": "التفاصيل (التواريخ والمكان والإجراءات)"
+          }
+        },
+        "options": {
+          "audience": {
+            "parents_and_students": "أولياء الأمور والطلاب",
+            "parents": "أولياء الأمور",
+            "students": "الطلاب",
+            "staff": "الموظفون"
+          },
+          "tone": {
+            "formal": "رسمي",
+            "friendly": "ودّي",
+            "urgent": "عاجل"
+          }
+        }
+      }
+    },
+    "quick": {
+      "explain_this_chapter_in_simple_words": "اشرح هذه الوحدة بكلمات بسيطة",
+      "tell_it_to_me_as_a_story": "احكِ لي الدرس على شكل قصة",
+      "give_me_a_real_life_example": "أعطني مثالاً من الحياة",
+      "quiz_me_on_this_chapter": "اختبرني في هذه الوحدة",
+      "what_homework_is_due_this_week": "ما الواجبات المطلوبة هذا الأسبوع؟",
+      "what_is_my_attendance": "ما نسبة حضوري؟",
+      "when_are_my_exams": "متى امتحاناتي؟",
+      "show_my_timetable_for_today": "اعرض جدولي الدراسي لليوم",
+      "explain_this_chapter_so_i_can_help_at_home": "اشرح لي هذه الوحدة لأتمكن من المساعدة في المنزل",
+      "explain_it_the_way_i_would_tell_a_child": "اشرحها لي بالأسلوب الذي أشرحه به لطفل",
+      "how_can_i_support_my_child_with_this_topic": "كيف يمكنني دعم طفلي في هذا الموضوع؟",
+      "simple_activities_to_practise_this": "أنشطة بسيطة للتدرب على هذا الموضوع",
+      "how_is_my_child_doing_in_attendance": "كيف حضور طفلي؟",
+      "is_any_homework_pending": "هل هناك واجبات معلقة؟",
+      "are_there_any_fees_due": "هل هناك رسوم مستحقة؟",
+      "what_are_the_upcoming_school_events": "ما هي الفعاليات المدرسية القادمة؟",
+      "summarise_this_chapter_for_a_lesson": "لخّص هذه الوحدة لحصة دراسية",
+      "suggest_homework_for_this_chapter": "اقترح واجباً منزلياً لهذه الوحدة",
+      "common_misconceptions_in_this_chapter": "المفاهيم الخاطئة الشائعة في هذه الوحدة",
+      "explain_this_concept_with_an_analogy": "اشرح هذا المفهوم بتشبيه",
+      "which_classes_do_i_teach_today": "ما الحصص التي أدرّسها اليوم؟",
+      "who_is_absent_today": "من الغائب اليوم؟",
+      "which_homework_submissions_are_pending": "ما تسليمات الواجبات المعلقة؟",
+      "show_my_timetable": "اعرض جدولي الدراسي",
+      "how_can_we_improve_results_in_this_subject": "كيف يمكننا تحسين النتائج في هذه المادة؟",
+      "teaching_strategies_for_this_chapter": "استراتيجيات التدريس لهذه الوحدة",
+      "give_me_today_s_school_summary": "أعطني ملخص المدرسة لليوم",
+      "attendance_trend_this_month": "اتجاه الحضور هذا الشهر",
+      "fee_collection_summary": "ملخص تحصيل الرسوم",
+      "any_admissions_awaiting_approval": "هل هناك طلبات قبول بانتظار الموافقة؟",
+      "today_s_school_summary": "ملخص المدرسة لليوم",
+      "pending_admission_approvals": "موافقات القبول المعلقة",
+      "staff_attendance_today": "حضور الموظفين اليوم",
+      "outline_of_this_subject_s_syllabus": "مخطط منهج هذه المادة",
+      "give_me_a_platform_overview": "أعطني نظرة عامة على المنصة"
+    }
+  }
+}

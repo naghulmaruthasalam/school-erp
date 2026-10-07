@@ -5,15 +5,17 @@ import { Button, Card, ErrorText, Input, Label, PageHeader } from "../../compone
 import { api } from "../../api/client";
 import { createStudent } from "./api";
 import { useAcademicYears, useClasses, useSections } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { StudentCreateRequest } from "./types";
 
 function CredentialsModal({ credentials, onClose, studentId }: { credentials: { username?: string; email?: string; password: string }; onClose: () => void; studentId: string }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
   const loginId = credentials.username || credentials.email || "";
 
   const copyToClipboard = () => {
-    const text = `Login Credentials\nLogin ID: ${loginId}\nPassword: ${credentials.password}`;
+    const text = t("admin.credentials.clipboard", { id: loginId, password: credentials.password });
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -22,26 +24,26 @@ function CredentialsModal({ credentials, onClose, studentId }: { credentials: { 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <h2 className="text-xl font-bold text-ink mb-2">Student Login Credentials</h2>
-        <p className="text-sm text-accent-fg mb-4">Share these credentials with the student. They will be asked to change password on first login.</p>
+        <h2 className="text-xl font-bold text-ink mb-2">{t("admin.credentials.title")}</h2>
+        <p className="text-sm text-accent-fg mb-4">{t("admin.credentials.hint")}</p>
 
         <div className="bg-violet-50 rounded-lg p-4 mb-4 font-mono text-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-accent-fg">Login ID:</span>
-            <span className="text-ink font-medium">{loginId}</span>
+            <span className="text-accent-fg">{t("admin.credentials.loginId")}</span>
+            <span className="text-ink font-medium" dir="ltr">{loginId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-accent-fg">Password:</span>
-            <span className="text-ink font-medium">{credentials.password}</span>
+            <span className="text-accent-fg">{t("admin.credentials.password")}</span>
+            <span className="text-ink font-medium" dir="ltr">{credentials.password}</span>
           </div>
         </div>
 
         <div className="flex gap-3">
           <Button onClick={copyToClipboard} variant="secondary" className="flex-1">
-            {copied ? "Copied!" : "Copy Credentials"}
+            {copied ? t("admin.credentials.copied") : t("admin.credentials.copy")}
           </Button>
           <Button onClick={() => { onClose(); navigate(`/admin/students/${studentId}`); }} className="flex-1">
-            Done
+            {t("admin.credentials.done")}
           </Button>
         </div>
       </div>
@@ -70,6 +72,7 @@ function selectClass(className = "") {
 }
 
 export default function StudentForm() {
+  const { t, te } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<StudentCreateRequest>(emptyForm);
@@ -84,9 +87,9 @@ export default function StudentForm() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [documents, setDocuments] = useState<{ name: string; file: File | null }[]>([
-    { name: "Birth Certificate", file: null },
-    { name: "Transfer Certificate", file: null },
-    { name: "Previous Report Card", file: null },
+    { name: "admin.studentForm.docBirth", file: null },
+    { name: "admin.studentForm.docTransfer", file: null },
+    { name: "admin.studentForm.docPrevReport", file: null },
   ]);
   const [uploading, setUploading] = useState(false);
 
@@ -129,7 +132,7 @@ export default function StudentForm() {
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to create student.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.studentForm.createFailed");
       setError(message);
     },
   });
@@ -142,7 +145,7 @@ export default function StudentForm() {
     e.preventDefault();
     setError(null);
     if (!form.academic_year_id || !form.class_id || !form.section_id) {
-      setError("Academic year, class and section are required.");
+      setError(t("admin.studentForm.requiredYCS"));
       return;
     }
     setUploading(true);
@@ -173,7 +176,7 @@ export default function StudentForm() {
       };
       mutation.mutate(payload);
     } catch {
-      setError("Failed to upload files.");
+      setError(t("admin.forms.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -188,44 +191,44 @@ export default function StudentForm() {
           onClose={() => setCredentials(null)}
         />
       )}
-      <PageHeader title="New Student" subtitle="Enroll a new student into an academic year, class and section." />
+      <PageHeader title={t("admin.studentForm.title")} subtitle={t("admin.studentForm.subtitle")} />
       <Card className="max-w-3xl">
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label>First Name *</Label>
+              <Label>{t("admin.forms.firstNameReq")}</Label>
               <Input required value={form.first_name} onChange={(e) => update("first_name", e.target.value)} />
             </div>
             <div>
-              <Label>Last Name *</Label>
+              <Label>{t("admin.forms.lastNameReq")}</Label>
               <Input required value={form.last_name} onChange={(e) => update("last_name", e.target.value)} />
             </div>
             <div>
-              <Label>Date of Birth</Label>
+              <Label>{t("admin.common.dob")}</Label>
               <Input type="date" value={form.dob ?? ""} onChange={(e) => update("dob", e.target.value)} />
             </div>
             <div>
-              <Label>Gender</Label>
+              <Label>{t("admin.common.gender")}</Label>
               <select className={selectClass()} value={form.gender ?? ""} onChange={(e) => update("gender", e.target.value)}>
-                <option value="">Select</option>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-                <option value="O">Other</option>
+                <option value="">{t("admin.common.select")}</option>
+                <option value="M">{t("admin.common.male")}</option>
+                <option value="F">{t("admin.common.female")}</option>
+                <option value="O">{t("admin.common.other")}</option>
               </select>
             </div>
             <div>
-              <Label>Blood Group</Label>
-              <Input value={form.blood_group ?? ""} onChange={(e) => update("blood_group", e.target.value)} placeholder="e.g. O+" />
+              <Label>{t("admin.studentForm.bloodGroup")}</Label>
+              <Input value={form.blood_group ?? ""} onChange={(e) => update("blood_group", e.target.value)} placeholder={t("admin.studentForm.bloodPlaceholder")} />
             </div>
             <div>
-              <Label>Admission Date</Label>
+              <Label>{t("admin.studentForm.admissionDate")}</Label>
               <Input type="date" value={form.admission_date ?? ""} onChange={(e) => update("admission_date", e.target.value)} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <Label>Academic Year *</Label>
+              <Label>{t("admin.studentForm.academicYearReq")}</Label>
               <select
                 className={selectClass()}
                 required
@@ -236,7 +239,7 @@ export default function StudentForm() {
                   update("section_id", "");
                 }}
               >
-                <option value="">Select year</option>
+                <option value="">{t("admin.studentForm.selectYear")}</option>
                 {(years ?? []).map((y) => (
                   <option key={y.id} value={y.id}>
                     {y.name}
@@ -245,12 +248,12 @@ export default function StudentForm() {
               </select>
               {!yearsLoading && (years ?? []).length === 0 && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  No academic years. <a href="/admin/academic-setup" className="underline">Create one first</a>
+                  {t("admin.studentForm.noYears")} <a href="/admin/academic-setup" className="underline">{t("admin.studentForm.createOneFirst")}</a>
                 </p>
               )}
             </div>
             <div>
-              <Label>Class *</Label>
+              <Label>{t("admin.studentForm.classReq")}</Label>
               <select
                 className={selectClass()}
                 required
@@ -261,24 +264,24 @@ export default function StudentForm() {
                   update("section_id", "");
                 }}
               >
-                <option value="">Select class</option>
+                <option value="">{t("admin.studentForm.selectClass")}</option>
                 {(classes ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {te("class", c.name)}
                   </option>
                 ))}
               </select>
               {form.academic_year_id && !classesLoading && (classes ?? []).length === 0 && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                   {(allClasses ?? []).length > 0
-                    ? "No classes for this academic year. Create classes for this year in Academic Setup."
-                    : <>No classes found. <a href="/admin/academic-setup" className="underline">Create classes first</a></>
+                    ? t("admin.studentForm.noClassesForYear")
+                    : <>{t("admin.studentForm.noClassesFound")} <a href="/admin/academic-setup" className="underline">{t("admin.forms.createClassesFirst")}</a></>
                   }
                 </p>
               )}
             </div>
             <div>
-              <Label>Section *</Label>
+              <Label>{t("admin.studentForm.sectionReq")}</Label>
               <select
                 className={selectClass()}
                 required
@@ -286,16 +289,16 @@ export default function StudentForm() {
                 disabled={!form.class_id}
                 onChange={(e) => update("section_id", e.target.value)}
               >
-                <option value="">Select section</option>
+                <option value="">{t("admin.studentForm.selectSection")}</option>
                 {(sections ?? []).map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name}
+                    {te("section", s.name)}
                   </option>
                 ))}
               </select>
               {form.class_id && !sectionsLoading && (sections ?? []).length === 0 && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  No sections for this class. <a href="/admin/academic-setup" className="underline">Create sections first</a>
+                  {t("admin.studentForm.noSectionsForClass")} <a href="/admin/academic-setup" className="underline">{t("admin.studentForm.createSectionsFirst")}</a>
                 </p>
               )}
             </div>
@@ -303,26 +306,26 @@ export default function StudentForm() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label>Phone</Label>
+              <Label>{t("admin.common.phone")}</Label>
               <Input value={form.phone ?? ""} onChange={(e) => update("phone", e.target.value)} />
             </div>
             <div>
-              <Label>Email</Label>
+              <Label>{t("common.email")}</Label>
               <Input type="email" value={form.email ?? ""} onChange={(e) => update("email", e.target.value)} />
             </div>
             <div className="sm:col-span-2">
-              <Label>Address</Label>
+              <Label>{t("admin.common.address")}</Label>
               <Input value={form.address ?? ""} onChange={(e) => update("address", e.target.value)} />
             </div>
           </div>
 
           {/* Photo Upload */}
           <div className="border-t border-line pt-4">
-            <Label>Student Photo</Label>
+            <Label>{t("admin.studentForm.photo")}</Label>
             <div className="flex items-center gap-4 mt-2">
               <div className="w-24 h-24 rounded-xl bg-violet-50 border-2 border-dashed border-line flex items-center justify-center overflow-hidden">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img src={photoPreview} alt={t("admin.forms.photoPreview")} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-ink-2 text-3xl">👤</span>
                 )}
@@ -334,18 +337,18 @@ export default function StudentForm() {
                   onChange={handlePhotoChange}
                   className="text-sm text-accent-fg file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-violet-100 file:text-ink-2 hover:file:bg-violet-200"
                 />
-                <p className="text-xs text-accent-fg mt-1">JPG, PNG up to 5MB</p>
+                <p className="text-xs text-accent-fg mt-1">{t("admin.forms.photoHint")}</p>
               </div>
             </div>
           </div>
 
           {/* Documents Upload */}
           <div className="border-t border-line pt-4">
-            <Label>Documents</Label>
+            <Label>{t("admin.forms.documents")}</Label>
             <div className="space-y-3 mt-2">
               {documents.map((doc, idx) => (
                 <div key={doc.name} className="flex items-center gap-3 p-3 bg-violet-50/50 rounded-lg">
-                  <span className="text-sm font-medium text-ink-2 w-40">{doc.name}</span>
+                  <span className="text-sm font-medium text-ink-2 w-40">{t(doc.name)}</span>
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
@@ -362,10 +365,10 @@ export default function StudentForm() {
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => navigate("/admin/students")}>
-              Cancel
+              {t("admin.common.cancel")}
             </Button>
             <Button type="submit" disabled={mutation.isPending || uploading}>
-              {uploading ? "Uploading..." : mutation.isPending ? "Creating..." : "Create Student"}
+              {uploading ? t("admin.forms.uploading") : mutation.isPending ? t("admin.forms.creating") : t("admin.studentForm.create")}
             </Button>
           </div>
         </form>

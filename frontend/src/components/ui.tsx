@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, LabelHTMLAttributes, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { clsx } from "clsx";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function Button({
   className = "",
@@ -27,6 +28,7 @@ export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInpu
 }
 
 export function PasswordInput({ className = "", ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  const { t } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   return (
     <div className="relative">
@@ -39,7 +41,7 @@ export function PasswordInput({ className = "", ...props }: Omit<InputHTMLAttrib
         type="button"
         onClick={() => setShowPassword(!showPassword)}
         disabled={props.disabled}
-        aria-label={showPassword ? "Hide password" : "Show password"}
+        aria-label={showPassword ? t("shell.common.hidePassword") : t("shell.common.showPassword")}
         className="absolute end-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-3 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
         {showPassword ? (
@@ -235,6 +237,7 @@ export function Modal({
   children: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
 }) {
+  const { t } = useLanguage();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -262,7 +265,7 @@ export function Modal({
           <h2 className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("shell.common.close")}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-3 text-ink-3 transition-all hover:scale-105 hover:text-ink"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

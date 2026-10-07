@@ -1,4 +1,5 @@
 import { Card, PageHeader, Spinner } from "../../components/ui";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { useMyTimetable, useSections, useSubjects, useClasses } from "./hooks";
 import { WEEKDAY_LABELS, type TimetableSlot } from "./types";
 import { Calendar, Clock, BookOpen, Users, ChevronRight } from "lucide-react";
@@ -14,6 +15,7 @@ const dayColors = [
 ];
 
 export default function TeacherTimetable() {
+  const { t, te } = useLanguage();
   const { data: slots, isLoading } = useMyTimetable();
   const { data: sections } = useSections();
   const { data: subjects } = useSubjects();
@@ -33,7 +35,7 @@ export default function TeacherTimetable() {
 
   return (
     <div className="animate-page-enter">
-      <PageHeader title="My Classes" subtitle="Your weekly timetable, grouped by day." />
+      <PageHeader title={t("teacher.timetable.pageTitle")} subtitle={t("teacher.timetable.pageSubtitle")} />
 
       {isLoading ? (
         <Card className="py-12 flex justify-center">
@@ -44,9 +46,9 @@ export default function TeacherTimetable() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10 flex items-center justify-center animate-float">
             <Calendar className="w-10 h-10 text-accent-fg" />
           </div>
-          <h3 className="text-xl font-bold text-ink dark:text-white mb-2">No Timetable Yet</h3>
+          <h3 className="text-xl font-bold text-ink dark:text-white mb-2">{t("teacher.timetable.noTimetable")}</h3>
           <p className="text-ink-3 max-w-md mx-auto">
-            No timetable slots have been assigned to you yet. Please contact your school administrator to set up your class schedule.
+            {t("teacher.timetable.noTimetableDesc")}
           </p>
         </Card>
       ) : (
@@ -54,9 +56,9 @@ export default function TeacherTimetable() {
           {/* Stats Summary */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[
-              { label: "Total Periods", value: totalPeriods, icon: Clock, color: "from-violet-500 to-purple-500" },
-              { label: "Subjects", value: uniqueSubjects, icon: BookOpen, color: "from-teal-500 to-cyan-500" },
-              { label: "Sections", value: uniqueSections, icon: Users, color: "from-pink-500 to-rose-500" },
+              { label: t("teacher.timetable.totalPeriods"), value: totalPeriods, icon: Clock, color: "from-violet-500 to-purple-500" },
+              { label: t("teacher.timetable.subjects"), value: uniqueSubjects, icon: BookOpen, color: "from-teal-500 to-cyan-500" },
+              { label: t("teacher.timetable.sections"), value: uniqueSections, icon: Users, color: "from-pink-500 to-rose-500" },
             ].map((stat, i) => (
               <div
                 key={stat.label}
@@ -84,8 +86,8 @@ export default function TeacherTimetable() {
                         <Calendar className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-white">{label}</h2>
-                        <p className="text-sm text-white/70">{byDay[dow].length} periods</p>
+                        <h2 className="text-lg font-bold text-white">{te("weekday", label)}</h2>
+                        <p className="text-sm text-white/70">{t("teacher.timetable.periodsCount", { n: byDay[dow].length })}</p>
                       </div>
                     </div>
                   </div>
@@ -112,21 +114,21 @@ export default function TeacherTimetable() {
                           <div className="flex items-center gap-2 min-w-[120px]">
                             <Clock className="w-4 h-4 text-ink-3" />
                             <span className="text-sm font-medium text-ink dark:text-white">
-                              {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                              <span dir="ltr">{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</span>
                             </span>
                           </div>
 
                           {/* Subject & Section */}
                           <div className="flex-1">
                             <p className="font-semibold text-ink dark:text-white">
-                              {subject?.name ?? "Unknown Subject"}
+                              {subject ? te("subject", subject.name) : t("teacher.timetable.unknownSubject")}
                             </p>
                             <p className="text-sm text-ink-3">
-                              {cls?.name} - {section?.name ?? "Unknown Section"}
+                              {te("class", cls?.name)} - {section ? te("section", section.name) : t("teacher.timetable.unknownSection")}
                             </p>
                           </div>
 
-                          <ChevronRight className="w-5 h-5 text-ink-3" />
+                          <ChevronRight className="w-5 h-5 text-ink-3 rtl:-scale-x-100" />
                         </div>
                       );
                     })}

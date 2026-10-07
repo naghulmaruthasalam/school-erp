@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface CalendarEvent {
   id: string;
@@ -12,6 +13,7 @@ interface CalendarEvent {
 }
 
 export default function SchoolCalendar() {
+  const { t, fmtDate } = useLanguage();
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const eventsQuery = useQuery({
@@ -37,15 +39,20 @@ export default function SchoolCalendar() {
     MEETING: "yellow",
   };
 
-  const formatDate = (date: string) => new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  const formatDate = (date: string) => fmtDate(date, { day: "numeric", month: "short" });
+  const typeLabel = (type: string) => {
+    const key = `principal.calendar.types.${type}`;
+    const label = t(key);
+    return label === key ? type : label;
+  };
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="School Calendar" subtitle="View upcoming events, holidays, and exams" />
+      <PageHeader title={t("principal.calendar.title")} subtitle={t("principal.calendar.subtitle")} />
 
       <Card className="mb-6">
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-ink-2">Month:</label>
+          <label className="text-sm font-medium text-ink-2">{t("principal.calendar.month")}</label>
           <input
             type="month"
             value={selectedMonth}
@@ -65,13 +72,13 @@ export default function SchoolCalendar() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-ink dark:text-white">{event.title}</h3>
-                    <Badge tone={eventTypeColors[event.event_type] || "gray"}>{event.event_type}</Badge>
+                    <Badge tone={eventTypeColors[event.event_type] || "gray"}>{typeLabel(event.event_type)}</Badge>
                   </div>
                   {event.description && (
                     <p className="text-sm text-ink-2">{event.description}</p>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <p className="text-sm font-medium text-accent-fg dark:text-accent-fg">
                     {formatDate(event.event_date)}
                   </p>
@@ -81,7 +88,7 @@ export default function SchoolCalendar() {
           ))}
           {eventsQuery.data?.length === 0 && (
             <Card>
-              <p className="text-center text-ink-3 py-8">No events scheduled for this month.</p>
+              <p className="text-center text-ink-3 py-8">{t("principal.calendar.empty")}</p>
             </Card>
           )}
         </div>

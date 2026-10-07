@@ -13,12 +13,12 @@ import {
 } from "./api";
 import { Card, ErrorText, PageHeader, Spinner, StatTile } from "../../components/ui";
 import { AttendanceAreaChart, AttendanceLineChart, FeeCollectionBarChart, StudentDistributionPie } from "../../components/Charts";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function PrincipalDashboard() {
+  const { t, fmtDate, fmtNumber } = useLanguage();
+  const formatDate = (iso: string) => fmtDate(iso, { month: "short", day: "numeric", year: "numeric" });
+  const pct = (present: number, total: number) => fmtNumber(Math.round((present / total) * 100));
   const studentsQuery = useQuery({ queryKey: ["principal", "students-count"], queryFn: countStudents });
   const teachersQuery = useQuery({ queryKey: ["principal", "teachers-count"], queryFn: countTeachers });
   const admissionsQuery = useQuery({ queryKey: ["principal", "pending-admissions"], queryFn: countPendingAdmissions });
@@ -41,33 +41,33 @@ export default function PrincipalDashboard() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Principal Dashboard" subtitle="Today's school-wide summary." />
+      <PageHeader title={t("principal.dashboard.title")} subtitle={t("principal.dashboard.subtitle")} />
 
-      {anyError && <ErrorText>Some data failed to load. Please refresh to try again.</ErrorText>}
+      {anyError && <ErrorText>{t("principal.dashboard.loadError")}</ErrorText>}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <StatTile
-            label="Active Students"
+            label={t("principal.dashboard.activeStudents")}
             value={studentsQuery.isLoading ? <Spinner /> : (studentsQuery.data ?? "—")}
           />
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
           <StatTile
-            label="Active Teachers"
+            label={t("principal.dashboard.activeTeachers")}
             value={teachersQuery.isLoading ? <Spinner /> : (teachersQuery.data ?? "—")}
           />
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           <StatTile
-            label="Pending Admissions"
+            label={t("principal.dashboard.pendingAdmissions")}
             value={admissionsQuery.isLoading ? <Spinner /> : (admissionsQuery.data ?? "—")}
-            hint="Status: SUBMITTED"
+            hint={t("principal.dashboard.statusSubmitted")}
           />
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
           <StatTile
-            label="Upcoming Exams"
+            label={t("principal.dashboard.upcomingExams")}
             value={examsQuery.isLoading ? <Spinner /> : (examsQuery.data?.total ?? "—")}
           />
         </div>
@@ -76,26 +76,26 @@ export default function PrincipalDashboard() {
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
           <Card>
-            <p className="text-sm font-medium text-ink mb-4">Attendance Trend (14 days)</p>
+            <p className="text-sm font-medium text-ink mb-4">{t("principal.dashboard.attendanceTrend")}</p>
             {attendanceTrendQuery.isLoading ? (
               <div className="flex h-[250px] items-center justify-center"><Spinner /></div>
             ) : attendanceTrendQuery.data && attendanceTrendQuery.data.length > 0 ? (
               <AttendanceLineChart data={attendanceTrendQuery.data} />
             ) : (
-              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">No attendance data available.</p>
+              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">{t("principal.dashboard.noAttendanceData")}</p>
             )}
           </Card>
         </div>
 
         <div className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
           <Card>
-            <p className="text-sm font-medium text-ink mb-4">Fee Collection (6 months)</p>
+            <p className="text-sm font-medium text-ink mb-4">{t("principal.dashboard.feeCollection")}</p>
             {feeCollectionQuery.isLoading ? (
               <div className="flex h-[250px] items-center justify-center"><Spinner /></div>
             ) : feeCollectionQuery.data && feeCollectionQuery.data.length > 0 ? (
               <FeeCollectionBarChart data={feeCollectionQuery.data} />
             ) : (
-              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">No payment data available.</p>
+              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">{t("principal.dashboard.noPaymentData")}</p>
             )}
           </Card>
         </div>
@@ -104,26 +104,26 @@ export default function PrincipalDashboard() {
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
           <Card>
-            <p className="text-sm font-medium text-ink mb-4">Students by Class</p>
+            <p className="text-sm font-medium text-ink mb-4">{t("principal.dashboard.studentsByClass")}</p>
             {studentDistQuery.isLoading ? (
               <div className="flex h-[250px] items-center justify-center"><Spinner /></div>
             ) : studentDistQuery.data && studentDistQuery.data.length > 0 ? (
               <StudentDistributionPie data={studentDistQuery.data} />
             ) : (
-              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">No student data available.</p>
+              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">{t("principal.dashboard.noStudentData")}</p>
             )}
           </Card>
         </div>
 
         <div className="animate-fade-in-up lg:col-span-2" style={{ animationDelay: "0.45s" }}>
           <Card>
-            <p className="text-sm font-medium text-ink mb-4">Weekly Attendance (Present vs Absent)</p>
+            <p className="text-sm font-medium text-ink mb-4">{t("principal.dashboard.weeklyAttendance")}</p>
             {attendanceDailyQuery.isLoading ? (
               <div className="flex h-[250px] items-center justify-center"><Spinner /></div>
             ) : attendanceDailyQuery.data && attendanceDailyQuery.data.length > 0 ? (
               <AttendanceAreaChart data={attendanceDailyQuery.data} />
             ) : (
-              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">No attendance data available.</p>
+              <p className="text-sm text-accent-fg h-[250px] flex items-center justify-center">{t("principal.dashboard.noAttendanceData")}</p>
             )}
           </Card>
         </div>
@@ -132,25 +132,25 @@ export default function PrincipalDashboard() {
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
           <Card>
-            <p className="text-sm font-medium text-ink">Today's Student Attendance</p>
+            <p className="text-sm font-medium text-ink">{t("principal.dashboard.todayStudentAttendance")}</p>
             {studentAttendanceQuery.isLoading ? (
               <Spinner className="mt-3" />
             ) : studentAttendanceQuery.data ? (
               studentAttendanceQuery.data.totalMarked === 0 ? (
-                <p className="mt-2 text-sm text-accent-fg">No attendance has been marked yet today.</p>
+                <p className="mt-2 text-sm text-accent-fg">{t("principal.dashboard.noStudentMarked")}</p>
               ) : studentAttendanceQuery.data.complete ? (
                 <>
                   <p className="mt-1 text-2xl font-semibold text-ink">
-                    {Math.round((studentAttendanceQuery.data.presentCount / studentAttendanceQuery.data.totalMarked) * 100)}% present
+                    {t("principal.dashboard.percentPresent", { pct: pct(studentAttendanceQuery.data.presentCount, studentAttendanceQuery.data.totalMarked) })}
                   </p>
                   <p className="mt-1 text-xs text-accent-fg">
-                    {studentAttendanceQuery.data.presentCount} of {studentAttendanceQuery.data.totalMarked} records marked today
+                    {t("principal.dashboard.presentOfMarked", { present: studentAttendanceQuery.data.presentCount, total: studentAttendanceQuery.data.totalMarked })}
                   </p>
                 </>
               ) : (
                 <>
                   <p className="mt-1 text-2xl font-semibold text-ink">{studentAttendanceQuery.data.totalMarked}</p>
-                  <p className="mt-1 text-xs text-accent-fg">records marked today</p>
+                  <p className="mt-1 text-xs text-accent-fg">{t("principal.dashboard.recordsMarked")}</p>
                 </>
               )
             ) : null}
@@ -159,25 +159,25 @@ export default function PrincipalDashboard() {
 
         <div className="animate-fade-in-up" style={{ animationDelay: "0.55s" }}>
           <Card>
-            <p className="text-sm font-medium text-ink">Today's Staff Attendance</p>
+            <p className="text-sm font-medium text-ink">{t("principal.dashboard.todayStaffAttendance")}</p>
             {staffAttendanceQuery.isLoading ? (
               <Spinner className="mt-3" />
             ) : staffAttendanceQuery.data ? (
               staffAttendanceQuery.data.totalMarked === 0 ? (
-                <p className="mt-2 text-sm text-accent-fg">No staff attendance has been marked yet today.</p>
+                <p className="mt-2 text-sm text-accent-fg">{t("principal.dashboard.noStaffMarked")}</p>
               ) : staffAttendanceQuery.data.complete ? (
                 <>
                   <p className="mt-1 text-2xl font-semibold text-ink">
-                    {Math.round((staffAttendanceQuery.data.presentCount / staffAttendanceQuery.data.totalMarked) * 100)}% present
+                    {t("principal.dashboard.percentPresent", { pct: pct(staffAttendanceQuery.data.presentCount, staffAttendanceQuery.data.totalMarked) })}
                   </p>
                   <p className="mt-1 text-xs text-accent-fg">
-                    {staffAttendanceQuery.data.presentCount} of {staffAttendanceQuery.data.totalMarked} records marked today
+                    {t("principal.dashboard.presentOfMarked", { present: staffAttendanceQuery.data.presentCount, total: staffAttendanceQuery.data.totalMarked })}
                   </p>
                 </>
               ) : (
                 <>
                   <p className="mt-1 text-2xl font-semibold text-ink">{staffAttendanceQuery.data.totalMarked}</p>
-                  <p className="mt-1 text-xs text-accent-fg">records marked today</p>
+                  <p className="mt-1 text-xs text-accent-fg">{t("principal.dashboard.recordsMarked")}</p>
                 </>
               )
             ) : null}
@@ -187,7 +187,7 @@ export default function PrincipalDashboard() {
 
       <div className="animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
         <Card>
-          <p className="mb-3 text-sm font-medium text-ink">Upcoming Exams</p>
+          <p className="mb-3 text-sm font-medium text-ink">{t("principal.dashboard.upcomingExams")}</p>
           {examsQuery.isLoading ? (
             <Spinner />
           ) : examsQuery.data && examsQuery.data.items.length > 0 ? (
@@ -202,7 +202,7 @@ export default function PrincipalDashboard() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-accent-fg">No exams scheduled.</p>
+            <p className="text-sm text-accent-fg">{t("principal.dashboard.noExams")}</p>
           )}
         </Card>
       </div>

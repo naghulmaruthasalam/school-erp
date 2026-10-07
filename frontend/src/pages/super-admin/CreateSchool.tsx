@@ -3,9 +3,11 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Card, ErrorText, Input, Label, PageHeader } from "../../components/ui";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { createSchool } from "./api";
 
 export default function CreateSchool() {
+  const { t } = useLanguage();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [adminFullName, setAdminFullName] = useState("");
@@ -22,7 +24,7 @@ export default function CreateSchool() {
         admin_email: adminEmail,
       }),
     onSuccess: (res) => {
-      setSuccessMessage(`School "${res.school.name}" created with code ${res.school.code}. Admin login provisioned for ${res.admin_email}.`);
+      setSuccessMessage(t("superAdmin.create.success", { name: res.school.name, code: res.school.code, email: res.admin_email }));
     },
   });
 
@@ -34,7 +36,7 @@ export default function CreateSchool() {
   if (successMessage) {
     return (
       <div>
-        <PageHeader title="Create School" />
+        <PageHeader title={t("superAdmin.create.title")} />
         <Card className="max-w-lg">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -45,10 +47,10 @@ export default function CreateSchool() {
             <p className="text-sm font-medium text-green-700">{successMessage}</p>
           </div>
           <p className="text-xs text-ink-3 mb-4">
-            The school admin will receive their login credentials via email. They can then complete the school profile with address, contact details, and other information.
+            {t("superAdmin.create.successHint")}
           </p>
           <div className="flex gap-3">
-            <Button onClick={() => navigate("/super-admin")}>Back to Dashboard</Button>
+            <Button onClick={() => navigate("/super-admin")}>{t("superAdmin.create.backToDashboard")}</Button>
             <Button
               variant="secondary"
               onClick={() => {
@@ -59,7 +61,7 @@ export default function CreateSchool() {
                 setSuccessMessage(null);
               }}
             >
-              Create Another
+              {t("superAdmin.create.createAnother")}
             </Button>
           </div>
         </Card>
@@ -69,45 +71,46 @@ export default function CreateSchool() {
 
   return (
     <div>
-      <PageHeader title="Create School" subtitle="Quickly onboard a new school with minimal details. The school admin can complete their profile later." />
+      <PageHeader title={t("superAdmin.create.title")} subtitle={t("superAdmin.create.subtitle")} />
       <Card className="max-w-lg">
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-ink dark:text-white">School</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink dark:text-white">{t("superAdmin.create.school")}</h2>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">School name *</Label>
-                <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Green Hills Academy" />
+                <Label htmlFor="name">{t("superAdmin.create.schoolName")}</Label>
+                <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder={t("superAdmin.create.schoolNamePlaceholder")} />
               </div>
               <div>
-                <Label htmlFor="code">School code *</Label>
+                <Label htmlFor="code">{t("superAdmin.create.schoolCode")}</Label>
                 <Input
                   id="code"
                   required
-                  placeholder="e.g. GHS2026"
+                  placeholder="GHS2026"
+                  dir="ltr"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                 />
-                <p className="mt-1 text-xs text-ink-3">Unique identifier for the school. Used for login.</p>
+                <p className="mt-1 text-xs text-ink-3">{t("superAdmin.create.codeHint")}</p>
               </div>
             </div>
           </div>
 
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-ink dark:text-white">School Admin</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink dark:text-white">{t("superAdmin.create.schoolAdmin")}</h2>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="admin_full_name">Full name *</Label>
+                <Label htmlFor="admin_full_name">{t("superAdmin.create.fullName")}</Label>
                 <Input
                   id="admin_full_name"
                   required
                   value={adminFullName}
                   onChange={(e) => setAdminFullName(e.target.value)}
-                  placeholder="Admin's full name"
+                  placeholder={t("superAdmin.create.fullNamePlaceholder")}
                 />
               </div>
               <div>
-                <Label htmlFor="admin_email">Email *</Label>
+                <Label htmlFor="admin_email">{t("superAdmin.create.email")}</Label>
                 <Input
                   id="admin_email"
                   type="email"
@@ -115,25 +118,26 @@ export default function CreateSchool() {
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   placeholder="admin@school.com"
+                  dir="ltr"
                 />
-                <p className="mt-1 text-xs text-ink-3">Login credentials will be sent to this email.</p>
+                <p className="mt-1 text-xs text-ink-3">{t("superAdmin.create.emailHint")}</p>
               </div>
             </div>
           </div>
 
           <ErrorText>
             {mutation.isError
-              ? "Failed to create school. Check the code is unique and all required fields are filled."
+              ? t("superAdmin.create.error")
               : ""}
           </ErrorText>
 
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Creating..." : "Create School"}
+              {mutation.isPending ? t("superAdmin.create.creating") : t("superAdmin.create.title")}
             </Button>
             <Link to="/super-admin">
               <Button type="button" variant="secondary">
-                Cancel
+                {t("common.cancel")}
               </Button>
             </Link>
           </div>

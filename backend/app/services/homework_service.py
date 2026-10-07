@@ -113,6 +113,14 @@ async def _resolve_section_subject_teacher(school_id: str, section_id: str, subj
     return slot.teacher_id if slot is not None else None
 
 
+async def _stored_chapter_name(school_id: str, section_id: str, subject_id: str, chapter: str | None) -> str | None:
+    """A chapter picked in Arabic is filed under its stored (English) name, so every language finds the same homework."""
+    from app.services import syllabus_service
+
+    found = await syllabus_service.find_chapter(school_id, section_id, subject_id, chapter)
+    return found.name if found else (chapter or None)
+
+
 async def create_homework(current: CurrentUser, payload: HomeworkCreateRequest) -> HomeworkOut:
     if current.role not in _STAFF_WRITE_ROLES:
         raise PermissionDeniedError("Only teachers or school admins/principals can create homework")
@@ -139,7 +147,7 @@ async def create_homework(current: CurrentUser, payload: HomeworkCreateRequest) 
         teacher_id=teacher_id,
         title=payload.title,
         description=payload.description,
-        chapter=payload.chapter,
+        chapter=await _stored_chapter_name(current.school_id, payload.section_id, payload.subject_id, payload.chapter),
         attachment_document_ids=payload.attachment_document_ids,
         assigned_date=payload.assigned_date,
         due_date=payload.due_date,
@@ -246,6 +254,8 @@ async def update_homework(current: CurrentUser, homework_id: str, payload: Homew
 
     data = payload.model_dump(exclude_unset=True)
     for field, value in data.items():
+        if field == "chapter":
+            value = await _stored_chapter_name(current.school_id, homework.section_id, homework.subject_id, value)
         setattr(homework, field, value)
     homework.updated_at = utcnow()
     await homework.save()

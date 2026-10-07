@@ -6,6 +6,7 @@ import { openDocument } from "../../api/files";
 import { fetchSectionRoster, getHomework, listHomeworkSubmissions } from "./api";
 import { sectionLabel, useClasses, useSections, useSubjects } from "./hooks";
 import type { HomeworkSubmissionStatus } from "./types";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 const STATUS_TONE: Record<HomeworkSubmissionStatus, "gray" | "green" | "yellow"> = {
   PENDING: "gray",
@@ -15,6 +16,7 @@ const STATUS_TONE: Record<HomeworkSubmissionStatus, "gray" | "green" | "yellow">
 
 export default function TeacherHomeworkSubmissions() {
   const { homeworkId } = useParams<{ homeworkId: string }>();
+  const { t, te, fmtDate } = useLanguage();
   const { data: sections } = useSections();
   const { data: classes } = useClasses();
   const { data: subjects } = useSubjects();
@@ -42,17 +44,17 @@ export default function TeacherHomeworkSubmissions() {
   return (
     <div>
       <PageHeader
-        title={homework ? homework.title : "Homework Submissions"}
+        title={homework ? homework.title : t("teacher.homeworkSubmissions.title")}
         subtitle={
           homework
-            ? `${sectionLabel(homework.section_id, sections, classes)} — ${
-                subjects?.find((s) => s.id === homework.subject_id)?.name ?? homework.subject_id
+            ? `${sectionLabel(homework.section_id, sections, classes, te)} — ${
+                te("subject", subjects?.find((s) => s.id === homework.subject_id)?.name) || homework.subject_id
               }`
             : undefined
         }
         actions={
           <Link to="/teacher/homework" className="text-sm text-accent-fg hover:underline">
-            Back to Homework
+            {t("teacher.homeworkSubmissions.back")}
           </Link>
         }
       />
@@ -61,7 +63,7 @@ export default function TeacherHomeworkSubmissions() {
         <Card className="mb-6">
           <p className="text-sm text-ink-2">{homework.description}</p>
           <p className="mt-2 text-xs text-accent-fg">
-            Assigned {homework.assigned_date} — Due {homework.due_date}
+            {t("teacher.homeworkSubmissions.assignedDue", { assigned: fmtDate(homework.assigned_date), due: fmtDate(homework.due_date) })}
           </p>
         </Card>
       )}
@@ -74,22 +76,22 @@ export default function TeacherHomeworkSubmissions() {
         <DataTable
           rowKey={(row) => row.id}
           rows={submissionsQuery.data ?? []}
-          emptyLabel="No submissions found."
+          emptyLabel={t("teacher.homeworkSubmissions.empty")}
           columns={[
             {
-              header: "Student",
+              header: t("teacher.homeworkSubmissions.student"),
               cell: (r) => rosterQuery.data?.find((s) => s.id === r.student_id)?.full_name ?? r.student_id,
             },
             {
-              header: "Status",
-              cell: (r) => <Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge>,
+              header: t("teacher.homeworkSubmissions.status"),
+              cell: (r) => <Badge tone={STATUS_TONE[r.status]}>{te("status", r.status)}</Badge>,
             },
             {
-              header: "Submitted At",
-              cell: (r) => (r.submitted_at ? new Date(r.submitted_at).toLocaleString() : "—"),
+              header: t("teacher.homeworkSubmissions.submittedAt"),
+              cell: (r) => (r.submitted_at ? fmtDate(r.submitted_at, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"),
             },
             {
-              header: "Attachments",
+              header: t("teacher.homeworkSubmissions.attachments"),
               cell: (r) =>
                 r.attachment_document_ids.length === 0 ? (
                   "—"
@@ -97,13 +99,13 @@ export default function TeacherHomeworkSubmissions() {
                   <span className="flex flex-wrap gap-2">
                     {r.attachment_document_ids.map((docId, i) => (
                       <button key={docId} type="button" className="text-accent-fg hover:underline" onClick={() => void openDocument(docId)}>
-                        File {i + 1}
+                        {t("teacher.homeworkSubmissions.file", { n: i + 1 })}
                       </button>
                     ))}
                   </span>
                 ),
             },
-            { header: "Remarks", cell: (r) => r.remarks ?? "—" },
+            { header: t("teacher.homeworkSubmissions.remarks"), cell: (r) => r.remarks ?? "—" },
           ]}
         />
       )}

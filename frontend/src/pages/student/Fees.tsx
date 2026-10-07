@@ -2,12 +2,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Badge, Button, Card, ErrorText, PageHeader, StatTile } from "../../components/ui";
 import { DataTable, type Column } from "../../components/DataTable";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { fetchInvoices, initiatePayUPayment } from "./api";
 import type { Invoice, InvoiceStatus, PayUInitiateResponse } from "./types";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-}
 
 function formatCurrency(amount: number): string {
   return `₹${amount.toLocaleString("en-IN")}`;
@@ -76,6 +73,7 @@ function usePaymentReturnBanner() {
 }
 
 function PayNowButton({ invoice }: { invoice: Invoice }) {
+  const { t } = useLanguage();
   const [error, setError] = useState("");
   const [isPaying, setIsPaying] = useState(false);
 
@@ -90,7 +88,7 @@ function PayNowButton({ invoice }: { invoice: Invoice }) {
       });
       submitPayUForm(payu); // navigates the browser to PayU — nothing runs after this
     } catch {
-      setError("Could not start the payment. Online payments may not be configured for this school yet — please contact the office.");
+      setError(t("student.fees.payError"));
       setIsPaying(false);
     }
   }
@@ -98,7 +96,7 @@ function PayNowButton({ invoice }: { invoice: Invoice }) {
   return (
     <div>
       <Button onClick={handlePay} disabled={isPaying}>
-        {isPaying ? "Redirecting…" : "Pay Now"}
+        {isPaying ? t("student.fees.redirecting") : t("fees.payNow")}
       </Button>
       {error && <ErrorText>{error}</ErrorText>}
     </div>
@@ -106,6 +104,7 @@ function PayNowButton({ invoice }: { invoice: Invoice }) {
 }
 
 export default function StudentFees() {
+  const { t, te, fmtDate } = useLanguage();
   const banner = usePaymentReturnBanner();
 
   const invoicesQuery = useQuery({
@@ -118,11 +117,18 @@ export default function StudentFees() {
   const totalPaid = invoices.reduce((sum, inv) => sum + inv.amount_paid, 0);
 
   const columns: Column<Invoice>[] = [
-    { header: "Due Date", cell: (row) => formatDate(row.due_date) },
-    { header: "Total", cell: (row) => formatCurrency(row.total_amount) },
-    { header: "Paid", cell: (row) => formatCurrency(row.amount_paid) },
-    { header: "Outstanding", cell: (row) => formatCurrency(row.outstanding_amount) },
-    { header: "Status", cell: (row) => <Badge tone={STATUS_TONE[row.status]}>{row.status.replace("_", " ")}</Badge> },
+    { header: t("fees.dueDate"), cell: (row) => fmtDate(row.due_date) },
+    { header: t("student.fees.total"), cell: (row) => formatCurrency(row.total_amount) },
+    { header: t("fees.paid"), cell: (row) => formatCurrency(row.amount_paid) },
+    { header: t("student.fees.outstanding"), cell: (row) => formatCurrency(row.outstanding_amount) },
+    {
+      header: t("fees.status"),
+      cell: (row) => (
+        <Badge tone={STATUS_TONE[row.status]}>
+          {row.status === "PARTIALLY_PAID" ? t("fees.partiallyPaid") : te("status", row.status.replace("_", " "))}
+        </Badge>
+      ),
+    },
     {
       header: "",
       cell: (row) =>
@@ -132,23 +138,23 @@ export default function StudentFees() {
 
   return (
     <div>
-      <PageHeader title="Fees" subtitle="Your fee invoices and outstanding balance." />
+      <PageHeader title={t("navigation.fees")} subtitle={t("student.fees.subtitle")} />
 
       {banner === "success" && (
         <Card className="mb-4 border-green-200 bg-green-50">
-          <p className="text-sm text-green-700">Payment successful — thank you!</p>
+          <p className="text-sm text-green-700">{t("student.fees.paySuccess")}</p>
         </Card>
       )}
       {banner === "failed" && (
         <Card className="mb-4 border-red-200 bg-red-50">
-          <p className="text-sm text-red-700">Payment was not completed. Please try again.</p>
+          <p className="text-sm text-red-700">{t("student.fees.payFailed")}</p>
         </Card>
       )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatTile label="Outstanding" value={formatCurrency(totalOutstanding)} />
-        <StatTile label="Paid to Date" value={formatCurrency(totalPaid)} />
-        <StatTile label="Invoices" value={invoices.length} />
+        <StatTile label={t("student.fees.outstanding")} value={formatCurrency(totalOutstanding)} />
+        <StatTile label={t("student.fees.paidToDate")} value={formatCurrency(totalPaid)} />
+        <StatTile label={t("student.fees.invoices")} value={invoices.length} />
       </div>
 
       <DataTable
@@ -156,7 +162,7 @@ export default function StudentFees() {
         rows={invoices}
         isLoading={invoicesQuery.isLoading}
         rowKey={(row) => row.id}
-        emptyLabel="No invoices found."
+        emptyLabel={t("student.fees.empty")}
       />
     </div>
   );

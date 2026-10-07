@@ -5,6 +5,7 @@ import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { ExamSubjectsPanel } from "../../components/ExamSubjectsPanel";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Exam {
   id: string;
@@ -27,6 +28,7 @@ interface Class {
 }
 
 export default function ExamManagement() {
+  const { t, te, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [openExamId, setOpenExamId] = useState<string | null>(null);
@@ -76,81 +78,86 @@ export default function ExamManagement() {
     },
   });
 
-  const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || id;
+  const getClassName = (id: string) => te("class", classesQuery.data?.find((c) => c.id === id)?.name || id);
   const getYearName = (id: string) => yearsQuery.data?.find((y) => y.id === id)?.name || id;
 
   const examTypes = [
-    { value: "UNIT_TEST", label: "Unit Test" },
-    { value: "QUARTERLY", label: "Quarterly Exam" },
-    { value: "HALF_YEARLY", label: "Half Yearly Exam" },
-    { value: "ANNUAL", label: "Annual Exam" },
-    { value: "PRELIMS", label: "Preliminary Exam" },
+    { value: "UNIT_TEST", label: t("principal.exams.terms.UNIT_TEST") },
+    { value: "QUARTERLY", label: t("principal.exams.terms.QUARTERLY") },
+    { value: "HALF_YEARLY", label: t("principal.exams.terms.HALF_YEARLY") },
+    { value: "ANNUAL", label: t("principal.exams.terms.ANNUAL") },
+    { value: "PRELIMS", label: t("principal.exams.terms.PRELIMS") },
   ];
+  const termLabel = (term: string) => {
+    const key = `principal.exams.terms.${term.trim().toUpperCase().replace(/\s+/g, "_")}`;
+    const label = t(key);
+    return label === key ? term : label;
+  };
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Examination Management" subtitle="Schedule and manage school examinations">
-        <Button onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "Schedule Exam"}</Button>
+      <PageHeader title={t("principal.exams.title")} subtitle={t("principal.exams.subtitle")}>
+        <Button onClick={() => setShowForm(!showForm)}>{showForm ? t("common.cancel") : t("principal.exams.schedule")}</Button>
       </PageHeader>
 
       {showForm && (
         <Card className="mb-6">
-          <h3 className="font-semibold text-ink dark:text-white mb-4">Schedule New Examination</h3>
+          <h3 className="font-semibold text-ink dark:text-white mb-4">{t("principal.exams.scheduleNew")}</h3>
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Exam Name</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.exams.examName")}</label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink dark:text-white focus:border-accent focus:outline-none"
-                  placeholder="e.g., First Unit Test"
+                  placeholder={t("principal.exams.examNamePlaceholder")}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Exam Type</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.exams.examType")}</label>
                 <select
                   value={form.term}
                   onChange={(e) => setForm({ ...form, term: e.target.value })}
                   className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink dark:text-white focus:border-accent focus:outline-none"
                 >
-                  {examTypes.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                  {examTypes.map((type) => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Academic Year</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.exams.academicYear")}</label>
                 <select
                   value={form.academic_year_id}
                   onChange={(e) => setForm({ ...form, academic_year_id: e.target.value })}
                   className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink dark:text-white focus:border-accent focus:outline-none"
                   required
                 >
-                  <option value="">Select Academic Year</option>
+                  <option value="">{t("principal.exams.selectYear")}</option>
                   {yearsQuery.data?.map((y) => (
                     <option key={y.id} value={y.id}>{y.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.common.class")}</label>
                 <select
                   value={form.class_id}
                   onChange={(e) => setForm({ ...form, class_id: e.target.value })}
                   className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink dark:text-white focus:border-accent focus:outline-none"
                   required
                 >
-                  <option value="">Select Class</option>
+                  <option value="">{t("principal.exams.selectClass")}</option>
                   {classesQuery.data?.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>{te("class", c.name)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Start Date</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.exams.startDate")}</label>
                 <input
                   type="date"
                   value={form.start_date}
@@ -160,7 +167,7 @@ export default function ExamManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">End Date</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.exams.endDate")}</label>
                 <input
                   type="date"
                   value={form.end_date}
@@ -172,10 +179,10 @@ export default function ExamManagement() {
             </div>
             <div className="flex gap-2">
               <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Scheduling..." : "Schedule Exam"}
+                {createMutation.isPending ? t("principal.exams.scheduling") : t("principal.exams.schedule")}
               </Button>
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </form>
@@ -193,20 +200,20 @@ export default function ExamManagement() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-ink dark:text-white">{exam.name}</h3>
                     <Badge tone={EXAM_STATUS_TONE[examStatus(exam.start_date, exam.end_date)]}>
-                      {examStatus(exam.start_date, exam.end_date).replace("_", " ")}
+                      {te("status", examStatus(exam.start_date, exam.end_date).replace("_", " "))}
                     </Badge>
-                    {exam.term && <Badge tone="violet">{exam.term}</Badge>}
+                    {exam.term && <Badge tone="violet">{termLabel(exam.term)}</Badge>}
                   </div>
                   <p className="text-sm text-ink-2">
                     {(exam.class_ids ?? []).map(getClassName).join(", ")} • {getYearName(exam.academic_year_id)}
                   </p>
                   <p className="text-xs text-ink-3">
-                    {new Date(exam.start_date).toLocaleDateString()} - {new Date(exam.end_date).toLocaleDateString()}
+                    {fmtDate(exam.start_date)} - {fmtDate(exam.end_date)}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="secondary" onClick={() => setOpenExamId(openExamId === exam.id ? null : exam.id)}>
-                    {openExamId === exam.id ? "Hide subjects" : "Subjects & marks"}
+                    {openExamId === exam.id ? t("principal.exams.hideSubjects") : t("principal.exams.subjectsMarks")}
                   </Button>
                 </div>
               </div>
@@ -215,7 +222,7 @@ export default function ExamManagement() {
           ))}
           {examsQuery.data?.items.length === 0 && (
             <Card>
-              <p className="text-center text-ink-3 py-8">No exams scheduled yet. Click "Schedule Exam" to create one.</p>
+              <p className="text-center text-ink-3 py-8">{t("principal.exams.empty")}</p>
             </Card>
           )}
         </div>

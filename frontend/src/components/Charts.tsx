@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useLanguage } from "../i18n/LanguageContext";
 
 /* Chart colours come from the design tokens so they follow theme + role accent. */
 const ACCENT = "var(--accent)";
@@ -52,6 +53,7 @@ interface ChartProps {
 }
 
 export function AttendanceLineChart({ data, height = 250 }: ChartProps) {
+  const { t } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -12 }}>
@@ -68,6 +70,7 @@ export function AttendanceLineChart({ data, height = 250 }: ChartProps) {
         <Area
           type="monotone"
           dataKey="percentage"
+          name={t("shell.charts.attendance")}
           stroke={ACCENT}
           strokeWidth={2.5}
           fill="url(#lgLineFill)"
@@ -80,6 +83,7 @@ export function AttendanceLineChart({ data, height = 250 }: ChartProps) {
 }
 
 export function FeeCollectionBarChart({ data, height = 250 }: ChartProps) {
+  const { t, te, fmtNumber } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -4 }} barCategoryGap="28%">
@@ -90,11 +94,11 @@ export function FeeCollectionBarChart({ data, height = 250 }: ChartProps) {
           </linearGradient>
         </defs>
         {grid}
-        <XAxis dataKey="month" {...axisProps} />
+        <XAxis dataKey="month" {...axisProps} tickFormatter={(v) => te("month", String(v))} />
         <YAxis {...axisProps} />
         <Tooltip
           {...tooltipProps}
-          formatter={(value) => [`₹${Number(value).toLocaleString()}`, "Collected"]}
+          formatter={(value) => [`₹${fmtNumber(Number(value))}`, t("shell.charts.collected")]}
         />
         <Bar dataKey="amount" fill="url(#lgBarFill)" radius={[10, 10, 4, 4]} />
       </BarChart>
@@ -103,6 +107,7 @@ export function FeeCollectionBarChart({ data, height = 250 }: ChartProps) {
 }
 
 export function StudentDistributionPie({ data, height = 250 }: ChartProps) {
+  const { te, fmtNumber } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <PieChart>
@@ -117,7 +122,7 @@ export function StudentDistributionPie({ data, height = 250 }: ChartProps) {
           stroke="none"
           dataKey="value"
           nameKey="name"
-          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+          label={({ name, percent }) => `${te("other", String(name ?? ""))} ${fmtNumber(Math.round((percent ?? 0) * 100))}%`}
           labelLine={false}
         >
           {data.map((_, index) => (
@@ -125,13 +130,14 @@ export function StudentDistributionPie({ data, height = 250 }: ChartProps) {
           ))}
         </Pie>
         <Tooltip {...tooltipProps} />
-        <Legend iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ink-2)" }} />
+        <Legend iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ink-2)" }} formatter={(v) => te("other", String(v))} />
       </PieChart>
     </ResponsiveContainer>
   );
 }
 
 export function AttendanceAreaChart({ data, height = 250 }: ChartProps) {
+  const { t } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -12 }}>
@@ -150,21 +156,22 @@ export function AttendanceAreaChart({ data, height = 250 }: ChartProps) {
         <YAxis {...axisProps} />
         <Tooltip {...tooltipProps} />
         <Legend iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ink-2)" }} />
-        <Area type="monotone" dataKey="present" stroke="#30c25a" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPresent)" />
-        <Area type="monotone" dataKey="absent" stroke="#ff453a" strokeWidth={2.5} fillOpacity={1} fill="url(#colorAbsent)" />
+        <Area type="monotone" dataKey="present" name={t("attendance.present")} stroke="#30c25a" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPresent)" />
+        <Area type="monotone" dataKey="absent" name={t("attendance.absent")} stroke="#ff453a" strokeWidth={2.5} fillOpacity={1} fill="url(#colorAbsent)" />
       </AreaChart>
     </ResponsiveContainer>
   );
 }
 
 export function HomeworkCompletionChart({ data, height = 200 }: ChartProps) {
+  const { t, te, fmtNumber } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 60 }} barCategoryGap="30%">
         <CartesianGrid strokeDasharray="2 6" stroke={GRID} horizontal={false} />
         <XAxis type="number" {...axisProps} domain={[0, 100]} />
-        <YAxis dataKey="subject" type="category" {...axisProps} />
-        <Tooltip {...tooltipProps} formatter={(value) => [`${value}%`, "Completion"]} />
+        <YAxis dataKey="subject" type="category" {...axisProps} tickFormatter={(v) => te("subject", String(v))} />
+        <Tooltip {...tooltipProps} formatter={(value) => [`${fmtNumber(Number(value))}%`, t("shell.charts.completion")]} />
         <Bar dataKey="completion" fill={ACCENT} radius={[4, 10, 10, 4]} />
       </BarChart>
     </ResponsiveContainer>
@@ -172,14 +179,15 @@ export function HomeworkCompletionChart({ data, height = 200 }: ChartProps) {
 }
 
 export function ClassFeeBarChart({ data, height = 250 }: ChartProps) {
+  const { t, te, fmtNumber } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -4 }} barCategoryGap="28%">
         {grid}
-        <XAxis dataKey="name" {...axisProps} />
+        <XAxis dataKey="name" {...axisProps} tickFormatter={(v) => te("class", String(v))} />
         <YAxis {...axisProps} />
-        <Tooltip {...tooltipProps} formatter={(value, name) => [`₹${Number(value).toLocaleString("en-IN")}`, name === "collected" ? "Collected" : "Pending"]} />
-        <Legend iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ink-2)" }} formatter={(v) => (v === "collected" ? "Collected" : "Pending")} />
+        <Tooltip {...tooltipProps} formatter={(value, name) => [`₹${fmtNumber(Number(value))}`, name === "collected" ? t("shell.charts.collected") : t("shell.charts.pending")]} />
+        <Legend iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ink-2)" }} formatter={(v) => (v === "collected" ? t("shell.charts.collected") : t("shell.charts.pending"))} />
         <Bar dataKey="collected" stackId="fees" fill="#30c25a" radius={[0, 0, 4, 4]} />
         <Bar dataKey="pending" stackId="fees" fill="#ff9f0a" radius={[10, 10, 0, 0]} />
       </BarChart>

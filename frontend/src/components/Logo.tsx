@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Logo({ size = 32, showWordmark = true, className = "", dark = false }: { size?: number; showWordmark?: boolean; className?: string; dark?: boolean }) {
+  const { t } = useLanguage();
   const [imageFailed, setImageFailed] = useState(false);
 
   return (
@@ -8,7 +10,7 @@ export default function Logo({ size = 32, showWordmark = true, className = "", d
       {!imageFailed ? (
         <img
           src={`${import.meta.env.BASE_URL}logo.png`}
-          alt="Capital Private School"
+          alt={t("shell.brand.name")}
           style={{ height: size, width: "auto" }}
           className="object-contain"
           onError={() => setImageFailed(true)}
@@ -23,8 +25,8 @@ export default function Logo({ size = 32, showWordmark = true, className = "", d
       )}
       {showWordmark && (
         <div>
-          <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-ink'}`}>Capital Private School</span>
-          <span className={`text-xs block ${dark ? 'text-ink-2' : 'text-ink-3'}`}>مدرسة العاصمة الخاصة</span>
+          <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-ink'}`}>{t("shell.brand.name")}</span>
+          <span className={`text-xs block ${dark ? 'text-ink-2' : 'text-ink-3'}`}>{t("shell.brand.subtitle")}</span>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 type ToastType = "success" | "error" | "warning" | "info";
 
@@ -29,6 +30,7 @@ const typeStyles: Record<ToastType, { bg: string; icon: string }> = {
 };
 
 export function Toast({ message, type = "info", duration = 4000, onClose }: ToastProps) {
+  const { t } = useLanguage();
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
@@ -62,7 +64,8 @@ export function Toast({ message, type = "info", duration = 4000, onClose }: Toas
           setIsExiting(true);
           setTimeout(onClose, 300);
         }}
-        className="ml-auto hover:opacity-70 transition-opacity"
+        aria-label={t("shell.common.close")}
+        className="ms-auto hover:opacity-70 transition-opacity"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -79,7 +82,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <div className="fixed bottom-4 end-4 z-50 flex flex-col gap-2">
       {toasts.map((toast) => (
         <Toast
           key={toast.id}

@@ -4,22 +4,20 @@ import { useRef, useState } from "react";
 import { Badge, Card, PageHeader, Spinner } from "../../components/ui";
 import { useMyAcademicYear, useMyClass, useMyProfile, useMySection } from "./hooks";
 import { api } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({ label, value, ltr }: { label: string; value: string | null | undefined; ltr?: boolean }) {
   return (
     <div className="animate-fade-in-up">
       <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
-      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white">{ltr && value ? <span dir="ltr">{value}</span> : value || "—"}</p>
     </div>
   );
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
-}
-
 export default function StudentProfile() {
+  const { t, te, fmtDate } = useLanguage();
+  const formatDate = (iso: string | null): string => (iso ? fmtDate(iso, { day: "numeric", month: "long", year: "numeric" }) : "—");
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -56,12 +54,12 @@ export default function StudentProfile() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="My Profile" subtitle="Your class, section, roll number and admission details." />
+      <PageHeader title={t("navigation.myProfile")} subtitle={t("student.profile.subtitle")} />
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : error || !profile ? (
-        <p className="text-sm text-red-600">Could not load your profile.</p>
+        <p className="text-sm text-red-600">{t("student.profile.loadError")}</p>
       ) : (
         <div className="space-y-6">
           {/* Profile Header Card */}
@@ -95,8 +93,8 @@ export default function StudentProfile() {
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-accent hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
-                    title="Change photo"
+                    className="absolute -bottom-1 -end-1 w-8 h-8 bg-accent hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
+                    title={t("student.profile.changePhoto")}
                   >
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -110,9 +108,9 @@ export default function StudentProfile() {
                   <h2 className="text-2xl font-bold text-white mb-1">{profile.full_name}</h2>
                   <div className="flex items-center gap-3">
                     <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
-                      <p className="text-sm font-medium text-white">ID: {profile.admission_no}</p>
+                      <p className="text-sm font-medium text-white">{t("student.profile.id", { no: profile.admission_no })}</p>
                     </div>
-                    <Badge tone={profile.status === "ACTIVE" ? "green" : "gray"}>{profile.status}</Badge>
+                    <Badge tone={profile.status === "ACTIVE" ? "green" : "gray"}>{te("status", profile.status)}</Badge>
                   </div>
                 </div>
               </div>
@@ -121,16 +119,16 @@ export default function StudentProfile() {
             {/* Quick Stats */}
             <div className="grid grid-cols-3 divide-x divide-line dark:divide-line">
               <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{schoolClass?.name || "—"}</p>
-                <p className="text-xs text-ink-3 uppercase">Class</p>
+                <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{schoolClass?.name ? te("class", schoolClass.name) : "—"}</p>
+                <p className="text-xs text-ink-3 uppercase">{t("student.profile.class")}</p>
               </div>
               <div className="p-4 text-center">
-                <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{section?.name || "—"}</p>
-                <p className="text-xs text-ink-3 uppercase">Section</p>
+                <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{section?.name ? te("section", section.name) : "—"}</p>
+                <p className="text-xs text-ink-3 uppercase">{t("student.profile.section")}</p>
               </div>
               <div className="p-4 text-center">
                 <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{profile.roll_number || "—"}</p>
-                <p className="text-xs text-ink-3 uppercase">Roll No</p>
+                <p className="text-xs text-ink-3 uppercase">{t("student.profile.rollNo")}</p>
               </div>
             </div>
           </Card>
@@ -144,13 +142,13 @@ export default function StudentProfile() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-ink dark:text-white">Personal Details</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">{t("profile.personalDetails")}</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
-              <Field label="Date of Birth" value={formatDate(profile.dob)} />
-              <Field label="Gender" value={profile.gender === "M" ? "Male" : profile.gender === "F" ? "Female" : profile.gender} />
-              <Field label="Blood Group" value={profile.blood_group} />
+              <Field label={t("profile.dateOfBirth")} value={formatDate(profile.dob)} />
+              <Field label={t("profile.gender")} value={profile.gender === "M" ? t("student.profile.male") : profile.gender === "F" ? t("student.profile.female") : te("gender", profile.gender)} />
+              <Field label={t("student.profile.bloodGroup")} value={profile.blood_group} />
             </div>
           </Card>
 
@@ -163,13 +161,13 @@ export default function StudentProfile() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-ink dark:text-white">Contact Information</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">{t("profile.contactInfo")}</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
-              <Field label="Email" value={profile.email} />
-              <Field label="Phone" value={profile.phone} />
-              <Field label="Address" value={profile.address} />
+              <Field label={t("profile.email")} value={profile.email} ltr />
+              <Field label={t("profile.phone")} value={profile.phone} ltr />
+              <Field label={t("profile.address")} value={profile.address} />
             </div>
           </Card>
 
@@ -182,13 +180,13 @@ export default function StudentProfile() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-ink dark:text-white">Academic Information</h3>
+                <h3 className="text-lg font-semibold text-ink dark:text-white">{t("student.profile.academicInfo")}</h3>
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
-              <Field label="Admission Date" value={formatDate(profile.admission_date)} />
-              <Field label="Academic Year" value={academicYear?.name} />
-              <Field label="Admission No" value={profile.admission_no} />
+              <Field label={t("student.profile.admissionDate")} value={formatDate(profile.admission_date)} />
+              <Field label={t("student.profile.academicYear")} value={academicYear?.name} />
+              <Field label={t("student.profile.admissionNo")} value={profile.admission_no} />
             </div>
           </Card>
         </div>

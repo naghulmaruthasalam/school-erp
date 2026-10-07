@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge, Card, Input, Label, PageHeader, StatTile } from "../../components/ui";
 import { DataTable, Pagination, type Column } from "../../components/DataTable";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { fetchAttendanceHistory, fetchAttendanceSummary } from "./api";
 import type { AttendanceStatus, StudentAttendance } from "./types";
 
@@ -17,13 +18,10 @@ const STATUS_TONE: Record<AttendanceStatus, "green" | "red" | "yellow" | "gray">
   EXCUSED: "gray",
 };
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-}
-
 const PAGE_SIZE = 10;
 
 export default function StudentAttendance() {
+  const { t, te, fmtDate, fmtNumber } = useLanguage();
   const today = new Date();
   const [dateFrom, setDateFrom] = useState(toISODate(new Date(today.getFullYear(), today.getMonth(), 1)));
   const [dateTo, setDateTo] = useState(toISODate(today));
@@ -44,22 +42,22 @@ export default function StudentAttendance() {
   const summary = summaryQuery.data?.[0];
 
   const columns: Column<StudentAttendance>[] = [
-    { header: "Date", cell: (row) => formatDate(row.date) },
+    { header: t("attendance.date"), cell: (row) => fmtDate(row.date) },
     {
-      header: "Status",
-      cell: (row) => <Badge tone={STATUS_TONE[row.status]}>{row.status.replace("_", " ")}</Badge>,
+      header: t("fees.status"),
+      cell: (row) => <Badge tone={STATUS_TONE[row.status]}>{te("status", row.status.replace("_", " "))}</Badge>,
     },
-    { header: "Remarks", cell: (row) => row.remarks || "—" },
+    { header: t("student.attendance.remarks"), cell: (row) => row.remarks || "—" },
   ];
 
   return (
     <div>
-      <PageHeader title="Attendance" subtitle="Your attendance summary and recent history." />
+      <PageHeader title={t("navigation.attendance")} subtitle={t("student.attendance.subtitle")} />
 
       <Card className="mb-6">
         <div className="grid grid-cols-2 gap-4 sm:max-w-md">
           <div>
-            <Label htmlFor="att-from">From</Label>
+            <Label htmlFor="att-from">{t("student.attendance.from")}</Label>
             <Input
               id="att-from"
               type="date"
@@ -72,7 +70,7 @@ export default function StudentAttendance() {
             />
           </div>
           <div>
-            <Label htmlFor="att-to">To</Label>
+            <Label htmlFor="att-to">{t("student.attendance.to")}</Label>
             <Input
               id="att-to"
               type="date"
@@ -89,10 +87,10 @@ export default function StudentAttendance() {
       </Card>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Attendance %" value={summary ? `${summary.percentage_present.toFixed(1)}%` : "—"} />
-        <StatTile label="Total Days" value={summary?.total_days ?? "—"} />
-        <StatTile label="Present" value={summary?.counts.PRESENT ?? 0} />
-        <StatTile label="Absent" value={summary?.counts.ABSENT ?? 0} />
+        <StatTile label={t("student.attendance.pct")} value={summary ? `${fmtNumber(summary.percentage_present, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%` : "—"} />
+        <StatTile label={t("student.attendance.totalDays")} value={summary?.total_days ?? "—"} />
+        <StatTile label={t("attendance.present")} value={summary?.counts.PRESENT ?? 0} />
+        <StatTile label={t("attendance.absent")} value={summary?.counts.ABSENT ?? 0} />
       </div>
 
       <DataTable
@@ -100,7 +98,7 @@ export default function StudentAttendance() {
         rows={historyQuery.data?.items ?? []}
         isLoading={historyQuery.isLoading}
         rowKey={(row) => row.id}
-        emptyLabel="No attendance records in this range."
+        emptyLabel={t("student.attendance.empty")}
       />
       {historyQuery.data && (
         <Pagination page={page} pageSize={PAGE_SIZE} total={historyQuery.data.total} onPageChange={setPage} />

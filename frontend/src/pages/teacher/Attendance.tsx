@@ -20,7 +20,7 @@ const statusConfig: Record<AttendanceStatus, { icon: typeof CheckCircle; color: 
 };
 
 export default function TeacherAttendance() {
-  const { t } = useLanguage();
+  const { t, te } = useLanguage();
   const sectionIds = useMySectionIds();
   const { data: sections } = useSections();
   const { data: classes } = useClasses();
@@ -68,7 +68,7 @@ export default function TeacherAttendance() {
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setSaveError(message ?? "Failed to save attendance.");
+      setSaveError(message ?? t("teacher.attendance.saveFailed"));
     },
   });
 
@@ -130,7 +130,7 @@ export default function TeacherAttendance() {
               </option>
               {sectionIds.map((id) => (
                 <option key={id} value={id}>
-                  {sectionLabel(id, sections, classes)}
+                  {sectionLabel(id, sections, classes, te)}
                 </option>
               ))}
             </select>
@@ -158,8 +158,8 @@ export default function TeacherAttendance() {
           </div>
           <p className="text-ink-3 dark:text-ink-2">
             {sectionIds.length === 0
-              ? "No sections found — you have no timetable slots assigned yet."
-              : "Select a section to mark attendance."}
+              ? t("teacher.attendance.noSections")
+              : t("teacher.attendance.selectToMark")}
           </p>
         </Card>
       ) : rosterQuery.isLoading || existingQuery.isLoading ? (
@@ -171,17 +171,17 @@ export default function TeacherAttendance() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center">
             <AlertCircle className="w-8 h-8 text-amber-500" />
           </div>
-          <p className="text-ink-3">No active students in this section.</p>
+          <p className="text-ink-3">{t("teacher.attendance.noActiveStudents")}</p>
         </Card>
       ) : (
         <>
           {/* Stats Summary */}
           <div className="grid grid-cols-4 gap-4 mb-6">
             {[
-              { label: "Present", count: stats.present, color: "from-green-500 to-emerald-500", icon: CheckCircle },
-              { label: "Absent", count: stats.absent, color: "from-red-500 to-rose-500", icon: XCircle },
-              { label: "Late", count: stats.late, color: "from-amber-500 to-orange-500", icon: Clock },
-              { label: "Excused", count: stats.excused, color: "from-blue-500 to-cyan-500", icon: AlertCircle },
+              { label: t("attendance.present"), count: stats.present, color: "from-green-500 to-emerald-500", icon: CheckCircle },
+              { label: t("attendance.absent"), count: stats.absent, color: "from-red-500 to-rose-500", icon: XCircle },
+              { label: t("attendance.late"), count: stats.late, color: "from-amber-500 to-orange-500", icon: Clock },
+              { label: t("attendance.excused"), count: stats.excused, color: "from-blue-500 to-cyan-500", icon: AlertCircle },
             ].map((stat, i) => (
               <div
                 key={stat.label}
@@ -203,14 +203,14 @@ export default function TeacherAttendance() {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="border-b border-line">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-3">
-                      Student
+                    <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-ink-3">
+                      {t("teacher.attendance.student")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-3">
-                      Status
+                    <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-ink-3">
+                      {t("teacher.attendance.status")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-3">
-                      Remarks
+                    <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-ink-3">
+                      {t("teacher.attendance.remarks")}
                     </th>
                   </tr>
                 </thead>
@@ -231,7 +231,7 @@ export default function TeacherAttendance() {
                             <div>
                               <p className="font-medium text-ink dark:text-white">{student.full_name}</p>
                               {student.roll_number && (
-                                <p className="text-xs text-ink-3">Roll #{student.roll_number}</p>
+                                <p className="text-xs text-ink-3">{t("teacher.attendance.rollNo", { n: student.roll_number })}</p>
                               )}
                             </div>
                           </div>
@@ -250,7 +250,7 @@ export default function TeacherAttendance() {
                                       ? `${cfg.bg} ${cfg.color} ring-2 ring-offset-2 ring-current scale-110`
                                       : "bg-surface-3 text-ink-3 hover:scale-105"
                                   }`}
-                                  title={status}
+                                  title={te("status", status)}
                                 >
                                   <cfg.icon className="w-5 h-5" />
                                 </button>
@@ -263,7 +263,7 @@ export default function TeacherAttendance() {
                             className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
                             value={remarks[student.id] ?? ""}
                             onChange={(e) => setRemark(student.id, e.target.value)}
-                            placeholder="Add remarks..."
+                            placeholder={t("teacher.attendance.addRemarks")}
                           />
                         </td>
                       </tr>
@@ -278,19 +278,19 @@ export default function TeacherAttendance() {
                 {saveMutation.isPending ? (
                   <>
                     <Spinner size="sm" />
-                    Saving...
+                    {t("teacher.attendance.saving")}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Attendance
+                    {t("teacher.attendance.save")}
                   </>
                 )}
               </Button>
               {saveMutation.isSuccess && !saveMutation.isPending && (
                 <span className="flex items-center gap-2 text-sm text-green-600 animate-pulse">
                   <CheckCircle className="w-4 h-4" />
-                  Saved successfully!
+                  {t("teacher.attendance.saved")}
                 </span>
               )}
               <ErrorText>{saveError}</ErrorText>

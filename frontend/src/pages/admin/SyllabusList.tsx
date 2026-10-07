@@ -7,8 +7,10 @@ import { listSyllabus } from "./syllabusApi";
 import SyllabusBrowser from "../../components/SyllabusBrowser";
 import SyllabusImportDialog from "../../components/SyllabusImportDialog";
 import CurriculumSourceDialog from "../../components/CurriculumSourceDialog";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function SyllabusList() {
+  const { t, te, fmtDate } = useLanguage();
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -28,17 +30,17 @@ export default function SyllabusList() {
     }),
   });
 
-  const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || id;
-  const getSubjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name || id;
+  const getClassName = (id: string) => te("class", classesQuery.data?.find((c) => c.id === id)?.name) || id;
+  const getSubjectName = (id: string) => te("subject", subjectsQuery.data?.find((s) => s.id === id)?.name) || id;
   const getYearName = (id: string) => yearsQuery.data?.find((y) => y.id === id)?.name || id;
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Syllabus Management" subtitle="Manage curriculum and course content">
-        <Button variant="secondary" onClick={() => setSourceOpen(true)}>Connect source</Button>
-        <Button variant="secondary" onClick={() => setImportOpen(true)}>Import</Button>
+      <PageHeader title={t("admin.syllabus.title")} subtitle={t("admin.syllabus.subtitle")}>
+        <Button variant="secondary" onClick={() => setSourceOpen(true)}>{t("admin.syllabus.connectSource")}</Button>
+        <Button variant="secondary" onClick={() => setImportOpen(true)}>{t("admin.syllabus.import")}</Button>
         <Link to="/admin/syllabus/new">
-          <Button>Create Syllabus</Button>
+          <Button>{t("admin.syllabus.create")}</Button>
         </Link>
       </PageHeader>
       <SyllabusImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
@@ -49,41 +51,41 @@ export default function SyllabusList() {
       <Card className="mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Academic Year</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.academicYear")}</label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
-              <option value="">All Years</option>
+              <option value="">{t("admin.common.allYears")}</option>
               {yearsQuery.data?.map((y) => (
                 <option key={y.id} value={y.id}>{y.name}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.class")}</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
-              <option value="">All Classes</option>
+              <option value="">{t("admin.common.allClasses")}</option>
               {classesQuery.data?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{te("class", c.name)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Subject</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.subject")}</label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
-              <option value="">All Subjects</option>
+              <option value="">{t("admin.common.allSubjects")}</option>
               {subjectsQuery.data?.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>{te("subject", s.name)}</option>
               ))}
             </select>
           </div>
@@ -107,13 +109,13 @@ export default function SyllabusList() {
                     <p className="text-sm text-ink-2 mb-2 line-clamp-2">{syl.description}</p>
                     <div className="flex items-center gap-4 text-xs text-accent-fg">
                       <span>{getYearName(syl.academic_year_id)}</span>
-                      <span>{syl.chapters_count} chapters</span>
+                      <span>{t("admin.syllabus.chaptersCount", { n: syl.chapters_count })}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{syl.status}</Badge>
+                  <div className="text-end">
+                    <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{te("status", syl.status)}</Badge>
                     <p className="text-xs text-accent-fg mt-2">
-                      Updated: {new Date(syl.updated_at).toLocaleDateString()}
+                      {t("admin.syllabus.updatedOn", { date: fmtDate(syl.updated_at) })}
                     </p>
                   </div>
                 </div>
@@ -121,7 +123,7 @@ export default function SyllabusList() {
             </Link>
           ))}
           {syllabusQuery.data?.items.length === 0 && (
-            <Card><p className="text-center text-accent-fg py-8">No syllabus found.</p></Card>
+            <Card><p className="text-center text-accent-fg py-8">{t("admin.syllabus.empty")}</p></Card>
           )}
         </div>
       )}

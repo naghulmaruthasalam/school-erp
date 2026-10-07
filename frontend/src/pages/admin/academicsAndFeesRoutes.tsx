@@ -13,16 +13,16 @@ import InvoiceDetail from "./fees/InvoiceDetail";
 
 /** Nav items for the Academics & Fees slice — concatenated with the sibling agent's nav items in App.tsx. */
 export const academicsFeesNavItems: NavItem[] = [
-  { label: "Academics", to: "/admin/academics", end: true },
-  { label: "Classes", to: "/admin/academics/classes" },
-  { label: "Sections", to: "/admin/academics/sections" },
-  { label: "Subjects", to: "/admin/academics/subjects" },
-  { label: "Timetable", to: "/admin/academics/timetable" },
-  { label: "Calendar", to: "/admin/academics/calendar" },
-  { label: "Fees", to: "/admin/fees", end: true },
-  { label: "Assign & Invoice", to: "/admin/fees/manage" },
-  { label: "Fee Structures", to: "/admin/fees/structures" },
-  { label: "Fee Categories", to: "/admin/fees/categories" },
+  { label: "admin.nav.academics", to: "/admin/academics", end: true },
+  { label: "admin.nav.classes", to: "/admin/academics/classes" },
+  { label: "admin.nav.sections", to: "/admin/academics/sections" },
+  { label: "admin.nav.subjects", to: "/admin/academics/subjects" },
+  { label: "admin.nav.timetable", to: "/admin/academics/timetable" },
+  { label: "admin.nav.calendar", to: "/admin/academics/calendar" },
+  { label: "admin.nav.fees", to: "/admin/fees", end: true },
+  { label: "admin.nav.assignInvoice", to: "/admin/fees/manage" },
+  { label: "admin.nav.feeStructures", to: "/admin/fees/structures" },
+  { label: "admin.nav.feeCategories", to: "/admin/fees/categories" },
 ];
 
 /** Child routes for the Academics & Fees slice — merged into the single `/admin` route tree in App.tsx. */

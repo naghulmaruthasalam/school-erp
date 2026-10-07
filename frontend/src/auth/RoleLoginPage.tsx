@@ -5,7 +5,7 @@ import Logo from "../components/Logo";
 import { LOGIN_SLUG_TO_ROLE, ROLE_THEMES } from "../theme/roles";
 import { demoLoginRequest, fetchMe, loginRequest } from "./api";
 import { ROLE_HOME, useAuthStore } from "./store";
-import { useLanguage } from "../i18n/LanguageContext";
+import { currentLanguage, translate, useLanguage } from "../i18n/LanguageContext";
 import { ThemeToggle, useRoleAccent } from "../theme/ThemeContext";
 import {
   Sparkles,
@@ -21,6 +21,24 @@ const FEATURE_KEYS = [
   "login.features.notifications",
   "login.features.cloudStorage",
 ];
+
+const ROLE_NAME_KEY: Record<string, string> = {
+  STUDENT: "roles.student",
+  PARENT: "roles.parent",
+  TEACHER: "roles.teacher",
+  SUPER_ADMIN: "roles.superAdmin",
+  SCHOOL_ADMIN: "roles.admin",
+  PRINCIPAL: "roles.principal",
+};
+
+const ROLE_TAGLINE_KEY: Record<string, string> = {
+  STUDENT: "shell.login.tagline.STUDENT",
+  PARENT: "shell.login.tagline.PARENT",
+  TEACHER: "shell.login.tagline.TEACHER",
+  PRINCIPAL: "shell.login.tagline.PRINCIPAL",
+  SCHOOL_ADMIN: "shell.login.tagline.SCHOOL_ADMIN",
+  SUPER_ADMIN: "shell.login.tagline.SUPER_ADMIN",
+};
 
 export default function RoleLoginPage() {
   const { role: roleSlug } = useParams<{ role: string }>();
@@ -59,7 +77,7 @@ export default function RoleLoginPage() {
         username: `demo-${role.toLowerCase()}`,
         email: null,
         role: role,
-        full_name: `Demo ${ROLE_THEMES[role].label}`,
+        full_name: translate(currentLanguage(), "shell.login.demoUser", { role: translate(currentLanguage(), ROLE_NAME_KEY[role]) }),
         phone: null,
         student_id: role === "STUDENT" ? "DEMO-STU-001" : null,
         teacher_id: role === "TEACHER" ? "DEMO-TCH-001" : null,
@@ -81,15 +99,7 @@ export default function RoleLoginPage() {
   const needsSchoolCode = role !== "SUPER_ADMIN";
   const { dir, t, language, setLanguage } = useLanguage();
 
-  const roleLabels: Record<string, { en: string; ar: string }> = {
-    STUDENT: { en: "Student", ar: "الطالب" },
-    PARENT: { en: "Parent", ar: "ولي الأمر" },
-    TEACHER: { en: "Teacher", ar: "المعلم" },
-    SUPER_ADMIN: { en: "Super Admin", ar: "المدير العام" },
-    SCHOOL_ADMIN: { en: "School Admin", ar: "مدير المدرسة" },
-    PRINCIPAL: { en: "Principal", ar: "المدير" },
-  };
-  const roleLabel = roleLabels[role]?.[language] || theme.label;
+  const roleLabel = ROLE_NAME_KEY[role] ? t(ROLE_NAME_KEY[role]) : theme.label;
 
   return (
     <div className="relative flex min-h-screen flex-col lg:flex-row" dir={dir}>
@@ -104,7 +114,7 @@ export default function RoleLoginPage() {
               to="/login"
               className="group inline-flex items-center gap-2 rounded-full bg-surface-3 px-4 py-2 text-sm font-medium text-ink-2 transition-colors hover:text-ink"
             >
-              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1 rtl:-scale-x-100 rtl:group-hover:translate-x-1" />
               {t("login.backToRoles")}
             </Link>
           </div>
@@ -113,17 +123,17 @@ export default function RoleLoginPage() {
             <div className="mb-8 inline-flex w-fit items-center gap-3 rounded-full bg-accent-soft px-4 py-2">
               <theme.Icon className="h-5 w-5 text-accent" strokeWidth={1.7} />
               <span className="text-sm font-semibold text-accent-fg">
-                {roleLabel} {t("login.portal")}
+                {t("shell.login.rolePortal", { role: roleLabel })}
               </span>
             </div>
 
             <h1 className="mb-4 text-4xl font-semibold leading-[1.1] tracking-tight text-ink xl:text-[3.4rem]">
               {t("login.welcomeTo")}
               <br />
-              <span className="text-gradient">Capital Private School</span>
+              <span className="text-gradient">{t("shell.brand.name")}</span>
             </h1>
 
-            <p className="mb-9 text-lg text-ink-3">{theme.tagline}</p>
+            <p className="mb-9 text-lg text-ink-3">{t(ROLE_TAGLINE_KEY[role])}</p>
 
             <div className="space-y-3">
               {FEATURE_KEYS.map((key, i) => (
@@ -155,7 +165,7 @@ export default function RoleLoginPage() {
             to="/login"
             className="inline-flex items-center gap-2 rounded-full bg-surface-3 px-3.5 py-2 text-sm text-ink-2 transition-colors hover:text-ink"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
             {t("login.backToRoles")}
           </Link>
         </div>
@@ -171,10 +181,10 @@ export default function RoleLoginPage() {
         <div className="mt-12 w-full max-w-md animate-fade-in-up lg:mt-0">
           <div className="mb-7 text-center">
             <div className="glass relative mx-auto mb-5 grid h-[76px] w-[76px] place-items-center !rounded-[24px] p-3">
-              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Cognitec" className="h-full w-full object-contain" />
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt={t("shell.brand.cogniitec")} className="h-full w-full object-contain" />
             </div>
             <h2 className="mb-1 text-[1.65rem] font-semibold tracking-tight text-ink">
-              {t("login.signIn")} - {roleLabel}
+              {t("shell.login.signInRole", { role: roleLabel })}
             </h2>
             <p className="text-sm text-ink-3">{t("login.enterCredentials")}</p>
           </div>
@@ -194,7 +204,7 @@ export default function RoleLoginPage() {
                   </label>
                   <input
                     id="school_code"
-                    placeholder="e.g. SCH-2024-XXXXXX"
+                    placeholder={t("shell.login.schoolCodePlaceholder")}
                     value={schoolCode}
                     onChange={(e) => setSchoolCode(e.target.value)}
                     className="lg-field"
@@ -213,7 +223,7 @@ export default function RoleLoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="lg-field"
-                  placeholder={role === "STUDENT" ? "e.g. BPS-STU-001" : role === "TEACHER" ? "e.g. BPS-TCH-001" : role === "PARENT" ? "e.g. 9876543210" : "Enter username"}
+                  placeholder={role === "STUDENT" ? t("shell.login.studentIdPlaceholder") : role === "TEACHER" ? t("shell.login.teacherIdPlaceholder") : role === "PARENT" ? t("shell.login.phonePlaceholder") : t("shell.login.usernamePlaceholder")}
                 />
               </div>
 
@@ -229,12 +239,12 @@ export default function RoleLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="lg-field pe-12"
-                    placeholder="Enter your password"
+                    placeholder={t("shell.login.passwordPlaceholder")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? t("shell.common.hidePassword") : t("shell.common.showPassword")}
                     className="absolute end-4 top-1/2 -translate-y-1/2 text-ink-3 transition-colors hover:text-ink"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -266,7 +276,7 @@ export default function RoleLoginPage() {
               >
                 {mutation.isPending ? (
                   <>
-                    <svg className="-ml-1 mr-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                    <svg className="-ms-1 me-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -303,7 +313,7 @@ export default function RoleLoginPage() {
               ) : (
                 <>
                   <Sparkles className="h-[18px] w-[18px] text-amber-500" />
-                  {t("login.tryDemo")} {roleLabel}
+                  {t("shell.login.tryDemoRole", { role: roleLabel })}
                 </>
               )}
             </button>
@@ -312,7 +322,7 @@ export default function RoleLoginPage() {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-ink-3">
-              {t("login.notA")} {roleLabel.toLowerCase()}?{" "}
+              {t("shell.login.notARole", { role: roleLabel.toLowerCase() })}{" "}
               <Link to="/login" className="font-semibold text-accent-fg transition-opacity hover:opacity-70">
                 {t("login.chooseDifferentRole")}
               </Link>
@@ -321,7 +331,7 @@ export default function RoleLoginPage() {
 
           <div className="mt-10 flex items-center justify-center gap-2 text-ink-3 lg:hidden">
             <Logo size={20} showWordmark={false} />
-            <span className="text-xs font-medium">مدرسة العاصمة الخاصة</span>
+            <span className="text-xs font-medium">{t("shell.brand.name")}</span>
           </div>
         </div>
       </div>

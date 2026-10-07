@@ -6,18 +6,20 @@ import { formatDisplayDate } from "./dates";
 import { useSubjects } from "./hooks";
 import { useSelectedChild } from "./SelectedChildContext";
 import type { ExamOut } from "./types";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 function ResultPanel({ examId, studentId }: { examId: string; studentId: string }) {
+  const { t, te } = useLanguage();
   const subjectsQuery = useSubjects();
   const resultQuery = useQuery({
     queryKey: ["parent", "exam-result", examId, studentId],
     queryFn: () => fetchExamResult(examId, studentId),
   });
 
-  const subjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name ?? id;
+  const subjectName = (id: string) => te("subject", subjectsQuery.data?.find((s) => s.id === id)?.name ?? id);
 
   if (resultQuery.isLoading) return <Spinner className="my-3" />;
-  if (resultQuery.error) return <ErrorText>Result is not available for this exam yet.</ErrorText>;
+  if (resultQuery.error) return <ErrorText>{t("parent.exams.resultUnavailable")}</ErrorText>;
   const result = resultQuery.data;
   if (!result) return null;
 
@@ -26,10 +28,10 @@ function ResultPanel({ examId, studentId }: { examId: string; studentId: string 
       <table className="min-w-full divide-y divide-line text-sm">
         <thead className="bg-violet-50">
           <tr>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Subject</th>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Max Marks</th>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Obtained</th>
-            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-accent-fg">Grade</th>
+            <th className="px-3 py-2 text-start text-xs font-medium uppercase text-accent-fg">{t("parent.exams.subject")}</th>
+            <th className="px-3 py-2 text-start text-xs font-medium uppercase text-accent-fg">{t("parent.exams.maxMarks")}</th>
+            <th className="px-3 py-2 text-start text-xs font-medium uppercase text-accent-fg">{t("parent.exams.obtained")}</th>
+            <th className="px-3 py-2 text-start text-xs font-medium uppercase text-accent-fg">{t("parent.exams.grade")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -44,7 +46,7 @@ function ResultPanel({ examId, studentId }: { examId: string; studentId: string 
         </tbody>
         <tfoot className="bg-violet-50 font-medium">
           <tr>
-            <td className="px-3 py-2 text-ink">Total</td>
+            <td className="px-3 py-2 text-ink">{t("parent.exams.total")}</td>
             <td className="px-3 py-2 text-ink">{result.total_max_marks}</td>
             <td className="px-3 py-2 text-ink">{result.total_marks_obtained}</td>
             <td className="px-3 py-2 text-ink">
@@ -58,6 +60,7 @@ function ResultPanel({ examId, studentId }: { examId: string; studentId: string 
 }
 
 export default function ExamsPage() {
+  const { t } = useLanguage();
   const { selectedChild, selectedChildId } = useSelectedChild();
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null);
   const [downloadingExamId, setDownloadingExamId] = useState<string | null>(null);
@@ -72,8 +75,8 @@ export default function ExamsPage() {
   if (!selectedChild) {
     return (
       <div>
-        <PageHeader title="Exams" />
-        <p className="text-sm text-accent-fg">Select a child above to view exams.</p>
+        <PageHeader title={t("exams.title")} />
+        <p className="text-sm text-accent-fg">{t("parent.exams.selectChild")}</p>
       </div>
     );
   }
@@ -100,7 +103,7 @@ export default function ExamsPage() {
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch {
-      setDownloadError("Could not download the report card. It may not be ready yet.");
+      setDownloadError(t("parent.exams.downloadFailed"));
     } finally {
       setDownloadingExamId(null);
     }
@@ -108,16 +111,16 @@ export default function ExamsPage() {
 
   return (
     <div>
-      <PageHeader title="Exams" subtitle={`Exams and results for ${selectedChild.full_name}.`} />
+      <PageHeader title={t("exams.title")} subtitle={t("parent.exams.subtitle", { name: selectedChild.full_name })} />
 
-      {examsQuery.error && <ErrorText>Could not load exams.</ErrorText>}
+      {examsQuery.error && <ErrorText>{t("parent.exams.loadError")}</ErrorText>}
       {downloadError && <ErrorText>{downloadError}</ErrorText>}
 
       {examsQuery.isLoading ? (
         <Spinner />
       ) : exams.length === 0 ? (
         <Card>
-          <p className="text-sm text-accent-fg">No exams scheduled yet.</p>
+          <p className="text-sm text-accent-fg">{t("parent.exams.empty")}</p>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -131,23 +134,23 @@ export default function ExamsPage() {
                     <p className="text-sm font-semibold text-ink">{exam.name}</p>
                     <p className="text-xs text-accent-fg">
                       {exam.term ? `${exam.term} — ` : ""}
-                      {formatDisplayDate(exam.start_date)} to {formatDisplayDate(exam.end_date)}
+                      {t("parent.exams.dateRange", { from: formatDisplayDate(exam.start_date), to: formatDisplayDate(exam.end_date) })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge tone={isPast ? "gray" : "yellow"}>{isPast ? "Completed" : "Upcoming"}</Badge>
+                    <Badge tone={isPast ? "gray" : "yellow"}>{isPast ? t("exams.completed") : t("exams.upcoming")}</Badge>
                     <Button
                       variant="secondary"
                       onClick={() => setExpandedExamId(isExpanded ? null : exam.id)}
                     >
-                      {isExpanded ? "Hide Result" : "View Result"}
+                      {isExpanded ? t("parent.exams.hideResult") : t("exams.viewResults")}
                     </Button>
                     <Button
                       variant="secondary"
                       disabled={downloadingExamId === exam.id}
                       onClick={() => handleDownload(exam)}
                     >
-                      {downloadingExamId === exam.id ? "Preparing…" : "Download Report Card"}
+                      {downloadingExamId === exam.id ? t("parent.exams.preparing") : t("parent.exams.downloadReportCard")}
                     </Button>
                   </div>
                 </div>

@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import Logo from "../components/Logo";
 import type { RoleTheme } from "../theme/roles";
 import { ThemeToggle, useRoleAccent } from "../theme/ThemeContext";
+import { useLanguage } from "../i18n/LanguageContext";
 
 /** Shared visual shell for every auth page (forgot/reset password, register):
  * the role-tinted liquid-glass wallpaper with a single centred glass card. */
@@ -22,6 +23,7 @@ export default function AuthLayout({
   footer?: ReactNode;
 }) {
   useRoleAccent(theme.role);
+  const { t } = useLanguage();
   const HeaderIcon = IconOverride ?? theme.Icon;
 
   return (
@@ -43,7 +45,7 @@ export default function AuthLayout({
         </div>
         <div className="mt-5 flex items-center justify-center gap-2 text-ink-3">
           <Logo size={18} showWordmark={false} />
-          <span className="text-xs font-medium">مدرسة العاصمة الخاصة</span>
+          <span className="text-xs font-medium">{t("shell.brand.name")}</span>
         </div>
         {footer && <div className="mt-3 text-center text-sm text-ink-2">{footer}</div>}
       </div>

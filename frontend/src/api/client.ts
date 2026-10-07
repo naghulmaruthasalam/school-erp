@@ -3,6 +3,7 @@ import { authStore } from "../auth/store";
 import { getDemoResponse } from "./demoData";
 import { demoMutation, overlayDemoList } from "./demoMutations";
 import { getDemoSyllabusResponse, postDemoResponse } from "./demoSyllabus";
+import { currentLanguage } from "../i18n/LanguageContext";
 import { getDemoCopilotToolsResponse, mutateDemoCopilotTools } from "./demoCopilotTools";
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -30,6 +31,8 @@ api.interceptors.request.use((config) => {
     if (result !== null) return Promise.reject({ __isDemo: true, data: result, config });
   }
 
+  // The server picks the language of curriculum content, AI feedback and messages from this header.
+  config.headers["Accept-Language"] = currentLanguage();
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }

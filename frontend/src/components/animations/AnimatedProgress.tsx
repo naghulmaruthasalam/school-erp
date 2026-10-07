@@ -52,7 +52,7 @@ export function AnimatedProgress({
         />
       </div>
       {showLabel && (
-        <div className="mt-1 text-xs text-ink-2 dark:text-ink-3 text-right animate-count-up">
+        <div className="mt-1 text-xs text-ink-2 dark:text-ink-3 text-end animate-count-up">
           {Math.round(displayValue)}%
         </div>
       )}

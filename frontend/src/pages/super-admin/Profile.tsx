@@ -1,21 +1,23 @@
 import { Card, PageHeader } from "../../components/ui";
 import { useAuthStore } from "../../auth/store";
+import { useLanguage } from "../../i18n/LanguageContext";
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({ label, value, ltr }: { label: string; value: string | null | undefined; ltr?: boolean }) {
   return (
     <div className="animate-fade-in-up">
       <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
-      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white">{ltr && value ? <span dir="ltr">{value}</span> : value || "—"}</p>
     </div>
   );
 }
 
 export default function SuperAdminProfile() {
+  const { t } = useLanguage();
   const user = useAuthStore((s) => s.user);
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="My Profile" subtitle="Your account details and contact information." />
+      <PageHeader title={t("navigation.myProfile")} subtitle={t("superAdmin.profile.subtitle")} />
 
       <div className="space-y-6">
         <Card className="!p-0 overflow-hidden">
@@ -29,7 +31,7 @@ export default function SuperAdminProfile() {
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-white mb-1">{user?.full_name}</h2>
                 <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm inline-block">
-                  <p className="text-sm font-medium text-white">Super Administrator</p>
+                  <p className="text-sm font-medium text-white">{t("superAdmin.profile.superAdministrator")}</p>
                 </div>
               </div>
             </div>
@@ -44,13 +46,13 @@ export default function SuperAdminProfile() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-ink dark:text-white">Contact Information</h3>
+              <h3 className="text-lg font-semibold text-ink dark:text-white">{t("profile.contactInfo")}</h3>
             </div>
           </div>
           <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
-            <Field label="Email" value={user?.email} />
-            <Field label="Phone" value={user?.phone} />
-            <Field label="Role" value="Super Admin" />
+            <Field label={t("profile.email")} value={user?.email} ltr />
+            <Field label={t("profile.phone")} value={user?.phone} ltr />
+            <Field label={t("superAdmin.profile.role")} value={t("roles.superAdmin")} />
           </div>
         </Card>
       </div>

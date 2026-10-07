@@ -107,7 +107,10 @@ export function getSyllabusDocumentUrl(documentId: string): string {
 
 export interface TreeChapter {
   id: string;
+  key?: string; // stored (English) name: the same in every language
   name: string;
+  content_language?: string | null;
+  languages?: string[];
   description: string | null;
   order: number;
   topics: string[];

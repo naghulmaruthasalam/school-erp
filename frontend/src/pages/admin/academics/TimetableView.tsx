@@ -11,8 +11,10 @@ import {
   listTimetableSlots,
 } from "./api";
 import { DAY_LABELS } from "./types";
+import { useLanguage } from "../../../i18n/LanguageContext";
 
 export default function TimetableView() {
+  const { t, te } = useLanguage();
   const queryClient = useQueryClient();
   const { data: years } = useQuery({ queryKey: ["academic-years"], queryFn: listAcademicYears });
 
@@ -79,13 +81,13 @@ export default function TimetableView() {
       setEndTime("");
       setError("");
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Failed to create timetable slot."),
+    onError: (err) => setError(err instanceof Error ? err.message : t("admin.timetableView.createFailed")),
   });
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!sectionId || !startTime || !endTime || !subjectId || !teacherId) {
-      setError("All fields are required.");
+      setError(t("admin.timetableView.allRequired"));
       return;
     }
     createMutation.mutate({
@@ -99,8 +101,8 @@ export default function TimetableView() {
     });
   }
 
-  const subjectName = (id: string) => subjects?.find((s) => s.id === id)?.name ?? id;
-  const teacherName = (id: string) => teachers?.find((t) => t.id === id)?.full_name ?? id;
+  const subjectName = (id: string) => te("subject", subjects?.find((s) => s.id === id)?.name) || id;
+  const teacherName = (id: string) => teachers?.find((tc) => tc.id === id)?.full_name ?? id;
 
   const slotsByDay = DAY_LABELS.map((_, dayIndex) =>
     (slots ?? [])
@@ -110,12 +112,12 @@ export default function TimetableView() {
 
   return (
     <div>
-      <PageHeader title="Timetable" subtitle="Weekly schedule for a section." />
+      <PageHeader title={t("admin.timetableView.title")} subtitle={t("admin.timetableView.subtitle")} />
 
       <Card className="mb-6">
         <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:max-w-2xl">
           <div>
-            <Label htmlFor="tt-year">Academic Year</Label>
+            <Label htmlFor="tt-year">{t("admin.common.academicYear")}</Label>
             <select
               id="tt-year"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -130,7 +132,7 @@ export default function TimetableView() {
             </select>
           </div>
           <div>
-            <Label htmlFor="tt-class">Class</Label>
+            <Label htmlFor="tt-class">{t("admin.common.class")}</Label>
             <select
               id="tt-class"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -139,13 +141,13 @@ export default function TimetableView() {
             >
               {(classes ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {te("class", c.name)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <Label htmlFor="tt-section">Section</Label>
+            <Label htmlFor="tt-section">{t("admin.common.section")}</Label>
             <select
               id="tt-section"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -154,17 +156,17 @@ export default function TimetableView() {
             >
               {(sections ?? []).map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}
+                  {te("section", s.name)}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        <h2 className="mb-4 text-sm font-semibold text-ink">Add Slot</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t("admin.common.addSlot")}</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7 sm:items-end">
           <div>
-            <Label htmlFor="tt-day">Day</Label>
+            <Label htmlFor="tt-day">{t("admin.common.day")}</Label>
             <select
               id="tt-day"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -173,77 +175,77 @@ export default function TimetableView() {
             >
               {DAY_LABELS.map((label, idx) => (
                 <option key={label} value={idx}>
-                  {label}
+                  {te("weekday", label)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <Label htmlFor="tt-period">Period</Label>
+            <Label htmlFor="tt-period">{t("admin.common.period")}</Label>
             <Input id="tt-period" type="number" min={1} value={periodNumber} onChange={(e) => setPeriodNumber(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="tt-start">Start</Label>
+            <Label htmlFor="tt-start">{t("admin.timetableView.start")}</Label>
             <Input id="tt-start" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="tt-end">End</Label>
+            <Label htmlFor="tt-end">{t("admin.timetableView.end")}</Label>
             <Input id="tt-end" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="tt-subject">Subject</Label>
+            <Label htmlFor="tt-subject">{t("admin.common.subject")}</Label>
             <select
               id="tt-subject"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
             >
-              <option value="">Select</option>
+              <option value="">{t("admin.common.select")}</option>
               {(subjects ?? []).map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}
+                  {te("subject", s.name)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <Label htmlFor="tt-teacher">Teacher</Label>
+            <Label htmlFor="tt-teacher">{t("admin.common.teacher")}</Label>
             <select
               id="tt-teacher"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={teacherId}
               onChange={(e) => setTeacherId(e.target.value)}
             >
-              <option value="">Select</option>
-              {(teachers ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.full_name}
+              <option value="">{t("admin.common.select")}</option>
+              {(teachers ?? []).map((tc) => (
+                <option key={tc.id} value={tc.id}>
+                  {tc.full_name}
                 </option>
               ))}
             </select>
           </div>
           <Button type="submit" disabled={createMutation.isPending || !sectionId}>
-            {createMutation.isPending ? "Adding…" : "Add Slot"}
+            {createMutation.isPending ? t("admin.common.adding") : t("admin.common.addSlot")}
           </Button>
         </form>
         <ErrorText>{error}</ErrorText>
       </Card>
 
       {isLoading ? (
-        <p className="text-sm text-accent-fg">Loading timetable…</p>
+        <p className="text-sm text-accent-fg">{t("admin.timetableView.loading")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {DAY_LABELS.map((label, dayIndex) => (
             <Card key={label}>
-              <h3 className="mb-3 text-sm font-semibold text-ink">{label}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-ink">{te("weekday", label)}</h3>
               {slotsByDay[dayIndex].length === 0 ? (
-                <p className="text-xs text-accent-fg">No periods scheduled.</p>
+                <p className="text-xs text-accent-fg">{t("admin.timetableView.noPeriods")}</p>
               ) : (
                 <ul className="space-y-2">
                   {slotsByDay[dayIndex].map((slot) => (
                     <li key={slot.id} className="rounded-md border border-line bg-violet-50 px-3 py-2 text-xs">
                       <p className="font-medium text-ink">
-                        Period {slot.period_number} · {slot.start_time}–{slot.end_time}
+                        {t("admin.timetableView.periodLine", { n: slot.period_number, start: slot.start_time, end: slot.end_time })}
                       </p>
                       <p className="text-accent-fg">
                         {subjectName(slot.subject_id)} · {teacherName(slot.teacher_id)}

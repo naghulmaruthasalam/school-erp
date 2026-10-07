@@ -4,6 +4,15 @@ import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import { fetchClasses, fetchSections, listStudents } from "./api";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
+
+const TERM_KEYS: Record<string, string> = {
+  "Unit Test": "admin.exams.terms.unitTest",
+  Quarterly: "admin.exams.terms.quarterly",
+  "Half Yearly": "admin.exams.terms.halfYearly",
+  Annual: "admin.exams.terms.annual",
+};
+
 
 interface ResultSubject {
   exam_subject_id: string;
@@ -32,6 +41,8 @@ interface Exam {
 }
 
 export default function ReportCards() {
+  const { t, te } = useLanguage();
+  const termLabel = (v: string) => (TERM_KEYS[v] ? t(TERM_KEYS[v]) : v);
   const [selectedSection, setSelectedSection] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
   const [selectedExam, setSelectedExam] = useState("");
@@ -70,13 +81,13 @@ export default function ReportCards() {
     enabled: !!selectedStudent && !!selectedExam,
   });
 
-  const subjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name ?? id;
+  const subjectName = (id: string) => te("subject", subjectsQuery.data?.find((s) => s.id === id)?.name) || id;
 
   const getSectionName = (id: string) => {
     const section = sectionsQuery.data?.find((s) => s.id === id);
     if (!section) return id;
     const cls = classesQuery.data?.find((c) => c.id === section.class_id);
-    return `${cls?.name || ""} - ${section.name}`;
+    return `${te("class", cls?.name)} - ${te("section", section.name)}`;
   };
 
   const getGradeTone = (grade: string): "green" | "violet" | "yellow" | "red" => {
@@ -105,47 +116,47 @@ export default function ReportCards() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Report Cards" subtitle="View and generate student report cards" />
+      <PageHeader title={t("admin.reportCards.title")} subtitle={t("admin.reportCards.subtitle")} />
 
       <Card className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Section</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.section")}</label>
             <select
               value={selectedSection}
               onChange={(e) => { setSelectedSection(e.target.value); setSelectedStudent(""); }}
               className="w-full rounded-lg border border-line px-3 py-2"
             >
-              <option value="">-- Select Section --</option>
+              <option value="">{t("admin.reportCards.selectSection")}</option>
               {sectionsQuery.data?.map((s) => (
                 <option key={s.id} value={s.id}>{getSectionName(s.id)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Student</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.student")}</label>
             <select
               value={selectedStudent}
               onChange={(e) => setSelectedStudent(e.target.value)}
               className="w-full rounded-lg border border-line px-3 py-2"
               disabled={!selectedSection}
             >
-              <option value="">-- Select Student --</option>
+              <option value="">{t("admin.reportCards.selectStudent")}</option>
               {studentsQuery.data?.items.map((s) => (
                 <option key={s.id} value={s.id}>{s.full_name} ({s.admission_no})</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Exam</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.exam")}</label>
             <select
               value={selectedExam}
               onChange={(e) => setSelectedExam(e.target.value)}
               className="w-full rounded-lg border border-line px-3 py-2"
             >
-              <option value="">-- Select Exam --</option>
+              <option value="">{t("admin.reportCards.selectExam")}</option>
               {examsQuery.data?.items.map((e) => (
-                <option key={e.id} value={e.id}>{e.name}{e.term ? ` (${e.term})` : ""}</option>
+                <option key={e.id} value={e.id}>{e.name}{e.term ? ` (${termLabel(e.term)})` : ""}</option>
               ))}
             </select>
           </div>
@@ -165,21 +176,21 @@ export default function ReportCards() {
                     {selectedStudentData?.admission_no} · {getSectionName(selectedSection)}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <p className="text-2xl font-bold text-accent-fg">{percentage}%</p>
-                  <p className="text-sm text-accent-fg">{totalMarks}/{maxMarks} marks</p>
+                  <p className="text-sm text-accent-fg">{t("admin.reportCards.marksOf", { obtained: totalMarks, max: maxMarks })}</p>
                 </div>
               </div>
             </div>
 
             <table className="w-full">
               <thead>
-                <tr className="text-left text-sm text-accent-fg border-b border-line">
-                  <th className="pb-2">Subject</th>
-                  <th className="pb-2 text-center">Marks</th>
-                  <th className="pb-2 text-center">Max</th>
+                <tr className="text-start text-sm text-accent-fg border-b border-line">
+                  <th className="pb-2 text-start">{t("admin.common.subject")}</th>
+                  <th className="pb-2 text-center">{t("admin.reportCards.marks")}</th>
+                  <th className="pb-2 text-center">{t("admin.reportCards.max")}</th>
                   <th className="pb-2 text-center">%</th>
-                  <th className="pb-2 text-center">Grade</th>
+                  <th className="pb-2 text-center">{t("admin.reportCards.grade")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,16 +211,16 @@ export default function ReportCards() {
             </table>
 
             <div className="mt-4 flex justify-end">
-              <Button variant="secondary" onClick={downloadPdf}>Download Report Card (PDF)</Button>
+              <Button variant="secondary" onClick={downloadPdf}>{t("admin.reportCards.downloadPdf")}</Button>
             </div>
           </Card>
         ) : (
-          <Card><p className="text-center text-accent-fg py-8">No marks found for this student/exam.</p></Card>
+          <Card><p className="text-center text-accent-fg py-8">{t("admin.reportCards.noMarks")}</p></Card>
         )
       )}
 
       {(!selectedStudent || !selectedExam) && (
-        <Card><p className="text-center text-accent-fg py-8">Select a section, student, and exam to view report card.</p></Card>
+        <Card><p className="text-center text-accent-fg py-8">{t("admin.reportCards.selectAll")}</p></Card>
       )}
     </div>
   );

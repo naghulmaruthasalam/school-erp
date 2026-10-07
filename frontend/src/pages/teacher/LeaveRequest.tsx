@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Button, Card, ErrorText, Input, Label, PageHeader, Select, Spinner } from "../../components/ui";
 import { api } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 import {
   Calendar,
   Clock,
@@ -62,12 +63,12 @@ async function cancelLeave(leaveId: string) {
   await api.post(`/leave/${leaveId}/cancel`);
 }
 
-const leaveTypeConfig: Record<string, { label: string; color: string }> = {
-  SICK: { label: "Sick Leave", color: "from-red-500 to-rose-500" },
-  CASUAL: { label: "Casual Leave", color: "from-blue-500 to-cyan-500" },
-  EMERGENCY: { label: "Emergency", color: "from-amber-500 to-orange-500" },
-  VACATION: { label: "Vacation", color: "from-green-500 to-emerald-500" },
-  OTHER: { label: "Other", color: "from-violet-500 to-purple-500" },
+const leaveTypeConfig: Record<string, { labelKey: string; color: string }> = {
+  SICK: { labelKey: "teacher.leave.types.SICK", color: "from-red-500 to-rose-500" },
+  CASUAL: { labelKey: "teacher.leave.types.CASUAL", color: "from-blue-500 to-cyan-500" },
+  EMERGENCY: { labelKey: "teacher.leave.types.EMERGENCY", color: "from-amber-500 to-orange-500" },
+  VACATION: { labelKey: "teacher.leave.types.VACATION", color: "from-green-500 to-emerald-500" },
+  OTHER: { labelKey: "teacher.leave.types.OTHER", color: "from-violet-500 to-purple-500" },
 };
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; color: string; bg: string }> = {
@@ -78,6 +79,7 @@ const statusConfig: Record<string, { icon: typeof CheckCircle; color: string; bg
 };
 
 export default function TeacherLeaveRequest() {
+  const { t, te, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [leaveType, setLeaveType] = useState("CASUAL");
@@ -108,7 +110,7 @@ export default function TeacherLeaveRequest() {
       setReason("");
     },
     onError: (err: any) => {
-      setError(err.response?.data?.detail || "Failed to submit leave request");
+      setError(err.response?.data?.detail || t("teacher.leave.submitFailed"));
     },
   });
 
@@ -124,7 +126,7 @@ export default function TeacherLeaveRequest() {
     e.preventDefault();
     setError("");
     if (!startDate || !endDate || !reason) {
-      setError("All fields are required");
+      setError(t("teacher.leave.allRequired"));
       return;
     }
     createMutation.mutate({ leave_type: leaveType, start_date: startDate, end_date: endDate, reason });
@@ -133,13 +135,13 @@ export default function TeacherLeaveRequest() {
   return (
     <div className="animate-page-enter">
       <PageHeader
-        title="Leave Requests"
-        subtitle="Request and track your leave applications."
+        title={t("teacher.leave.title")}
+        subtitle={t("teacher.leave.subtitle")}
         actions={
           !showForm && (
             <Button onClick={() => setShowForm(true)} glow>
               <Plus className="w-4 h-4" />
-              Request Leave
+              {t("teacher.leave.requestLeave")}
             </Button>
           )
         }
@@ -149,10 +151,10 @@ export default function TeacherLeaveRequest() {
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[
-            { label: "Pending", value: summary.pending, icon: Clock, color: "from-amber-500 to-orange-500" },
-            { label: "Approved", value: summary.approved, icon: CheckCircle, color: "from-green-500 to-emerald-500" },
-            { label: "Rejected", value: summary.rejected, icon: XCircle, color: "from-red-500 to-rose-500" },
-            { label: "Total", value: summary.total, icon: FileText, color: "from-violet-500 to-purple-500" },
+            { label: t("leave.pending"), value: summary.pending, icon: Clock, color: "from-amber-500 to-orange-500" },
+            { label: t("leave.approved"), value: summary.approved, icon: CheckCircle, color: "from-green-500 to-emerald-500" },
+            { label: t("leave.rejected"), value: summary.rejected, icon: XCircle, color: "from-red-500 to-rose-500" },
+            { label: t("teacher.leave.total"), value: summary.total, icon: FileText, color: "from-violet-500 to-purple-500" },
           ].map((stat, i) => (
             <div
               key={stat.label}
@@ -172,13 +174,13 @@ export default function TeacherLeaveRequest() {
       {/* Leave Request Form */}
       {showForm && (
         <Card className="mb-6 relative overflow-hidden" gradient>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent/10 to-accent-2/10 rounded-full -mr-16 -mt-16" />
+          <div className="absolute top-0 end-0 w-32 h-32 bg-gradient-to-br from-accent/10 to-accent-2/10 rounded-full -me-16 -mt-16" />
 
           <h3 className="text-xl font-bold text-ink dark:text-white mb-6 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            New Leave Request
+            {t("teacher.leave.newRequest")}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -186,22 +188,22 @@ export default function TeacherLeaveRequest() {
               <div>
                 <Label className="flex items-center gap-2 mb-2">
                   <FileText className="w-4 h-4 text-accent-fg" />
-                  Leave Type
+                  {t("leave.leaveType")}
                 </Label>
                 <Select
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value)}
                   className="rounded-xl"
                 >
-                  {Object.entries(leaveTypeConfig).map(([key, { label }]) => (
-                    <option key={key} value={key}>{label}</option>
+                  {Object.entries(leaveTypeConfig).map(([key, { labelKey }]) => (
+                    <option key={key} value={key}>{t(labelKey)}</option>
                   ))}
                 </Select>
               </div>
               <div>
                 <Label className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4 text-accent-fg" />
-                  Start Date
+                  {t("teacher.leave.startDate")}
                 </Label>
                 <Input
                   type="date"
@@ -214,7 +216,7 @@ export default function TeacherLeaveRequest() {
               <div>
                 <Label className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4 text-accent-fg" />
-                  End Date
+                  {t("teacher.leave.endDate")}
                 </Label>
                 <Input
                   type="date"
@@ -228,12 +230,12 @@ export default function TeacherLeaveRequest() {
             <div>
               <Label className="flex items-center gap-2 mb-2">
                 <AlertCircle className="w-4 h-4 text-accent-fg" />
-                Reason
+                {t("leave.reason")}
               </Label>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Briefly describe your reason for leave"
+                placeholder={t("teacher.leave.reasonPlaceholder")}
                 required
                 rows={3}
                 className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink dark:text-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all resize-none"
@@ -245,17 +247,17 @@ export default function TeacherLeaveRequest() {
                 {createMutation.isPending ? (
                   <>
                     <Spinner size="sm" />
-                    Submitting...
+                    {t("teacher.leave.submitting")}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Submit Request
+                    {t("teacher.leave.submitRequest")}
                   </>
                 )}
               </Button>
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </form>
@@ -272,18 +274,18 @@ export default function TeacherLeaveRequest() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10 flex items-center justify-center animate-float">
             <Calendar className="w-10 h-10 text-accent-fg" />
           </div>
-          <h3 className="text-xl font-bold text-ink dark:text-white mb-2">No Leave Requests</h3>
+          <h3 className="text-xl font-bold text-ink dark:text-white mb-2">{t("teacher.leave.noRequests")}</h3>
           <p className="text-ink-3 max-w-md mx-auto mb-6">
-            You haven't submitted any leave requests yet.
+            {t("teacher.leave.noRequestsDesc")}
           </p>
           <Button onClick={() => setShowForm(true)} glow>
             <Plus className="w-4 h-4" />
-            Create Your First Request
+            {t("teacher.leave.createFirst")}
           </Button>
         </Card>
       ) : (
         <Card>
-          <h3 className="text-lg font-bold text-ink dark:text-white mb-4">Leave History</h3>
+          <h3 className="text-lg font-bold text-ink dark:text-white mb-4">{t("teacher.leave.history")}</h3>
           <div className="space-y-4">
             {leaves.items.map((leave, i) => {
               const typeConfig = leaveTypeConfig[leave.leave_type] || leaveTypeConfig.OTHER;
@@ -304,18 +306,18 @@ export default function TeacherLeaveRequest() {
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-ink dark:text-white">{typeConfig.label}</p>
+                      <p className="font-semibold text-ink dark:text-white">{t(typeConfig.labelKey)}</p>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.bg} ${status.color}`}>
                         <StatusIcon className="w-3 h-3" />
-                        {leave.status}
+                        {te("status", leave.status)}
                       </span>
                     </div>
                     <p className="text-sm text-ink-3">
-                      {new Date(leave.start_date).toLocaleDateString()} - {new Date(leave.end_date).toLocaleDateString()}
+                      {fmtDate(leave.start_date)} - {fmtDate(leave.end_date)}
                     </p>
                     <p className="text-sm text-ink-2 mt-1 truncate">{leave.reason}</p>
                     {leave.review_notes && (
-                      <p className="text-xs text-ink-3 mt-1 italic">Note: {leave.review_notes}</p>
+                      <p className="text-xs text-ink-3 mt-1 italic">{t("teacher.leave.note", { note: leave.review_notes })}</p>
                     )}
                   </div>
 
@@ -327,7 +329,7 @@ export default function TeacherLeaveRequest() {
                       disabled={cancelMutation.isPending}
                     >
                       <X className="w-4 h-4" />
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                   )}
                 </div>

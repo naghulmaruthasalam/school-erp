@@ -1,3 +1,5 @@
+import { currentLanguage } from "../../i18n/LanguageContext";
+
 /** date helpers shared across the parent portal pages (backend expects plain YYYY-MM-DD strings). */
 
 export function toIsoDate(d: Date): string {
@@ -18,5 +20,6 @@ export function daysAgoIso(daysAgo: number): string {
 export function formatDisplayDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  const locale = currentLanguage() === "ar" ? "ar-OM-u-nu-latn" : "en-GB";
+  return d.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
 }

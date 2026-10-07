@@ -18,18 +18,18 @@ import Settings from "./Settings";
 import About from "./About";
 
 export const principalNavItems: NavItem[] = [
-  { label: "Dashboard", to: "/principal", end: true, icon: DashboardIcon },
-  { label: "My Profile", to: "/principal/profile", icon: ProfileIcon },
-  { label: "Staff", to: "/principal/staff", icon: TeachersIcon },
-  { label: "Students", to: "/principal/students", icon: StudentsIcon },
-  { label: "Syllabus", to: "/principal/syllabus", icon: SyllabusIcon },
-  { label: "Examinations", to: "/principal/exams", icon: ExamsIcon },
-  { label: "Attendance", to: "/principal/attendance", icon: AttendanceIcon },
-  { label: "Fee Reports", to: "/principal/fees", icon: FeesIcon },
-  { label: "Calendar", to: "/principal/calendar", icon: CalendarIcon },
-  { label: "Analytics", to: "/principal/analytics", icon: AnalyticsIcon },
-  { label: "Settings", to: "/principal/settings", icon: SettingsIcon },
-  { label: "About", to: "/principal/about", icon: AboutIcon },
+  { label: "navigation.dashboard", to: "/principal", end: true, icon: DashboardIcon },
+  { label: "navigation.myProfile", to: "/principal/profile", icon: ProfileIcon },
+  { label: "principal.nav.staff", to: "/principal/staff", icon: TeachersIcon },
+  { label: "navigation.students", to: "/principal/students", icon: StudentsIcon },
+  { label: "navigation.syllabus", to: "/principal/syllabus", icon: SyllabusIcon },
+  { label: "principal.nav.exams", to: "/principal/exams", icon: ExamsIcon },
+  { label: "navigation.attendance", to: "/principal/attendance", icon: AttendanceIcon },
+  { label: "principal.nav.feeReports", to: "/principal/fees", icon: FeesIcon },
+  { label: "principal.nav.calendar", to: "/principal/calendar", icon: CalendarIcon },
+  { label: "principal.nav.analytics", to: "/principal/analytics", icon: AnalyticsIcon },
+  { label: "navigation.settings", to: "/principal/settings", icon: SettingsIcon },
+  { label: "navigation.about", to: "/principal/about", icon: AboutIcon },
 ];
 
 export const principalChildRoutes = (

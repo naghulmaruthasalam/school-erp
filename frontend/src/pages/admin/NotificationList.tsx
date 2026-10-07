@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Notification {
   id: string;
@@ -25,6 +26,7 @@ interface CreatePayload {
 }
 
 export default function NotificationList() {
+  const { t, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CreatePayload>({
@@ -68,8 +70,8 @@ export default function NotificationList() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Notifications & Announcements" subtitle="Manage school-wide communications">
-        <Button onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "New Announcement"}</Button>
+      <PageHeader title={t("admin.notifications.title")} subtitle={t("admin.notifications.subtitle")}>
+        <Button onClick={() => setShowForm(!showForm)}>{showForm ? t("admin.common.cancel") : t("admin.notifications.new")}</Button>
       </PageHeader>
 
       {showForm && (
@@ -82,7 +84,7 @@ export default function NotificationList() {
             className="space-y-4"
           >
             <div>
-              <label className="block text-sm font-medium text-ink-2 mb-1">Title</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.title")}</label>
               <input
                 type="text"
                 value={form.title}
@@ -92,7 +94,7 @@ export default function NotificationList() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-2 mb-1">Content</label>
+              <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.content")}</label>
               <textarea
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
@@ -103,35 +105,35 @@ export default function NotificationList() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Type</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.type")}</label>
                 <select
                   value={form.notification_type}
                   onChange={(e) => setForm({ ...form, notification_type: e.target.value })}
                   className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
                 >
-                  <option value="ANNOUNCEMENT">Announcement</option>
-                  <option value="NOTICE">Notice</option>
-                  <option value="ALERT">Alert</option>
-                  <option value="REMINDER">Reminder</option>
-                  <option value="EVENT">Event</option>
+                  <option value="ANNOUNCEMENT">{t("admin.notifType.ANNOUNCEMENT")}</option>
+                  <option value="NOTICE">{t("admin.notifType.NOTICE")}</option>
+                  <option value="ALERT">{t("admin.notifType.ALERT")}</option>
+                  <option value="REMINDER">{t("admin.notifType.REMINDER")}</option>
+                  <option value="EVENT">{t("admin.notifType.EVENT")}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Priority</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.priority")}</label>
                 <select
                   value={form.priority}
                   onChange={(e) => setForm({ ...form, priority: e.target.value })}
                   className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
                 >
-                  <option value="LOW">Low</option>
-                  <option value="NORMAL">Normal</option>
-                  <option value="HIGH">High</option>
-                  <option value="URGENT">Urgent</option>
+                  <option value="LOW">{t("admin.priority.LOW")}</option>
+                  <option value="NORMAL">{t("admin.priority.NORMAL")}</option>
+                  <option value="HIGH">{t("admin.priority.HIGH")}</option>
+                  <option value="URGENT">{t("admin.priority.URGENT")}</option>
                 </select>
               </div>
             </div>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create Announcement"}
+              {createMutation.isPending ? t("admin.common.creating") : t("admin.notifications.create")}
             </Button>
           </form>
         </Card>
@@ -147,30 +149,30 @@ export default function NotificationList() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-ink">{n.title}</h3>
-                    <Badge tone={n.priority === "URGENT" ? "red" : n.priority === "HIGH" ? "yellow" : n.priority === "LOW" ? "gray" : "violet"}>{n.priority}</Badge>
-                    <Badge tone="violet">{n.notification_type}</Badge>
+                    <Badge tone={n.priority === "URGENT" ? "red" : n.priority === "HIGH" ? "yellow" : n.priority === "LOW" ? "gray" : "violet"}>{t(`admin.priority.${n.priority}`)}</Badge>
+                    <Badge tone="violet">{t(`admin.notifType.${n.notification_type}`)}</Badge>
                   </div>
                   <p className="text-ink-2 mb-2">{n.content}</p>
                   <p className="text-xs text-accent-fg">
-                    By {n.created_by_name} · {new Date(n.created_at).toLocaleDateString()}
+                    {t("admin.notifications.by", { name: n.created_by_name, date: fmtDate(n.created_at) })}
                   </p>
                 </div>
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    if (confirm("Delete this notification?")) {
+                    if (confirm(t("admin.notifications.confirmDelete"))) {
                       deleteMutation.mutate(n.id);
                     }
                   }}
                 >
-                  Delete
+                  {t("admin.common.delete")}
                 </Button>
               </div>
             </Card>
           ))}
           {data?.items.length === 0 && (
             <Card>
-              <p className="text-center text-accent-fg py-8">No notifications yet.</p>
+              <p className="text-center text-accent-fg py-8">{t("admin.notifications.empty")}</p>
             </Card>
           )}
         </div>

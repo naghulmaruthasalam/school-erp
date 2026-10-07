@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from app.core.deps import CurrentUser, require_tenant_user
 from app.core.enums import Role
+from app.core.lang import Lang, get_lang
 from app.core.exceptions import PermissionDeniedError
 from app.services.ai import (
     extract_topics,
@@ -20,6 +21,7 @@ from app.services.ai import (
     GeminiNotConfigured,
 )
 from app.models.curriculum import CurriculumUnit
+from app.services import curriculum_service
 
 router = APIRouter(prefix="/teacher-copilot", tags=["teacher-copilot"])
 
@@ -36,45 +38,28 @@ def _check_permission(current: CurrentUser):
 @router.get("/curriculum-options")
 async def get_curriculum_options(
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> dict[str, Any]:
-    """Get available grades, subjects, and chapters from curriculum database."""
+    """Grades, subjects and chapters from the curriculum database: one chapter per unit, titled in the caller's language."""
     _check_permission(current)
 
-    # Get all curriculum units
-    units = await CurriculumUnit.find().to_list()
+    units = await curriculum_service.load_units(current.school_id)
+    grades = sorted({u.grade for u in units if u.grade})
 
-    # Build options structure
-    grades = sorted(set(u.grade for u in units if u.grade))
-
-    # Build subjects per grade
     subjects_by_grade: dict[int, list[str]] = {}
-    for u in units:
-        if u.grade not in subjects_by_grade:
-            subjects_by_grade[u.grade] = []
-        if u.subject and u.subject not in subjects_by_grade[u.grade]:
-            subjects_by_grade[u.grade].append(u.subject)
-
-    # Build chapters per grade/subject
     chapters_by_grade_subject: dict[str, list[dict]] = {}
-    for u in units:
-        key = f"{u.grade}_{u.subject}"
-        if key not in chapters_by_grade_subject:
-            chapters_by_grade_subject[key] = []
-        chapters_by_grade_subject[key].append({
-            "unit_number": u.unit_number,
-            "title_en": u.unit_title_en,
-            "title_ar": u.unit_title_ar,
-            "id": str(u.id),
-        })
-
-    # Sort chapters by unit number
-    for key in chapters_by_grade_subject:
-        chapters_by_grade_subject[key].sort(key=lambda x: x["unit_number"])
+    names = curriculum_service.subject_display(units)
+    for (grade, skey, _n), group in curriculum_service.group_by_unit(units).items():
+        subject = names[skey]
+        if subject not in subjects_by_grade.setdefault(grade, []):
+            subjects_by_grade[grade].append(subject)
+        chapters_by_grade_subject.setdefault(f"{grade}_{subject}", []).append(curriculum_service.describe(group, lang))
 
     return {
         "grades": grades,
         "subjects_by_grade": subjects_by_grade,
         "chapters_by_grade_subject": chapters_by_grade_subject,
+        "language": lang,
     }
 
 
@@ -82,23 +67,30 @@ async def get_curriculum_options(
 async def get_curriculum_content(
     unit_id: str,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> dict[str, Any]:
-    """Get full content for a specific curriculum unit."""
+    """Full text of a curriculum unit in the caller's language (the other edition when only that one exists)."""
     _check_permission(current)
 
     unit = await CurriculumUnit.get(unit_id)
-    if not unit:
+    if not unit or (unit.school_id not in (None, current.school_id)):
         raise HTTPException(status_code=404, detail="Curriculum unit not found")
 
+    siblings = [
+        u for u in await curriculum_service.load_units(current.school_id, unit.grade, unit.subject) if u.unit_number == unit.unit_number
+    ] or [unit]
+    group = curriculum_service.group_by_unit(siblings)
+    unit_group = next(iter(group.values()))
+    chosen, served = curriculum_service.pick(unit_group, lang)
     return {
-        "id": str(unit.id),
-        "grade": unit.grade,
-        "subject": unit.subject,
-        "unit_number": unit.unit_number,
-        "title_en": unit.unit_title_en,
-        "title_ar": unit.unit_title_ar,
-        "full_text": unit.full_text,
-        "resources": [r.model_dump() for r in unit.resources],
+        **curriculum_service.describe(unit_group, lang),
+        "id": str(chosen.id),
+        "grade": chosen.grade,
+        "subject": chosen.subject,
+        "language": served,
+        "requested_language": lang,
+        "full_text": chosen.full_text,
+        "resources": [r.model_dump() for u in siblings for r in u.resources],
     }
 
 

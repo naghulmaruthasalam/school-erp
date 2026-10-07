@@ -27,6 +27,7 @@ from app.models.student import Student
 from app.models.syllabus import Syllabus
 from app.models.teacher import Teacher
 from app.services import student_service
+from app.services.academic_keys import equivalent_class_ids, equivalent_subject_ids, subject_key
 
 logger = logging.getLogger("copilot.grounding")
 
@@ -44,7 +45,15 @@ class StudyContext:
     student_id: str | None = None  # the child, when a parent is the user
     text: str = ""
     has_material: bool = False
-    chapters: list[str] = field(default_factory=list)
+    chapters: list[str] = field(default_factory=list)  # English (stored) chapter names
+    chapter_labels: dict[str, str] = field(default_factory=dict)  # stored name -> name in the reader's language
+    aliases: dict[str, str] = field(default_factory=dict)  # any-language name (lower case) -> stored name
+    lang: str = "en"
+    content_language: str | None = None  # language the chapter notes sent to the model are in
+
+    def canon(self, chapter: str | None) -> str | None:
+        """A chapter name as typed in either language -> the name it is stored under."""
+        return self.aliases.get((chapter or "").strip().lower()) or chapter
 
     @property
     def label(self) -> str:
@@ -52,7 +61,7 @@ class StudyContext:
         if self.subject_name:
             parts.append(self.subject_name)
         if self.chapter:
-            parts.append(self.chapter)
+            parts.append(self.chapter_labels.get(self.chapter, self.chapter))
         return " · ".join(parts)
 
 
@@ -100,7 +109,7 @@ async def allowed_class_ids(current: CurrentUser, student_id: str | None = None)
 
 # ------------------------------------------------------------------ options for the UI pickers
 
-async def context_options(current: CurrentUser) -> dict:
+async def context_options(current: CurrentUser, lang: str = "en") -> dict:
     """Classes -> subjects -> chapters this user can study/teach, plus a parent's children."""
     class_ids, _ = await allowed_class_ids(current)
     classes_q = Class.find(Class.school_id == current.school_id)
@@ -116,15 +125,21 @@ async def context_options(current: CurrentUser) -> dict:
 
     out_classes = []
     for c in classes:
+        # a student's class also covers duplicate records of the same grade (same textbook, different ids)
+        scope = set(await equivalent_class_ids(current.school_id, str(c.id))) if published_only else {str(c.id)}
         subs: dict[str, dict] = {}
-        for syl in (s for s in syllabi if s.class_id == str(c.id)):
+        for syl in (s for s in syllabi if s.class_id in scope):
             subject = subjects.get(syl.subject_id)
             if subject is None:
                 continue
-            entry = subs.setdefault(syl.subject_id, {"id": syl.subject_id, "name": subject.name, "chapters": []})
+            skey = subject_key(subject.name, subject.code)
+            entry = subs.setdefault(skey, {"id": syl.subject_id, "name": subject.name, "chapters": [], "_seen": set()})
             for ch in sorted(syl.chapters, key=lambda x: x.order):
-                if ch.name not in entry["chapters"]:
-                    entry["chapters"].append(ch.name)
+                if ch.name.strip().lower() not in entry["_seen"]:
+                    entry["_seen"].add(ch.name.strip().lower())
+                    entry["chapters"].append(ch.localized(lang).name)
+        for entry in subs.values():
+            entry.pop("_seen", None)
         out_classes.append({"id": str(c.id), "name": c.name, "subjects": list(subs.values())})
 
     children = []
@@ -173,23 +188,26 @@ async def _document_text(school_id: str, document_ids: list[str]) -> str:
 
 # ------------------------------------------------------------------ build
 
-def _outline_line(i: int, c) -> str:
-    line = f"{i}. {c.name}" + (f" - {c.description}" if c.description else "")
-    if c.topics:
-        line += " (topics: " + "; ".join(c.topics) + ")"
+def _outline_line(i: int, c, lang: str) -> str:
+    loc = c.localized(lang)
+    line = f"{i}. {loc.name}" + (f" - {loc.description}" if loc.description else "")
+    if loc.topics:
+        line += " (topics: " + "; ".join(loc.topics) + ")"
     return line
 
 
-def _chapter_block(c, full: bool) -> str:
-    """The selected chapter in full (description, topics, notes); other chapters' notes are cut short."""
-    lines = [f"Selected chapter: {c.name}" if full else f"{c.name}:"]
-    if c.description:
-        lines.append(c.description)
-    if c.topics:
-        lines.append("Topics: " + "; ".join(c.topics))
-    if (c.content or "").strip():
-        notes = c.content.strip()
-        lines.append("Chapter notes:\n" + (notes if full else notes[:1200]))
+def _chapter_block(c, full: bool, lang: str) -> str:
+    """The selected chapter in full (description, topics, notes in the reader's language when we have them); other chapters' notes are cut short."""
+    loc = c.localized(lang)
+    lines = [f"Selected chapter: {loc.name}" if full else f"{loc.name}:"]
+    if loc.description:
+        lines.append(loc.description)
+    if loc.topics:
+        lines.append("Topics: " + "; ".join(loc.topics))
+    if (loc.content or "").strip():
+        notes = loc.content.strip()
+        label = "Chapter notes" + (f" (in {'Arabic' if loc.content_language == 'ar' else 'English'})" if loc.content_language and loc.content_language != lang else "")
+        lines.append(label + ":\n" + (notes if full else notes[:1200]))
     return "\n".join(lines)
 
 
@@ -200,6 +218,7 @@ async def build_study_context(
     chapter: str | None = None,
     student_id: str | None = None,
     require_subject: bool = False,
+    lang: str = "en",
 ) -> StudyContext:
     allowed, child_id = await allowed_class_ids(current, student_id)
     if allowed is not None and class_id not in allowed:
@@ -210,7 +229,7 @@ async def build_study_context(
     if require_subject and not subject_id:
         raise ValidationAppError("Choose a subject first")
 
-    ctx = StudyContext(class_id=class_id, class_name=school_class.name, student_id=child_id, chapter=chapter or None)
+    ctx = StudyContext(class_id=class_id, class_name=school_class.name, student_id=child_id, chapter=chapter or None, lang=lang)
     if not subject_id:
         return ctx
 
@@ -219,8 +238,11 @@ async def build_study_context(
         raise NotFoundError("Subject not found")
     ctx.subject_id, ctx.subject_name = subject_id, subject.name
 
+    # the same grade and subject under any record id (duplicate class/subject records must not hide the material)
     syllabi = await Syllabus.find(
-        Syllabus.school_id == current.school_id, Syllabus.class_id == class_id, Syllabus.subject_id == subject_id
+        Syllabus.school_id == current.school_id,
+        In(Syllabus.class_id, await equivalent_class_ids(current.school_id, class_id)),
+        In(Syllabus.subject_id, await equivalent_subject_ids(current.school_id, subject_id)),
     ).to_list()
     if current.role in (Role.STUDENT, Role.PARENT):
         syllabi = [s for s in syllabi if s.status == SyllabusStatus.PUBLISHED]
@@ -231,20 +253,28 @@ async def build_study_context(
         parts.append(f"Syllabus: {syl.title}" + (f"\n{syl.description}" if syl.description else ""))
         chapters = sorted(syl.chapters, key=lambda c: c.order)
         if chapters:
-            parts.append("Chapter outline:\n" + "\n".join(_outline_line(i, c) for i, c in enumerate(chapters, 1)))
-            ctx.chapters.extend(c.name for c in chapters if c.name not in ctx.chapters)
+            parts.append("Chapter outline:\n" + "\n".join(_outline_line(i, c, lang) for i, c in enumerate(chapters, 1)))
+            for c in chapters:
+                if c.name not in ctx.chapters:
+                    ctx.chapters.append(c.name)
+                    ctx.chapter_labels[c.name] = c.localized(lang).name
+                for n in c.names():
+                    ctx.aliases.setdefault(n, c.name)
         if chapter:
             for c in chapters:
-                if c.name.strip().lower() == chapter.strip().lower():
-                    parts.append(_chapter_block(c, full=True))
+                if c.matches(chapter):
+                    parts.append(_chapter_block(c, full=True, lang=lang))
+                    ctx.content_language = c.localized(lang).content_language
         else:  # no chapter picked: still give the model each chapter's notes, trimmed so none crowds out the rest
-            notes = [_chapter_block(c, full=False) for c in chapters if (c.content or "").strip()]
+            notes = [_chapter_block(c, full=False, lang=lang) for c in chapters if c.localized(lang).content]
             if notes:
                 parts.append("Chapter notes:\n\n" + "\n\n".join(notes))
         doc_ids.extend(d for d in syl.document_ids if d not in doc_ids)
 
-    if chapter and ctx.chapters and chapter not in ctx.chapters:
-        raise NotFoundError("That chapter isn't in this subject's syllabus")
+    if chapter and ctx.chapters:
+        ctx.chapter = ctx.canon(chapter)  # always the stored name, whichever language it was picked in
+        if ctx.chapter not in ctx.chapters:
+            raise NotFoundError("That chapter isn't in this subject's syllabus")
 
     material = await _document_text(current.school_id, doc_ids)
     if material:

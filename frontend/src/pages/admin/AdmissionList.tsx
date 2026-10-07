@@ -5,6 +5,7 @@ import { Badge, Button, Label, PageHeader } from "../../components/ui";
 import { DataTable, Pagination, type Column } from "../../components/DataTable";
 import { listAdmissions } from "./api";
 import { useClasses } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { Admission, AdmissionStatus } from "./types";
 
 const STATUS_OPTIONS: AdmissionStatus[] = ["SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "CONVERTED"];
@@ -20,6 +21,7 @@ const STATUS_TONE: Record<AdmissionStatus, "gray" | "green" | "red" | "yellow"> 
 const PAGE_SIZE = 20;
 
 export default function AdmissionList() {
+  const { t, te, fmtDate } = useLanguage();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<AdmissionStatus | "">("");
 
@@ -37,34 +39,34 @@ export default function AdmissionList() {
 
   const columns: Column<Admission>[] = [
     {
-      header: "Applicant",
+      header: t("admin.admissions.applicant"),
       cell: (a) => (
         <Link to={`/admin/admissions/${a.id}`} className="font-medium text-accent-fg hover:underline">
           {a.applicant_first_name} {a.applicant_last_name}
         </Link>
       ),
     },
-    { header: "Applying For", cell: (a) => classNameById.get(a.applying_for_class_id) ?? "—" },
-    { header: "Guardian", cell: (a) => `${a.guardian_name} (${a.guardian_phone})` },
-    { header: "Status", cell: (a) => <Badge tone={STATUS_TONE[a.status]}>{a.status}</Badge> },
-    { header: "Submitted", cell: (a) => new Date(a.created_at).toLocaleDateString() },
+    { header: t("admin.admissions.applyingFor"), cell: (a) => te("class", classNameById.get(a.applying_for_class_id)) || "—" },
+    { header: t("admin.admissions.guardian"), cell: (a) => `${a.guardian_name} (${a.guardian_phone})` },
+    { header: t("admin.common.status"), cell: (a) => <Badge tone={STATUS_TONE[a.status]}>{te("status", a.status)}</Badge> },
+    { header: t("admin.admissions.submitted"), cell: (a) => fmtDate(a.created_at) },
   ];
 
   return (
     <div>
       <PageHeader
-        title="Admissions"
-        subtitle="Review applications and convert approved admissions into enrolled students."
+        title={t("admin.admissions.title")}
+        subtitle={t("admin.admissions.subtitle")}
         actions={
           <Link to="/admin/admissions/new">
-            <Button>New Admission</Button>
+            <Button>{t("admin.admissions.newAdmission")}</Button>
           </Link>
         }
       />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div>
-          <Label>Status</Label>
+          <Label>{t("admin.common.status")}</Label>
           <select
             className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={status}
@@ -73,10 +75,10 @@ export default function AdmissionList() {
               setStatus(e.target.value as AdmissionStatus | "");
             }}
           >
-            <option value="">All statuses</option>
+            <option value="">{t("admin.admissions.allStatuses")}</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {te("status", s)}
               </option>
             ))}
           </select>
@@ -88,7 +90,7 @@ export default function AdmissionList() {
         rows={data?.items ?? []}
         isLoading={isLoading}
         rowKey={(a) => a.id}
-        emptyLabel="No admissions found."
+        emptyLabel={t("admin.admissions.empty")}
       />
       <Pagination page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPageChange={setPage} />
     </div>

@@ -1,0 +1,120 @@
+{
+  "student": {
+    "nav": {
+      "exams": "Exams"
+    },
+    "attendance": {
+      "subtitle": "Your attendance summary and recent history.",
+      "from": "From",
+      "to": "To",
+      "pct": "Attendance %",
+      "totalDays": "Total Days",
+      "remarks": "Remarks",
+      "empty": "No attendance records in this range."
+    },
+    "dashboard": {
+      "hey": "Hey, {name}!"
+    },
+    "exams": {
+      "subtitle": "Your exam schedule, results and report cards.",
+      "exam": "Exam",
+      "term": "Term",
+      "start": "Start",
+      "end": "End",
+      "completed": "Completed",
+      "upcoming": "Upcoming",
+      "hideResult": "Hide result",
+      "viewResult": "View result",
+      "empty": "No exams scheduled yet.",
+      "result": "Result",
+      "reportUnavailable": "Report card is not available yet.",
+      "preparing": "Preparing…",
+      "downloadReport": "Download Report Card",
+      "notPublished": "Result not published yet for this exam.",
+      "total": "Total",
+      "rollNo": "Roll No.",
+      "subject": "Subject",
+      "marks": "Marks",
+      "max": "Max"
+    },
+    "fees": {
+      "subtitle": "Your fee invoices and outstanding balance.",
+      "total": "Total",
+      "outstanding": "Outstanding",
+      "paidToDate": "Paid to Date",
+      "invoices": "Invoices",
+      "empty": "No invoices found.",
+      "paySuccess": "Payment successful — thank you!",
+      "payFailed": "Payment was not completed. Please try again.",
+      "payError": "Could not start the payment. Online payments may not be configured for this school yet — please contact the office.",
+      "redirecting": "Redirecting…"
+    },
+    "notifications": {
+      "subtitle": "School announcements and notices",
+      "new": "New",
+      "by": "By {name}",
+      "empty": "No notifications.",
+      "types": {
+        "ANNOUNCEMENT": "Announcement",
+        "NOTICE": "Notice",
+        "ALERT": "Alert",
+        "REMINDER": "Reminder",
+        "EVENT": "Event"
+      },
+      "priorities": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      }
+    },
+    "profile": {
+      "subtitle": "Your class, section, roll number and admission details.",
+      "loadError": "Could not load your profile.",
+      "changePhoto": "Change photo",
+      "id": "ID: {no}",
+      "class": "Class",
+      "section": "Section",
+      "rollNo": "Roll No",
+      "academicInfo": "Academic Information",
+      "bloodGroup": "Blood Group",
+      "male": "Male",
+      "female": "Female",
+      "admissionDate": "Admission Date",
+      "academicYear": "Academic Year",
+      "admissionNo": "Admission No"
+    },
+    "settings": {
+      "subtitle": "Manage your account preferences and security.",
+      "appearance": "Appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "changeFailed": "Failed to change password. Please check your current password.",
+      "mismatch": "New passwords do not match.",
+      "tooShort": "Password must be at least 6 characters.",
+      "changed": "Password changed successfully!",
+      "update": "Update Password",
+      "updating": "Updating..."
+    },
+    "syllabus": {
+      "title": "My Syllabus",
+      "subtitle": "View your course curriculum and study materials",
+      "mySubjects": "My Subjects",
+      "chapters": "Chapters",
+      "materials": "Materials",
+      "journey": "Your Learning Journey",
+      "journeyDesc": "Explore your syllabus, chapters, and study materials for your grade.",
+      "empty": "No syllabus available for your classes yet."
+    },
+    "timetable": {
+      "subtitle": "Your weekly class schedule.",
+      "none": "No timetable has been published for your section yet.",
+      "holiday": "Holiday",
+      "noPeriods": "No periods scheduled."
+    }
+  }
+}

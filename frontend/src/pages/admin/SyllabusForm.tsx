@@ -5,6 +5,7 @@ import { Button, Card, PageHeader, Spinner, Input, Label } from "../../component
 import { fetchAcademicYears, fetchClasses, fetchSubjects } from "./api";
 import { getSyllabus, createSyllabus, updateSyllabus, uploadSyllabusDocument } from "./syllabusApi";
 import type { SyllabusChapter } from "./syllabusApi";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface ChapterForm {
   id?: string;
@@ -16,6 +17,7 @@ interface ChapterForm {
 }
 
 export default function SyllabusForm() {
+  const { t, te } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
@@ -71,7 +73,7 @@ export default function SyllabusForm() {
         ...form,
         chapters: chapters.map(({ topicsText, ...c }) => ({
           ...c,
-          topics: (topicsText ?? "").split(/[;\n]/).map((t) => t.trim()).filter(Boolean),
+          topics: (topicsText ?? "").split(/[;\n]/).map((x) => x.trim()).filter(Boolean),
         })),
       };
       if (isEdit) {
@@ -125,84 +127,84 @@ export default function SyllabusForm() {
   return (
     <div className="animate-fade-in-up">
       <PageHeader
-        title={isEdit ? "Edit Syllabus" : "Create Syllabus"}
-        subtitle={isEdit ? "Update syllabus details and chapters" : "Define curriculum for a class and subject"}
+        title={isEdit ? t("admin.syllabusForm.editTitle") : t("admin.syllabusForm.createTitle")}
+        subtitle={isEdit ? t("admin.syllabusForm.editSubtitle") : t("admin.syllabusForm.createSubtitle")}
       />
 
       <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-6">
         <Card>
-          <h2 className="text-lg font-semibold text-ink mb-4">Basic Information</h2>
+          <h2 className="text-lg font-semibold text-ink mb-4">{t("admin.syllabusForm.basicInfo")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="md:col-span-2 lg:col-span-3">
-              <Label>Title</Label>
+              <Label>{t("admin.common.title")}</Label>
               <Input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g., Mathematics Grade 10 - 2024"
+                placeholder={t("admin.syllabusForm.titlePlaceholder")}
                 required
               />
             </div>
             <div>
-              <Label>Academic Year</Label>
+              <Label>{t("admin.common.academicYear")}</Label>
               <select
                 value={form.academic_year_id}
                 onChange={(e) => setForm({ ...form, academic_year_id: e.target.value })}
                 className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 required
               >
-                <option value="">-- Select --</option>
+                <option value="">{t("admin.common.selectDash")}</option>
                 {yearsQuery.data?.map((y) => (
                   <option key={y.id} value={y.id}>{y.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label>Class</Label>
+              <Label>{t("admin.common.class")}</Label>
               <select
                 value={form.class_id}
                 onChange={(e) => setForm({ ...form, class_id: e.target.value })}
                 className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 required
               >
-                <option value="">-- Select --</option>
+                <option value="">{t("admin.common.selectDash")}</option>
                 {classesQuery.data?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>{te("class", c.name)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label>Subject</Label>
+              <Label>{t("admin.common.subject")}</Label>
               <select
                 value={form.subject_id}
                 onChange={(e) => setForm({ ...form, subject_id: e.target.value })}
                 className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 required
               >
-                <option value="">-- Select --</option>
+                <option value="">{t("admin.common.selectDash")}</option>
                 {subjectsQuery.data?.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                  <option key={s.id} value={s.id}>{te("subject", s.name)}</option>
                 ))}
               </select>
             </div>
             <div className="md:col-span-2 lg:col-span-3">
-              <Label>Description</Label>
+              <Label>{t("admin.common.description")}</Label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 rows={3}
-                placeholder="Brief description of the syllabus..."
+                placeholder={t("admin.syllabusForm.descPlaceholder")}
               />
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t("admin.common.status")}</Label>
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value as "DRAFT" | "PUBLISHED" })}
                 className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
               >
-                <option value="DRAFT">Draft</option>
-                <option value="PUBLISHED">Published</option>
+                <option value="DRAFT">{t("admin.syllabusForm.draft")}</option>
+                <option value="PUBLISHED">{t("admin.syllabusForm.published")}</option>
               </select>
             </div>
           </div>
@@ -210,18 +212,18 @@ export default function SyllabusForm() {
 
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-ink">Chapters</h2>
-            <Button type="button" variant="secondary" onClick={addChapter}>Add Chapter</Button>
+            <h2 className="text-lg font-semibold text-ink">{t("admin.syllabusForm.chapters")}</h2>
+            <Button type="button" variant="secondary" onClick={addChapter}>{t("admin.syllabusForm.addChapter")}</Button>
           </div>
 
           {chapters.length === 0 ? (
-            <p className="text-center text-accent-fg py-4">No chapters added. Click "Add Chapter" to begin.</p>
+            <p className="text-center text-accent-fg py-4">{t("admin.syllabusForm.noChapters")}</p>
           ) : (
             <div className="space-y-4">
               {chapters.map((ch, idx) => (
                 <div key={idx} className="border border-line rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-medium text-accent-fg">Chapter {idx + 1}</span>
+                    <span className="text-sm font-medium text-accent-fg">{t("admin.syllabusForm.chapterN", { n: idx + 1 })}</span>
                     <div className="flex-1" />
                     <button type="button" onClick={() => moveChapter(idx, -1)} className="text-accent-fg hover:text-ink-2 disabled:opacity-30" disabled={idx === 0}>
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
@@ -235,38 +237,38 @@ export default function SyllabusForm() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Chapter Name</Label>
+                      <Label>{t("admin.syllabusForm.chapterName")}</Label>
                       <Input
                         value={ch.name}
                         onChange={(e) => updateChapter(idx, "name", e.target.value)}
-                        placeholder="e.g., Introduction to Algebra"
+                        placeholder={t("admin.syllabusForm.chapterNamePlaceholder")}
                         required
                       />
                     </div>
                     <div>
-                      <Label>Description</Label>
+                      <Label>{t("admin.common.description")}</Label>
                       <Input
                         value={ch.description}
                         onChange={(e) => updateChapter(idx, "description", e.target.value)}
-                        placeholder="Brief chapter description..."
+                        placeholder={t("admin.syllabusForm.chapterDescPlaceholder")}
                       />
                     </div>
                     <div>
-                      <Label>Topics (separate with ;)</Label>
+                      <Label>{t("admin.syllabusForm.topics")}</Label>
                       <Input
                         value={ch.topicsText ?? ""}
                         onChange={(e) => updateChapter(idx, "topicsText", e.target.value)}
-                        placeholder="e.g., Push and pull; Types of force"
+                        placeholder={t("admin.syllabusForm.topicsPlaceholder")}
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <Label>Study notes (used by the Copilot to explain this chapter)</Label>
+                      <Label>{t("admin.syllabusForm.notes")}</Label>
                       <textarea
                         value={ch.content ?? ""}
                         onChange={(e) => updateChapter(idx, "content", e.target.value)}
                         rows={4}
                         className="lg-field w-full"
-                        placeholder="Key points, definitions and examples from the textbook…"
+                        placeholder={t("admin.syllabusForm.notesPlaceholder")}
                       />
                     </div>
                   </div>
@@ -278,7 +280,7 @@ export default function SyllabusForm() {
 
         {isEdit && (
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Documents</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("admin.common.documents")}</h2>
             <div className="flex flex-wrap items-center gap-4 mb-4">
               <input
                 type="file"
@@ -291,7 +293,7 @@ export default function SyllabusForm() {
                 accept=".pdf,.doc,.docx"
               />
               <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>
-                {uploadMutation.isPending ? "Uploading..." : "Upload Document"}
+                {uploadMutation.isPending ? t("admin.common.uploading") : t("admin.documents.upload")}
               </Button>
             </div>
             {documents.length > 0 ? (
@@ -304,16 +306,16 @@ export default function SyllabusForm() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-accent-fg">No documents uploaded.</p>
+              <p className="text-sm text-accent-fg">{t("admin.syllabus.noDocuments")}</p>
             )}
           </Card>
         )}
 
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? "Saving..." : isEdit ? "Update Syllabus" : "Create Syllabus"}
+            {saveMutation.isPending ? t("admin.common.saving") : isEdit ? t("admin.syllabusForm.update") : t("admin.syllabusForm.createTitle")}
           </Button>
-          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>{t("admin.common.cancel")}</Button>
         </div>
       </form>
     </div>

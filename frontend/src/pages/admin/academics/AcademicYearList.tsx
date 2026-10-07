@@ -3,9 +3,11 @@ import { useState, type FormEvent } from "react";
 import { Badge, Button, Card, ErrorText, Input, Label, PageHeader } from "../../../components/ui";
 import { DataTable, type Column } from "../../../components/DataTable";
 import { createAcademicYear, listAcademicYears, setCurrentAcademicYear } from "./api";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import type { AcademicYear } from "./types";
 
 export default function AcademicYearList() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const { data: years, isLoading } = useQuery({ queryKey: ["academic-years"], queryFn: listAcademicYears });
 
@@ -25,7 +27,7 @@ export default function AcademicYearList() {
       setIsCurrent(false);
       setError("");
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Failed to create academic year."),
+    onError: (err) => setError(err instanceof Error ? err.message : t("admin.years.createFailed")),
   });
 
   const setCurrentMutation = useMutation({
@@ -36,19 +38,19 @@ export default function AcademicYearList() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!name || !startDate || !endDate) {
-      setError("Name, start date and end date are required.");
+      setError(t("admin.years.fieldsRequired"));
       return;
     }
     createMutation.mutate({ name, start_date: startDate, end_date: endDate, is_current: isCurrent });
   }
 
   const columns: Column<AcademicYear>[] = [
-    { header: "Name", cell: (y) => y.name },
-    { header: "Start Date", cell: (y) => y.start_date },
-    { header: "End Date", cell: (y) => y.end_date },
-    { header: "Status", cell: (y) => (y.is_current ? <Badge tone="green">Current</Badge> : <Badge>Inactive</Badge>) },
+    { header: t("admin.common.name"), cell: (y) => y.name },
+    { header: t("admin.common.startDate"), cell: (y) => y.start_date },
+    { header: t("admin.common.endDate"), cell: (y) => y.end_date },
+    { header: t("admin.common.status"), cell: (y) => (y.is_current ? <Badge tone="green">{t("admin.common.current")}</Badge> : <Badge>{t("admin.common.inactive")}</Badge>) },
     {
-      header: "Actions",
+      header: t("admin.common.actions"),
       cell: (y) =>
         !y.is_current && (
           <Button
@@ -57,7 +59,7 @@ export default function AcademicYearList() {
             disabled={setCurrentMutation.isPending}
             onClick={() => setCurrentMutation.mutate(y.id)}
           >
-            Set Current
+            {t("admin.years.setCurrent")}
           </Button>
         ),
     },
@@ -65,37 +67,37 @@ export default function AcademicYearList() {
 
   return (
     <div>
-      <PageHeader title="Academic Years" subtitle="Create and manage academic years for your school." />
+      <PageHeader title={t("admin.years.title")} subtitle={t("admin.years.subtitle")} />
 
       <Card className="mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Create Academic Year</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t("admin.years.createTitle")}</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
           <div>
-            <Label htmlFor="ay-name">Name</Label>
+            <Label htmlFor="ay-name">{t("admin.common.name")}</Label>
             <Input id="ay-name" placeholder="2027-2028" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="ay-start">Start Date</Label>
+            <Label htmlFor="ay-start">{t("admin.common.startDate")}</Label>
             <Input id="ay-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="ay-end">End Date</Label>
+            <Label htmlFor="ay-end">{t("admin.common.endDate")}</Label>
             <Input id="ay-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-sm text-ink-2">
               <input type="checkbox" checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)} />
-              Set as current
+              {t("admin.years.setAsCurrent")}
             </label>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating…" : "Create"}
+              {createMutation.isPending ? t("admin.common.creating") : t("admin.common.create")}
             </Button>
           </div>
         </form>
         <ErrorText>{error}</ErrorText>
       </Card>
 
-      <DataTable columns={columns} rows={years ?? []} isLoading={isLoading} rowKey={(y) => y.id} emptyLabel="No academic years yet." />
+      <DataTable columns={columns} rows={years ?? []} isLoading={isLoading} rowKey={(y) => y.id} emptyLabel={t("admin.years.empty")} />
     </div>
   );
 }

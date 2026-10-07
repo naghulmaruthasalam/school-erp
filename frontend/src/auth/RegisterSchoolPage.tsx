@@ -3,8 +3,10 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
 import { registerSchoolRequest } from "./api";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function RegisterSchoolPage() {
+  const { t } = useLanguage();
   const [schoolName, setSchoolName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -42,7 +44,7 @@ export default function RegisterSchoolPage() {
     onError: (err) => {
       const message =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        "Could not register your school. Please check the details and try again.";
+        t("shell.register.failed");
       setError(message);
     },
   });
@@ -51,11 +53,11 @@ export default function RegisterSchoolPage() {
     e.preventDefault();
     setError("");
     if (adminPassword.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t("shell.auth.passwordMin"));
       return;
     }
     if (adminPassword !== adminConfirmPassword) {
-      setError("Passwords do not match");
+      setError(t("shell.auth.passwordMismatch"));
       return;
     }
     mutation.mutate();
@@ -69,10 +71,10 @@ export default function RegisterSchoolPage() {
           to="/login"
           className="inline-flex items-center text-ink-3 hover:text-ink text-sm mb-6 transition-colors group"
         >
-          <svg className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 me-2 transition-transform group-hover:-translate-x-1 rtl:-scale-x-100 rtl:group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to login
+          {t("shell.auth.backToLogin")}
         </Link>
 
         <div className="animated-border">
@@ -84,30 +86,30 @@ export default function RegisterSchoolPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-semibold tracking-tight text-ink mb-2">School Registered!</h2>
+                <h2 className="text-2xl font-semibold tracking-tight text-ink mb-2">{t("shell.register.successTitle")}</h2>
                 <p className="text-ink-2 mb-4">
-                  <span className="font-semibold text-ink">{mutation.data.school.name}</span> has been registered successfully.
+                  <span className="font-semibold text-ink">{mutation.data.school.name}</span> {t("shell.register.successMsg")}
                 </p>
 
-                <div className="bg-surface-3 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-ink-3 text-sm mb-2">Your School Code:</p>
-                  <p className="text-2xl font-mono font-bold text-accent-fg tracking-wider">
+                <div className="bg-surface-3 rounded-xl p-4 mb-6 text-start">
+                  <p className="text-ink-3 text-sm mb-2">{t("shell.register.yourCode")}</p>
+                  <p dir="ltr" className="text-2xl font-mono font-bold text-accent-fg tracking-wider text-start">
                     {mutation.data.school.code}
                   </p>
                   <p className="text-xs text-ink-3 mt-2">
-                    Save this code! You'll need it to sign in.
+                    {t("shell.register.saveCode")}
                   </p>
                 </div>
 
                 <p className="text-ink-3 text-sm mb-6">
-                  You can now sign in with your email <span className="text-ink">{mutation.data.admin_email}</span> and the password you created.
+                  {t("shell.register.signInWith")} <span dir="ltr" className="text-ink">{mutation.data.admin_email}</span> {t("shell.register.andPassword")}
                 </p>
 
                 <Link
                   to="/login/admin"
                   className="inline-flex items-center justify-center w-full py-3 px-4 lg-btn lg-btn-primary font-medium"
                 >
-                  <span className="relative z-10">Go to Sign In</span>
+                  <span className="relative z-10">{t("shell.register.goToSignIn")}</span>
                 </Link>
               </div>
             ) : (
@@ -116,76 +118,76 @@ export default function RegisterSchoolPage() {
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-soft text-4xl mb-4">
                     🏫
                   </div>
-                  <h1 className="text-2xl font-semibold tracking-tight text-ink">Register Your School</h1>
-                  <p className="text-ink-3 text-sm mt-1">Set up your school in under a minute</p>
+                  <h1 className="text-2xl font-semibold tracking-tight text-ink">{t("landing.registerSchool")}</h1>
+                  <p className="text-ink-3 text-sm mt-1">{t("shell.register.subtitle")}</p>
                 </div>
 
                 <form className="space-y-5" onSubmit={handleSubmit}>
                   <div className="p-4 rounded-xl bg-surface-2 border border-line">
-                    <p className="text-xs font-medium text-accent-fg mb-3 uppercase tracking-wider">School Details</p>
+                    <p className="text-xs font-medium text-accent-fg mb-3 uppercase tracking-wider">{t("shell.register.schoolDetails")}</p>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-ink-2 mb-2">School Name *</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.schoolName")} *</label>
                         <input
                           required
                           value={schoolName}
                           onChange={(e) => setSchoolName(e.target.value)}
                           className="w-full px-4 py-3 lg-field"
-                          placeholder="e.g. Green Hills Academy"
+                          placeholder={t("shell.register.schoolNamePh")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-ink-2 mb-2">Address</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.about.addressLabel")}</label>
                         <input
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
                           className="w-full px-4 py-3 lg-field"
-                          placeholder="e.g. 123 Main Street"
+                          placeholder={t("shell.register.addressPh")}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-ink-2 mb-2">City</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.city")}</label>
                           <input
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
                             className="w-full px-4 py-3 lg-field"
-                            placeholder="e.g. Mumbai"
+                            placeholder={t("shell.register.cityPh")}
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-ink-2 mb-2">State</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.state")}</label>
                           <input
                             value={state}
                             onChange={(e) => setState(e.target.value)}
                             className="w-full px-4 py-3 lg-field"
-                            placeholder="e.g. Maharashtra"
+                            placeholder={t("shell.register.statePh")}
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-ink-2 mb-2">Country</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.country")}</label>
                           <input
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
                             className="w-full px-4 py-3 lg-field"
-                            placeholder="e.g. India"
+                            placeholder={t("shell.register.countryPh")}
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-ink-2 mb-2">PIN Code</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.postalCode")}</label>
                           <input
                             value={postalCode}
                             onChange={(e) => setPostalCode(e.target.value)}
                             className="w-full px-4 py-3 lg-field"
-                            placeholder="e.g. 400001"
+                            placeholder={t("shell.register.postalPh")}
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-ink-2 mb-2">School Phone</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.schoolPhone")}</label>
                           <input
                             value={schoolPhone}
                             onChange={(e) => setSchoolPhone(e.target.value)}
@@ -194,9 +196,10 @@ export default function RegisterSchoolPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-ink-2 mb-2">School Email</label>
+                          <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.schoolEmail")}</label>
                           <input
                             type="email"
+                            dir="ltr"
                             value={schoolEmail}
                             onChange={(e) => setSchoolEmail(e.target.value)}
                             className="w-full px-4 py-3 lg-field"
@@ -209,27 +212,28 @@ export default function RegisterSchoolPage() {
                       <svg className="w-4 h-4 text-accent-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      School code will be auto-generated
+                      {t("shell.register.autoCode")}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-xl bg-surface-2 border border-line">
-                    <p className="text-xs font-medium text-cyan-400 mb-3 uppercase tracking-wider">Admin Account</p>
+                    <p className="text-xs font-medium text-cyan-400 mb-3 uppercase tracking-wider">{t("shell.register.adminAccount")}</p>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-ink-2 mb-2">Your Name</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.yourName")}</label>
                         <input
                           required
                           value={adminName}
                           onChange={(e) => setAdminName(e.target.value)}
                           className="w-full px-4 py-3 lg-field"
-                          placeholder="Full name"
+                          placeholder={t("shell.register.fullName")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-ink-2 mb-2">Email Address</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.emailAddress")}</label>
                         <input
                           type="email"
+                          dir="ltr"
                           required
                           value={adminEmail}
                           onChange={(e) => setAdminEmail(e.target.value)}
@@ -238,7 +242,7 @@ export default function RegisterSchoolPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-ink-2 mb-2">Phone (optional)</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.register.phoneOptional")}</label>
                         <input
                           value={adminPhone}
                           onChange={(e) => setAdminPhone(e.target.value)}
@@ -247,20 +251,21 @@ export default function RegisterSchoolPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-ink-2 mb-2">Password *</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">{t("common.password")} *</label>
                         <div className="relative">
                           <input
                             type={showPassword ? "text" : "password"}
                             required
                             value={adminPassword}
                             onChange={(e) => setAdminPassword(e.target.value)}
-                            className="w-full px-4 py-3 pr-12 lg-field"
-                            placeholder="Minimum 8 characters"
+                            className="w-full px-4 py-3 pe-12 lg-field"
+                            placeholder={t("shell.auth.minChars")}
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent-fg transition-colors"
+                            className="absolute end-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent-fg transition-colors"
+                            aria-label={showPassword ? t("shell.common.hidePassword") : t("shell.common.showPassword")}
                           >
                             {showPassword ? (
                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -276,20 +281,21 @@ export default function RegisterSchoolPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-ink-2 mb-2">Confirm Password *</label>
+                        <label className="block text-sm font-medium text-ink-2 mb-2">{t("shell.reset.confirmPassword")} *</label>
                         <div className="relative">
                           <input
                             type={showConfirmPassword ? "text" : "password"}
                             required
                             value={adminConfirmPassword}
                             onChange={(e) => setAdminConfirmPassword(e.target.value)}
-                            className="w-full px-4 py-3 pr-12 lg-field"
-                            placeholder="Re-enter your password"
+                            className="w-full px-4 py-3 pe-12 lg-field"
+                            placeholder={t("shell.auth.reenter")}
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent-fg transition-colors"
+                            className="absolute end-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent-fg transition-colors"
+                            aria-label={showConfirmPassword ? t("shell.common.hidePassword") : t("shell.common.showPassword")}
                           >
                             {showConfirmPassword ? (
                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -321,14 +327,14 @@ export default function RegisterSchoolPage() {
                     <span className="relative z-10">
                       {mutation.isPending ? (
                         <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin -ms-1 me-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
-                          Registering...
+                          {t("shell.register.registering")}
                         </span>
                       ) : (
-                        "Register School"
+                        t("shell.register.submit")
                       )}
                     </span>
                   </button>
@@ -336,9 +342,9 @@ export default function RegisterSchoolPage() {
 
                 <div className="mt-6 pt-6 border-t border-slate-700/50 text-center">
                   <p className="text-ink-3 text-sm">
-                    Already registered?{" "}
+                    {t("shell.register.already")}{" "}
                     <Link to="/login" className="text-accent-fg hover:text-ink-2 font-medium transition-colors">
-                      Sign in
+                      {t("common.signIn")}
                     </Link>
                   </p>
                 </div>
@@ -349,7 +355,7 @@ export default function RegisterSchoolPage() {
 
         <div className="mt-8 flex items-center justify-center gap-3 text-ink-3">
           <Logo size={24} showWordmark={false} />
-          <span className="text-xs">مدرسة العاصمة الخاصة</span>
+          <span className="text-xs">{t("shell.brand.name")}</span>
         </div>
       </div>
     </div>

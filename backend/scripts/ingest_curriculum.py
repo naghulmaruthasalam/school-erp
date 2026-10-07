@@ -63,10 +63,14 @@ async def ingest_ndjson(file_path: str, school_id: str | None = None):
                     subject = data.get("subject", "")
                     unit_number = data.get("unit_number", 0)
 
+                    language = "ar" if str(data.get("language", "en")).lower().startswith("ar") else "en"
+                    # A unit exists once per language. Matching on grade/subject/unit alone made the English record
+                    # overwrite the Arabic one (or the reverse), leaving a mix of languages in the database.
                     existing = await CurriculumUnit.find_one(
                         CurriculumUnit.grade == grade,
                         CurriculumUnit.subject == subject,
                         CurriculumUnit.unit_number == unit_number,
+                        CurriculumUnit.language == language,
                     )
 
                     pages = [
@@ -84,7 +88,7 @@ async def ingest_ndjson(file_path: str, school_id: str | None = None):
 
                     if existing:
                         existing.school_id = school_id
-                        existing.language = data.get("language", "en")
+                        existing.language = language
                         existing.unit_title_ar = data.get("unit_title_ar")
                         existing.unit_title_en = data.get("unit_title_en")
                         existing.source_zip = data.get("source_zip")
@@ -103,7 +107,7 @@ async def ingest_ndjson(file_path: str, school_id: str | None = None):
                             school_id=school_id,
                             grade=grade,
                             subject=subject,
-                            language=data.get("language", "en"),
+                            language=language,
                             unit_number=unit_number,
                             unit_title_ar=data.get("unit_title_ar"),
                             unit_title_en=data.get("unit_title_en"),

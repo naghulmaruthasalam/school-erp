@@ -83,7 +83,7 @@ export default function SyllabusViewer() {
       <header className="sticky top-3 z-20 mx-3 mt-3 md:mx-6">
         <div className="glass-strong mx-auto flex max-w-6xl items-center justify-between !rounded-full px-4 py-2.5 md:px-6">
           <Link to="/" className="group flex items-center gap-3">
-            <ArrowLeft className="h-5 w-5 text-ink-3 transition-transform group-hover:-translate-x-1 group-hover:text-ink" />
+            <ArrowLeft className="h-5 w-5 text-ink-3 transition-transform group-hover:-translate-x-1 rtl:-scale-x-100 rtl:group-hover:translate-x-1 group-hover:text-ink" />
             <Logo size={36} showWordmark />
           </Link>
           <div className="flex items-center gap-2">
@@ -170,11 +170,11 @@ export default function SyllabusViewer() {
                     className="lg-btn lg-btn-primary !min-h-10"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    {language === "ar" ? "فتح في نافذة جديدة" : "Open in new tab"}
+                    {t("shell.publicSyllabus.openNewTab")}
                   </a>
                   <button
                     onClick={() => setSelectedDoc(null)}
-                    aria-label="Close"
+                    aria-label={t("shell.common.close")}
                     className="glass-icon-btn"
                   >
                     <span className="text-2xl leading-none">&times;</span>
@@ -191,8 +191,8 @@ export default function SyllabusViewer() {
 
         <div className="text-center animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
           <Link to="/" className="inline-flex items-center gap-2 text-accent-fg transition-opacity hover:opacity-70">
-            <ArrowLeft className="h-4 w-4" />
-            {language === "ar" ? "العودة إلى الصفحة الرئيسية" : "Back to Home"}
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+            {t("shell.publicSyllabus.backHome")}
           </Link>
         </div>
       </main>

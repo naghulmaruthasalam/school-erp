@@ -13,6 +13,7 @@ import {
   listInvoices,
   searchStudents,
 } from "./api";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import type { FeeAssignment, Invoice, InvoiceStatus, StudentLite } from "./types";
 
 const STATUS_TONES: Record<InvoiceStatus, "gray" | "green" | "red" | "yellow"> = {
@@ -24,6 +25,7 @@ const STATUS_TONES: Record<InvoiceStatus, "gray" | "green" | "red" | "yellow"> =
 };
 
 export default function FeeOverview() {
+  const { t, te, fmtDate, fmtNumber } = useLanguage();
   const queryClient = useQueryClient();
 
   const [nameInput, setNameInput] = useState("");
@@ -76,13 +78,13 @@ export default function FeeOverview() {
       setDiscountReason("");
       setAssignError("");
     },
-    onError: (err) => setAssignError(err instanceof Error ? err.message : "Failed to assign fee structure."),
+    onError: (err) => setAssignError(err instanceof Error ? err.message : t("admin.feeOverview.assignFailed")),
   });
 
   function handleAssign(e: FormEvent) {
     e.preventDefault();
     if (!student || !feeStructureId) {
-      setAssignError("Select a fee structure.");
+      setAssignError(t("admin.feeOverview.selectStructure"));
       return;
     }
     assignMutation.mutate({
@@ -106,7 +108,7 @@ export default function FeeOverview() {
       setDueDate("");
       setInvoiceError("");
     },
-    onError: (err) => setInvoiceError(err instanceof Error ? err.message : "Failed to create invoice."),
+    onError: (err) => setInvoiceError(err instanceof Error ? err.message : t("admin.feeOverview.invoiceFailed")),
   });
 
   function toggleAssignment(id: string) {
@@ -115,7 +117,7 @@ export default function FeeOverview() {
 
   function handleCreateInvoice() {
     if (!student || selectedAssignmentIds.length === 0 || !dueDate) {
-      setInvoiceError("Select at least one fee assignment and a due date.");
+      setInvoiceError(t("admin.feeOverview.selectAssignment"));
       return;
     }
     invoiceMutation.mutate({
@@ -126,10 +128,10 @@ export default function FeeOverview() {
     });
   }
 
-  const categoryName = (id: string) => categories?.find((c) => c.id === id)?.name ?? id;
+  const categoryName = (id: string) => te("feeType", categories?.find((c) => c.id === id)?.name) || id;
   const structureLabel = (id: string) => {
     const s = structures?.find((st) => st.id === id);
-    return s ? `${categoryName(s.category_id)} · ₹${s.amount.toLocaleString()} (${s.frequency})` : id;
+    return s ? `${categoryName(s.category_id)} · ₹${fmtNumber(s.amount)} (${t(`admin.frequency.${s.frequency}`)})` : id;
   };
 
   const assignmentColumns: Column<FeeAssignment>[] = [
@@ -139,22 +141,22 @@ export default function FeeOverview() {
         <input type="checkbox" checked={selectedAssignmentIds.includes(a.id)} onChange={() => toggleAssignment(a.id)} />
       ),
     },
-    { header: "Fee Structure", cell: (a) => structureLabel(a.fee_structure_id) },
-    { header: "Discount", cell: (a) => (a.discount_amount > 0 ? `₹${a.discount_amount.toLocaleString()}` : "—") },
-    { header: "Final Amount", cell: (a) => `₹${a.final_amount.toLocaleString()}` },
+    { header: t("admin.feeOverview.feeStructure"), cell: (a) => structureLabel(a.fee_structure_id) },
+    { header: t("admin.common.discount"), cell: (a) => (a.discount_amount > 0 ? `₹${fmtNumber(a.discount_amount)}` : "—") },
+    { header: t("admin.feeOverview.finalAmount"), cell: (a) => `₹${fmtNumber(a.final_amount)}` },
   ];
 
   const invoiceColumns: Column<Invoice>[] = [
-    { header: "Due Date", cell: (i) => i.due_date },
-    { header: "Total", cell: (i) => `₹${i.total_amount.toLocaleString()}` },
-    { header: "Paid", cell: (i) => `₹${i.amount_paid.toLocaleString()}` },
-    { header: "Outstanding", cell: (i) => `₹${i.outstanding_amount.toLocaleString()}` },
-    { header: "Status", cell: (i) => <Badge tone={STATUS_TONES[i.status]}>{i.status}</Badge> },
+    { header: t("admin.feeOverview.dueDate"), cell: (i) => fmtDate(i.due_date) },
+    { header: t("admin.feeOverview.total"), cell: (i) => `₹${fmtNumber(i.total_amount)}` },
+    { header: t("admin.feeOverview.paid"), cell: (i) => `₹${fmtNumber(i.amount_paid)}` },
+    { header: t("admin.feeOverview.outstanding"), cell: (i) => `₹${fmtNumber(i.outstanding_amount)}` },
+    { header: t("admin.common.status"), cell: (i) => <Badge tone={STATUS_TONES[i.status]}>{te("status", i.status)}</Badge> },
     {
       header: "",
       cell: (i) => (
         <Link to={`/admin/fees/invoices/${i.id}`} className="text-accent-fg hover:underline">
-          View
+          {t("admin.common.view")}
         </Link>
       ),
     },
@@ -162,36 +164,36 @@ export default function FeeOverview() {
 
   return (
     <div>
-      <PageHeader title="Fee Overview" subtitle="Look up a student to assign fees, raise invoices and track payments." />
+      <PageHeader title={t("admin.feeOverview.title")} subtitle={t("admin.feeOverview.subtitle")} />
       <FeesNav />
 
       <Card className="mb-6">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Find Student</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t("admin.feeOverview.findStudent")}</h2>
         <form onSubmit={handleSearch} className="flex items-end gap-4">
           <div className="flex-1 max-w-sm">
-            <Label htmlFor="student-search">Student Name</Label>
+            <Label htmlFor="student-search">{t("admin.feeOverview.studentName")}</Label>
             <Input
               id="student-search"
-              placeholder="Kiran Kumar"
+              placeholder={t("admin.feeOverview.studentPlaceholder")}
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
             />
           </div>
           <Button type="submit" disabled={isSearching}>
-            {isSearching ? "Searching…" : "Search"}
+            {isSearching ? t("admin.common.searching") : t("admin.common.search")}
           </Button>
         </form>
 
         {searchTerm && (
           <div className="mt-4 space-y-1">
             {(searchResults ?? []).length === 0 && !isSearching && (
-              <p className="text-sm text-accent-fg">No students found.</p>
+              <p className="text-sm text-accent-fg">{t("admin.feeOverview.noStudents")}</p>
             )}
             {(searchResults ?? []).map((s) => (
               <button
                 key={s.id}
                 onClick={() => setStudent(s)}
-                className={`block w-full rounded-md border px-3 py-2 text-left text-sm ${
+                className={`block w-full rounded-md border px-3 py-2 text-start text-sm ${
                   student?.id === s.id ? "border-indigo-500 bg-violet-50" : "border-line hover:bg-violet-50"
                 }`}
               >
@@ -206,18 +208,18 @@ export default function FeeOverview() {
         <>
           <Card className="mb-6">
             <h2 className="mb-4 text-sm font-semibold text-ink">
-              Assign Fee Structure — {student.full_name}
+              {t("admin.feeOverview.assignTitle", { name: student.full_name })}
             </h2>
             <form onSubmit={handleAssign} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
               <div className="sm:col-span-2">
-                <Label htmlFor="assign-structure">Fee Structure</Label>
+                <Label htmlFor="assign-structure">{t("admin.feeOverview.feeStructure")}</Label>
                 <select
                   id="assign-structure"
                   className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                   value={feeStructureId}
                   onChange={(e) => setFeeStructureId(e.target.value)}
                 >
-                  <option value="">Select</option>
+                  <option value="">{t("admin.common.select")}</option>
                   {(structures ?? []).map((s) => (
                     <option key={s.id} value={s.id}>
                       {structureLabel(s.id)}
@@ -226,7 +228,7 @@ export default function FeeOverview() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="assign-discount">Discount</Label>
+                <Label htmlFor="assign-discount">{t("admin.common.discount")}</Label>
                 <Input
                   id="assign-discount"
                   type="number"
@@ -237,11 +239,11 @@ export default function FeeOverview() {
                 />
               </div>
               <div>
-                <Label htmlFor="assign-reason">Discount Reason</Label>
+                <Label htmlFor="assign-reason">{t("admin.feeOverview.discountReason")}</Label>
                 <Input id="assign-reason" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} />
               </div>
               <Button type="submit" disabled={assignMutation.isPending}>
-                {assignMutation.isPending ? "Assigning…" : "Assign"}
+                {assignMutation.isPending ? t("admin.common.assigning") : t("admin.common.assign")}
               </Button>
             </form>
             <ErrorText>{assignError}</ErrorText>
@@ -251,13 +253,13 @@ export default function FeeOverview() {
                 columns={assignmentColumns}
                 rows={assignments ?? []}
                 rowKey={(a) => a.id}
-                emptyLabel="No fee assignments for this student yet."
+                emptyLabel={t("admin.feeOverview.noAssignments")}
               />
             </div>
 
             <div className="mt-4 flex items-end gap-4">
               <div>
-                <Label htmlFor="invoice-due-date">Invoice Due Date</Label>
+                <Label htmlFor="invoice-due-date">{t("admin.feeOverview.invoiceDueDate")}</Label>
                 <Input id="invoice-due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
               </div>
               <Button
@@ -265,20 +267,20 @@ export default function FeeOverview() {
                 onClick={handleCreateInvoice}
                 disabled={invoiceMutation.isPending || selectedAssignmentIds.length === 0}
               >
-                {invoiceMutation.isPending ? "Creating…" : "Create Invoice From Selected"}
+                {invoiceMutation.isPending ? t("admin.common.creating") : t("admin.feeOverview.createInvoice")}
               </Button>
             </div>
             <ErrorText>{invoiceError}</ErrorText>
           </Card>
 
           <Card>
-            <h2 className="mb-4 text-sm font-semibold text-ink">Invoices — {student.full_name}</h2>
+            <h2 className="mb-4 text-sm font-semibold text-ink">{t("admin.feeOverview.invoicesTitle", { name: student.full_name })}</h2>
             <DataTable
               columns={invoiceColumns}
               rows={invoicesPage?.items ?? []}
               isLoading={invoicesLoading}
               rowKey={(i) => i.id}
-              emptyLabel="No invoices yet."
+              emptyLabel={t("admin.feeOverview.noInvoices")}
             />
           </Card>
         </>

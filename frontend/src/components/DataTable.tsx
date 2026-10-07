@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export interface Column<T> {
   header: string;
@@ -22,7 +24,7 @@ export function DataTable<T>({
   columns,
   rows,
   isLoading,
-  emptyLabel = "No records found.",
+  emptyLabel,
   rowKey,
 }: {
   columns: Column<T>[];
@@ -31,6 +33,7 @@ export function DataTable<T>({
   emptyLabel?: string;
   rowKey: (row: T) => string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="glass overflow-hidden rounded-[22px]">
       <div className="overflow-x-auto">
@@ -38,7 +41,7 @@ export function DataTable<T>({
           <thead>
             <tr>
               {columns.map((col) => (
-                <th key={col.header}>{col.header}</th>
+                <th key={col.header} className="text-start">{col.header}</th>
               ))}
             </tr>
           </thead>
@@ -52,7 +55,7 @@ export function DataTable<T>({
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="!py-10 text-center text-sm text-ink-3">
-                  {emptyLabel}
+                  {emptyLabel ?? t("shell.dataTable.noRecords")}
                 </td>
               </tr>
             ) : (
@@ -84,20 +87,23 @@ export function Pagination({
   total: number;
   onPageChange: (page: number) => void;
 }) {
+  const { t, fmtNumber } = useLanguage();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (totalPages <= 1) return null;
   return (
     <div className="mt-4 flex items-center justify-between text-sm text-ink-3">
       <span>
-        Page <span className="font-semibold text-ink">{page}</span> of{" "}
-        <span className="font-semibold text-ink">{totalPages}</span> ({total} total)
+        {t("shell.dataTable.page")} <span className="font-semibold text-ink">{fmtNumber(page)}</span> {t("shell.dataTable.of")}{" "}
+        <span className="font-semibold text-ink">{fmtNumber(totalPages)}</span> ({t("shell.dataTable.total", { n: fmtNumber(total) })})
       </span>
       <div className="flex gap-2">
         <button className="lg-btn lg-btn-secondary !min-h-9 !px-4" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-          Previous
+          <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+          {t("shell.dataTable.previous")}
         </button>
         <button className="lg-btn lg-btn-secondary !min-h-9 !px-4" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
-          Next
+          {t("shell.dataTable.next")}
+          <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
         </button>
       </div>
     </div>

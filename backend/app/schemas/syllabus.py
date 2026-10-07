@@ -25,6 +25,7 @@ class ChapterIn(BaseModel):
 class ChapterOut(BaseModel):
     id: str
     syllabus_id: str
+    key: str | None = None  # the chapter's stored (English) name: stable across languages, what homework/papers are filed under
     name: str
     description: str | None = None
     order: int
@@ -32,6 +33,8 @@ class ChapterOut(BaseModel):
     duration_minutes: int | None = None
     topics: list[str] = Field(default_factory=list)
     content: str | None = None
+    content_language: str | None = None  # language the notes are in (differs from the one asked for when only the other exists)
+    languages: list[str] = Field(default_factory=list)  # languages this chapter has notes in
 
 
 class SyllabusDocumentOut(BaseModel):

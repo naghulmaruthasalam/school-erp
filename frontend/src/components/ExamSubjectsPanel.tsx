@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { Button, ErrorText } from "./ui";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface ExamSubject {
   id: string;
@@ -19,6 +20,7 @@ interface Named {
 
 /** Lists and adds the per-class subject papers (max/pass marks) of an exam. Marks entry by teachers needs these. */
 export function ExamSubjectsPanel({ examId, classIds }: { examId: string; classIds: string[] }) {
+  const { t, te, fmtDate, fmtNumber } = useLanguage();
   const queryClient = useQueryClient();
   const queryKey = ["exam-subjects", examId];
 
@@ -52,54 +54,60 @@ export function ExamSubjectsPanel({ examId, classIds }: { examId: string; classI
       setSubjectId("");
       void queryClient.invalidateQueries({ queryKey });
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Failed to add subject."),
+    onError: (err) => setError(err instanceof Error ? err.message : t("shell.examSubjects.addFailed")),
   });
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!classId || !subjectId || !maxMarks) {
-      setError("Class, subject and max marks are required.");
+      setError(t("shell.examSubjects.required"));
       return;
     }
     addMutation.mutate();
   }
 
-  const className = (id: string) => classes?.find((c) => c.id === id)?.name ?? id;
-  const subjectName = (id: string) => subjects?.find((s) => s.id === id)?.name ?? id;
+  const className = (id: string) => {
+    const n = classes?.find((c) => c.id === id)?.name;
+    return n ? te("class", n) : id;
+  };
+  const subjectName = (id: string) => {
+    const n = subjects?.find((s) => s.id === id)?.name;
+    return n ? te("subject", n) : id;
+  };
   const field = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm";
 
   return (
     <div className="mt-4 border-t border-line pt-4">
-      <h4 className="mb-2 text-sm font-semibold text-ink">Subjects &amp; marks</h4>
+      <h4 className="mb-2 text-sm font-semibold text-ink">{t("shell.examSubjects.title")}</h4>
       {(rows ?? []).length === 0 ? (
-        <p className="mb-3 text-sm text-ink-3">No subjects added yet. Teachers can enter marks once subjects are added.</p>
+        <p className="mb-3 text-sm text-ink-3">{t("shell.examSubjects.empty")}</p>
       ) : (
         <ul className="mb-3 space-y-1 text-sm text-ink-2">
           {rows!.map((r) => (
             <li key={r.id}>
-              {className(r.class_id)} — {subjectName(r.subject_id)} · max {r.max_marks}, pass {r.pass_marks}
-              {r.exam_date ? ` · ${new Date(r.exam_date).toLocaleDateString()}` : ""}
+              {className(r.class_id)} — {subjectName(r.subject_id)} · {t("shell.examSubjects.maxPass", { max: fmtNumber(r.max_marks), pass: fmtNumber(r.pass_marks) })}
+              {r.exam_date ? ` · ${fmtDate(r.exam_date)}` : ""}
             </li>
           ))}
         </ul>
       )}
       <form onSubmit={handleSubmit} className="grid grid-cols-2 items-end gap-3 md:grid-cols-6">
-        <select aria-label="Class" className={field} value={classId} onChange={(e) => setClassId(e.target.value)}>
-          <option value="">Class</option>
+        <select aria-label={t("shell.examSubjects.class")} className={field} value={classId} onChange={(e) => setClassId(e.target.value)}>
+          <option value="">{t("shell.examSubjects.class")}</option>
           {classIds.map((id) => (
             <option key={id} value={id}>{className(id)}</option>
           ))}
         </select>
-        <select aria-label="Subject" className={field} value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
-          <option value="">Subject</option>
+        <select aria-label={t("shell.examSubjects.subject")} className={field} value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
+          <option value="">{t("shell.examSubjects.subject")}</option>
           {(subjects ?? []).map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
+            <option key={s.id} value={s.id}>{te("subject", s.name)}</option>
           ))}
         </select>
-        <input aria-label="Max marks" type="number" min={1} className={field} value={maxMarks} onChange={(e) => setMaxMarks(e.target.value)} placeholder="Max" />
-        <input aria-label="Pass marks" type="number" min={0} className={field} value={passMarks} onChange={(e) => setPassMarks(e.target.value)} placeholder="Pass" />
-        <input aria-label="Exam date" type="date" className={field} value={examDate} onChange={(e) => setExamDate(e.target.value)} />
-        <Button type="submit" disabled={addMutation.isPending}>{addMutation.isPending ? "Adding..." : "Add subject"}</Button>
+        <input aria-label={t("shell.examSubjects.maxMarks")} type="number" min={1} className={field} value={maxMarks} onChange={(e) => setMaxMarks(e.target.value)} placeholder={t("shell.examSubjects.max")} />
+        <input aria-label={t("shell.examSubjects.passMarks")} type="number" min={0} className={field} value={passMarks} onChange={(e) => setPassMarks(e.target.value)} placeholder={t("shell.examSubjects.pass")} />
+        <input aria-label={t("shell.examSubjects.examDate")} type="date" className={field} value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+        <Button type="submit" disabled={addMutation.isPending}>{addMutation.isPending ? t("shell.examSubjects.adding") : t("shell.examSubjects.add")}</Button>
       </form>
       <ErrorText>{error}</ErrorText>
     </div>

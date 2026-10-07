@@ -1,17 +1,19 @@
 import { ArrowLeft, Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { ToolSpec } from "./api";
+import { useCopilotText } from "./i18n";
 
 /** Title bar + back link shared by the tool panels in the Copilot widget. */
 export function Shell({ tool, onBack, children }: { tool: ToolSpec; onBack: () => void; children: ReactNode }) {
+  const { t, toolTitle, toolDescription } = useCopilotText();
   return (
     <div className="space-y-3">
       <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent-fg">
-        <ArrowLeft size={14} className="rtl:rotate-180" /> All tools
+        <ArrowLeft size={14} className="rtl:rotate-180" /> {t("copilot.allTools")}
       </button>
       <div>
-        <h3 className="text-[15px] font-semibold text-ink">{tool.title}</h3>
-        <p className="text-[13px] text-ink-3">{tool.description}</p>
+        <h3 className="text-[15px] font-semibold text-ink">{toolTitle(tool)}</h3>
+        <p className="text-[13px] text-ink-3">{toolDescription(tool)}</p>
       </div>
       {children}
     </div>

@@ -4,8 +4,10 @@ import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { fetchClasses, fetchSubjects } from "./api";
 import { openDocument } from "../../api/files";
 import { getTeacherSyllabus } from "./syllabusApi";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function SyllabusDetail() {
+  const { t, te } = useLanguage();
   const { id } = useParams<{ id: string }>();
 
   const syllabusQuery = useQuery({
@@ -17,8 +19,8 @@ export default function SyllabusDetail() {
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: fetchClasses });
   const subjectsQuery = useQuery({ queryKey: ["subjects"], queryFn: fetchSubjects });
 
-  const getClassName = (cid: string) => classesQuery.data?.find((c) => c.id === cid)?.name || cid;
-  const getSubjectName = (sid: string) => subjectsQuery.data?.find((s) => s.id === sid)?.name || sid;
+  const getClassName = (cid: string) => te("class", classesQuery.data?.find((c) => c.id === cid)?.name) || cid;
+  const getSubjectName = (sid: string) => te("subject", subjectsQuery.data?.find((s) => s.id === sid)?.name) || sid;
 
   if (syllabusQuery.isLoading) {
     return <div className="flex justify-center py-12"><Spinner /></div>;
@@ -27,8 +29,8 @@ export default function SyllabusDetail() {
   if (!syllabusQuery.data) {
     return (
       <div className="animate-fade-in-up">
-        <PageHeader title="Syllabus Not Found" />
-        <Card><p className="text-center text-accent-fg py-8">Not found.</p></Card>
+        <PageHeader title={t("teacher.syllabus.notFoundTitle")} />
+        <Card><p className="text-center text-accent-fg py-8">{t("teacher.syllabus.notFound")}</p></Card>
       </div>
     );
   }
@@ -37,40 +39,40 @@ export default function SyllabusDetail() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title={syl.title} subtitle="Syllabus Details">
+      <PageHeader title={syl.title} subtitle={t("teacher.syllabus.details")}>
         <Link to={`/teacher/syllabus/${id}/edit`}>
-          <Button>Edit Syllabus</Button>
+          <Button>{t("teacher.syllabus.edit")}</Button>
         </Link>
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Overview</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("teacher.syllabus.overview")}</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <p className="text-xs text-accent-fg uppercase">Class</p>
+                <p className="text-xs text-accent-fg uppercase">{t("syllabus.class")}</p>
                 <p className="font-medium text-ink">{getClassName(syl.class_id)}</p>
               </div>
               <div>
-                <p className="text-xs text-accent-fg uppercase">Subject</p>
+                <p className="text-xs text-accent-fg uppercase">{t("syllabus.subject")}</p>
                 <p className="font-medium text-ink">{getSubjectName(syl.subject_id)}</p>
               </div>
               <div>
-                <p className="text-xs text-accent-fg uppercase">Status</p>
-                <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{syl.status}</Badge>
+                <p className="text-xs text-accent-fg uppercase">{t("teacher.syllabus.status")}</p>
+                <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{te("status", syl.status)}</Badge>
               </div>
             </div>
             {syl.description && (
               <div>
-                <p className="text-xs text-accent-fg uppercase mb-1">Description</p>
+                <p className="text-xs text-accent-fg uppercase mb-1">{t("teacher.syllabus.description")}</p>
                 <p className="text-ink-2">{syl.description}</p>
               </div>
             )}
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Chapters ({syl.chapters?.length || 0})</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("teacher.syllabus.chaptersTitle", { n: syl.chapters?.length || 0 })}</h2>
             {syl.chapters && syl.chapters.length > 0 ? (
               <div className="space-y-3">
                 {syl.chapters.sort((a, b) => a.order - b.order).map((ch, idx) => (
@@ -88,14 +90,14 @@ export default function SyllabusDetail() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-accent-fg py-4">No chapters defined.</p>
+              <p className="text-center text-accent-fg py-4">{t("teacher.syllabus.noChapters")}</p>
             )}
           </Card>
         </div>
 
         <div className="space-y-6">
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Documents</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("teacher.syllabus.documents")}</h2>
             {syl.documents && syl.documents.length > 0 ? (
               <ul className="space-y-2">
                 {syl.documents.map((doc) => (
@@ -117,7 +119,7 @@ export default function SyllabusDetail() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-accent-fg">No documents uploaded.</p>
+              <p className="text-sm text-accent-fg">{t("teacher.syllabus.noDocuments")}</p>
             )}
           </Card>
         </div>

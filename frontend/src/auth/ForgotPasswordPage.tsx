@@ -3,10 +3,12 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Logo from "../components/Logo";
 import { api } from "../api/client";
+import { useLanguage } from "../i18n/LanguageContext";
 
 type Step = "email" | "otp" | "password" | "success";
 
 export default function ForgotPasswordPage() {
+  const { t, fmtNumber } = useLanguage();
   const [searchParams] = useSearchParams();
   const initialSchoolCode = searchParams.get("school") || "";
 
@@ -36,7 +38,7 @@ export default function ForgotPasswordPage() {
       setStep("otp");
       setError("");
     },
-    onError: () => setError("Failed to send OTP. Please check your username and school code."),
+    onError: () => setError(t("shell.forgot.sendFailed")),
   });
 
   const verifyOtpMutation = useMutation({
@@ -47,7 +49,7 @@ export default function ForgotPasswordPage() {
       setStep("password");
       setError("");
     },
-    onError: () => setError("Invalid OTP. Please try again."),
+    onError: () => setError(t("shell.forgot.invalidOtp")),
   });
 
   const resetPasswordMutation = useMutation({
@@ -64,7 +66,7 @@ export default function ForgotPasswordPage() {
       setStep("success");
       setError("");
     },
-    onError: () => setError("Failed to reset password. Please try again."),
+    onError: () => setError(t("shell.forgot.resetFailed")),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -73,23 +75,23 @@ export default function ForgotPasswordPage() {
 
     if (step === "email") {
       if (!email) {
-        setError("Please enter your username");
+        setError(t("shell.forgot.enterUsername"));
         return;
       }
       requestOtpMutation.mutate();
     } else if (step === "otp") {
       if (!otp || otp.length !== 6) {
-        setError("Please enter a valid 6-digit OTP");
+        setError(t("shell.forgot.enterOtp"));
         return;
       }
       verifyOtpMutation.mutate();
     } else if (step === "password") {
       if (newPassword.length < 8) {
-        setError("Password must be at least 8 characters");
+        setError(t("shell.auth.passwordMin"));
         return;
       }
       if (newPassword !== confirmPassword) {
-        setError("Passwords do not match");
+        setError(t("shell.auth.passwordMismatch"));
         return;
       }
       resetPasswordMutation.mutate();
@@ -106,10 +108,10 @@ export default function ForgotPasswordPage() {
           to="/login"
           className="inline-flex items-center text-ink-3 hover:text-ink text-sm mb-6 transition-colors group"
         >
-          <svg className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 me-2 transition-transform group-hover:-translate-x-1 rtl:-scale-x-100 rtl:group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to login
+          {t("shell.auth.backToLogin")}
         </Link>
 
         <div className="animated-border">
@@ -127,16 +129,16 @@ export default function ForgotPasswordPage() {
                 )}
               </div>
               <h1 className="text-2xl font-semibold tracking-tight text-ink">
-                {step === "email" && "Reset Password"}
-                {step === "otp" && "Verify OTP"}
-                {step === "password" && "New Password"}
-                {step === "success" && "Password Reset!"}
+                {step === "email" && t("shell.forgot.titleEmail")}
+                {step === "otp" && t("shell.forgot.titleOtp")}
+                {step === "password" && t("shell.forgot.titlePassword")}
+                {step === "success" && t("shell.forgot.titleSuccess")}
               </h1>
               <p className="text-ink-3 text-sm mt-1">
-                {step === "email" && "Enter your username to receive an OTP on your registered email"}
-                {step === "otp" && "Enter the 6-digit code (use 123456 for testing)"}
-                {step === "password" && "Create your new password"}
-                {step === "success" && "Your password has been reset successfully"}
+                {step === "email" && t("shell.forgot.subEmail")}
+                {step === "otp" && t("shell.forgot.subOtp")}
+                {step === "password" && t("shell.forgot.subPassword")}
+                {step === "success" && t("shell.forgot.subSuccess")}
               </p>
             </div>
 
@@ -154,7 +156,7 @@ export default function ForgotPasswordPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
-                        i + 1
+                        fmtNumber(i + 1)
                       )}
                     </div>
                     {i < 2 && (
@@ -173,7 +175,7 @@ export default function ForgotPasswordPage() {
                   to="/login"
                   className="inline-flex items-center justify-center w-full py-3 px-4 lg-btn lg-btn-primary font-medium"
                 >
-                  <span className="relative z-10">Go to Login</span>
+                  <span className="relative z-10">{t("shell.forgot.goToLogin")}</span>
                 </Link>
               </div>
             ) : (
@@ -182,7 +184,7 @@ export default function ForgotPasswordPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-ink-2 mb-2">
-                        Username
+                        {t("login.username")}
                       </label>
                       <input
                         type="text"
@@ -191,22 +193,22 @@ export default function ForgotPasswordPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-3 lg-field"
-                        placeholder="e.g. admin@school.com or BPS-TCH-001"
+                        placeholder={t("shell.forgot.usernamePlaceholder")}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-ink-2 mb-2">
-                        School Code
-                        <span className="text-ink-3 font-normal ml-1">(optional)</span>
+                        {t("login.schoolCode")}
+                        <span className="text-ink-3 font-normal ms-1">({t("shell.auth.optional")})</span>
                       </label>
                       <input
                         value={schoolCode}
                         onChange={(e) => setSchoolCode(e.target.value)}
                         className="w-full px-4 py-3 lg-field"
-                        placeholder="e.g. GHS2026"
+                        placeholder={t("shell.forgot.schoolCodePlaceholder")}
                       />
                       <p className="text-xs text-ink-3 mt-2">
-                        Only required for school staff (Admin, Teacher, etc.). Platform admins can leave this empty.
+                        {t("shell.forgot.schoolCodeHint")}
                       </p>
                     </div>
                   </>
@@ -215,7 +217,7 @@ export default function ForgotPasswordPage() {
                 {step === "otp" && (
                   <div>
                     <label className="block text-sm font-medium text-ink-2 mb-2">
-                      Enter OTP
+                      {t("shell.forgot.enterOtpLabel")}
                     </label>
                     <input
                       type="text"
@@ -227,7 +229,7 @@ export default function ForgotPasswordPage() {
                       placeholder="000000"
                     />
                     <p className="mt-2 text-xs text-ink-3 text-center">
-                      Hint: Use <span className="text-accent-fg font-mono">123456</span> for testing
+                      {t("shell.forgot.hintPrefix")} <span className="text-accent-fg font-mono">123456</span> {t("shell.forgot.hintSuffix")}
                     </p>
                   </div>
                 )}
@@ -236,7 +238,7 @@ export default function ForgotPasswordPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-ink-2 mb-2">
-                        New Password
+                        {t("shell.reset.newPassword")}
                       </label>
                       <div className="relative">
                         <input
@@ -244,13 +246,14 @@ export default function ForgotPasswordPage() {
                           required
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full px-4 py-3 pr-12 lg-field"
-                          placeholder="Minimum 8 characters"
+                          className="w-full px-4 py-3 pe-12 lg-field"
+                          placeholder={t("shell.auth.minChars")}
                         />
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink transition-colors"
+                          className="absolute end-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink transition-colors"
+                          aria-label={showNewPassword ? t("shell.common.hidePassword") : t("shell.common.showPassword")}
                         >
                           {showNewPassword ? (
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -267,7 +270,7 @@ export default function ForgotPasswordPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-ink-2 mb-2">
-                        Confirm Password
+                        {t("shell.reset.confirmPassword")}
                       </label>
                       <div className="relative">
                         <input
@@ -275,13 +278,14 @@ export default function ForgotPasswordPage() {
                           required
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full px-4 py-3 pr-12 lg-field"
-                          placeholder="Re-enter your password"
+                          className="w-full px-4 py-3 pe-12 lg-field"
+                          placeholder={t("shell.auth.reenter")}
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink transition-colors"
+                          className="absolute end-4 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink transition-colors"
+                          aria-label={showConfirmPassword ? t("shell.common.hidePassword") : t("shell.common.showPassword")}
                         >
                           {showConfirmPassword ? (
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,13 +317,13 @@ export default function ForgotPasswordPage() {
                   <span className="relative z-10">
                     {isPending ? (
                       <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ms-1 me-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        Processing...
+                        {t("shell.auth.processing")}
                       </span>
-                    ) : step === "email" ? "Send OTP" : step === "otp" ? "Verify OTP" : "Reset Password"}
+                    ) : step === "email" ? t("shell.forgot.sendOtp") : step === "otp" ? t("shell.forgot.titleOtp") : t("shell.forgot.titleEmail")}
                   </span>
                 </button>
               </form>
@@ -329,7 +333,7 @@ export default function ForgotPasswordPage() {
 
         <div className="mt-8 flex items-center justify-center gap-3 text-ink-3">
           <Logo size={24} showWordmark={false} />
-          <span className="text-xs">مدرسة العاصمة الخاصة</span>
+          <span className="text-xs">{t("shell.brand.name")}</span>
         </div>
       </div>
     </div>

@@ -22,22 +22,19 @@ interface TeacherProfile {
   photo_document_id: string | null;
 }
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({ label, value, ltr }: { label: string; value: string | null | undefined; ltr?: boolean }) {
   return (
     <div className="animate-fade-in-up">
       <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
-      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white" dir={ltr ? "ltr" : undefined}>{value || "—"}</p>
     </div>
   );
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
-}
-
 export default function TeacherProfile() {
-  const { t } = useLanguage();
+  const { t, te, fmtDate } = useLanguage();
+  const formatDate = (iso: string | null): string =>
+    iso ? fmtDate(iso, { day: "numeric", month: "long", year: "numeric" }) : "—";
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -103,7 +100,7 @@ export default function TeacherProfile() {
       {isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : error || !profile ? (
-        <p className="text-sm text-red-600">Could not load your profile.</p>
+        <p className="text-sm text-red-600">{t("teacher.profile.loadError")}</p>
       ) : (
         <div className="space-y-6">
           {/* Profile Header Card */}
@@ -137,8 +134,8 @@ export default function TeacherProfile() {
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-accent hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
-                    title="Change photo"
+                    className="absolute -bottom-1 -end-1 w-8 h-8 bg-accent hover:bg-[#5B21B6] rounded-full border-2 border-white flex items-center justify-center transition-colors cursor-pointer"
+                    title={t("teacher.profile.changePhoto")}
                   >
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -152,9 +149,9 @@ export default function TeacherProfile() {
                   <h2 className="text-2xl font-bold text-white mb-1">{profile.full_name}</h2>
                   <div className="flex items-center gap-3">
                     <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
-                      <p className="text-sm font-medium text-white">ID: {profile.employee_no}</p>
+                      <p className="text-sm font-medium text-white">{t("teacher.profile.id", { id: profile.employee_no })}</p>
                     </div>
-                    <Badge tone={profile.status === "ACTIVE" ? "green" : "gray"}>{profile.status}</Badge>
+                    <Badge tone={profile.status === "ACTIVE" ? "green" : "gray"}>{te("status", profile.status)}</Badge>
                   </div>
                 </div>
               </div>
@@ -191,7 +188,7 @@ export default function TeacherProfile() {
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
               <Field label={t("profile.dateOfBirth")} value={formatDate(profile.dob)} />
-              <Field label={t("profile.gender")} value={profile.gender === "M" ? "Male" : profile.gender === "F" ? "Female" : profile.gender} />
+              <Field label={t("profile.gender")} value={te("gender", profile.gender)} />
               <Field label={t("profile.employeeNo")} value={profile.employee_no} />
             </div>
           </Card>
@@ -209,8 +206,8 @@ export default function TeacherProfile() {
               </div>
             </div>
             <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
-              <Field label={t("profile.email")} value={profile.email} />
-              <Field label={t("profile.phone")} value={profile.phone} />
+              <Field label={t("profile.email")} value={profile.email} ltr />
+              <Field label={t("profile.phone")} value={profile.phone} ltr />
               <Field label={t("profile.address")} value={profile.address} />
             </div>
           </Card>

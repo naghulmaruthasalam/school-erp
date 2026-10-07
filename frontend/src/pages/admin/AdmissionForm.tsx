@@ -5,6 +5,7 @@ import { Button, Card, ErrorText, Input, Label, Select } from "../../components/
 import { api } from "../../api/client";
 import { createAdmission } from "./api";
 import { useAcademicYears, useClasses } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { AdmissionCreateRequest } from "./types";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -57,6 +58,13 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 }
 
 export default function AdmissionForm() {
+  const { t, te, fmtDate } = useLanguage();
+  const optLabel = (prefix: string, v: string) => {
+    const k = `${prefix}.${v}`;
+    const r = t(k);
+    return r === k ? v : r;
+  };
+  const prevClassLabel = (v: string) => (/^\d+$/.test(v) ? te("class", v) : optLabel("admin.prevClass", v));
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AdmissionCreateRequest>(emptyForm);
@@ -64,11 +72,11 @@ export default function AdmissionForm() {
   const [activeSection, setActiveSection] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<{ name: string; file: File | null }[]>([
-    { name: "Birth Certificate", file: null },
-    { name: "Previous School/Transfer Certificate", file: null },
-    { name: "Student Photo", file: null },
-    { name: "Address Proof", file: null },
-    { name: "Parent/Guardian ID Proof", file: null },
+    { name: "admin.admissionForm.docBirth", file: null },
+    { name: "admin.admissionForm.docPrevious", file: null },
+    { name: "admin.admissionForm.docPhoto", file: null },
+    { name: "admin.admissionForm.docAddress", file: null },
+    { name: "admin.admissionForm.docGuardianId", file: null },
   ]);
 
   const { data: academicYears } = useAcademicYears();
@@ -82,7 +90,7 @@ export default function AdmissionForm() {
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to create admission.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.admissionForm.createFailed");
       setError(message);
     },
   });
@@ -141,25 +149,25 @@ export default function AdmissionForm() {
     const errors: string[] = [];
     switch (sectionIndex) {
       case 0: // Student Information
-        if (!form.applicant_first_name) errors.push("First name is required");
-        if (!form.applicant_last_name) errors.push("Last name is required");
-        if (!form.dob) errors.push("Date of birth is required");
-        if (!form.gender) errors.push("Gender is required");
-        if (!form.applying_for_class_id) errors.push("Class selection is required");
+        if (!form.applicant_first_name) errors.push(t("admin.admissionForm.v.firstName"));
+        if (!form.applicant_last_name) errors.push(t("admin.admissionForm.v.lastName"));
+        if (!form.dob) errors.push(t("admin.admissionForm.v.dob"));
+        if (!form.gender) errors.push(t("admin.admissionForm.v.gender"));
+        if (!form.applying_for_class_id) errors.push(t("admin.admissionForm.v.class"));
         break;
       case 1: // Parent/Guardian
-        if (!form.guardian_name && isOtherGuardian) errors.push("Guardian name is required");
-        if (!form.guardian_phone && isOtherGuardian) errors.push("Guardian phone is required");
-        if (form.primary_guardian === "Father" && !form.father_name) errors.push("Father's name is required when Father is primary guardian");
-        if (form.primary_guardian === "Father" && !form.father_phone) errors.push("Father's phone is required when Father is primary guardian");
-        if (form.primary_guardian === "Mother" && !form.mother_name) errors.push("Mother's name is required when Mother is primary guardian");
-        if (form.primary_guardian === "Mother" && !form.mother_phone) errors.push("Mother's phone is required when Mother is primary guardian");
+        if (!form.guardian_name && isOtherGuardian) errors.push(t("admin.admissionForm.v.guardianName"));
+        if (!form.guardian_phone && isOtherGuardian) errors.push(t("admin.admissionForm.v.guardianPhone"));
+        if (form.primary_guardian === "Father" && !form.father_name) errors.push(t("admin.admissionForm.v.fatherName"));
+        if (form.primary_guardian === "Father" && !form.father_phone) errors.push(t("admin.admissionForm.v.fatherPhone"));
+        if (form.primary_guardian === "Mother" && !form.mother_name) errors.push(t("admin.admissionForm.v.motherName"));
+        if (form.primary_guardian === "Mother" && !form.mother_phone) errors.push(t("admin.admissionForm.v.motherPhone"));
         break;
       case 2: // Address
-        if (!form.address_line1) errors.push("Address line 1 is required");
-        if (!form.city) errors.push("City is required");
-        if (!form.state) errors.push("State is required");
-        if (!form.postal_code) errors.push("Postal code is required");
+        if (!form.address_line1) errors.push(t("admin.admissionForm.v.address1"));
+        if (!form.city) errors.push(t("admin.admissionForm.v.city"));
+        if (!form.state) errors.push(t("admin.admissionForm.v.state"));
+        if (!form.postal_code) errors.push(t("admin.admissionForm.v.postal"));
         break;
     }
     return errors;
@@ -211,7 +219,7 @@ export default function AdmissionForm() {
       const firstErrorSection = Object.keys(sectionErrors).map(Number).sort()[0];
       if (firstErrorSection !== undefined) {
         setActiveSection(firstErrorSection);
-        setError("Please fix the errors in highlighted sections.");
+        setError(t("admin.admissionForm.fixErrors"));
       }
       return;
     }
@@ -223,14 +231,14 @@ export default function AdmissionForm() {
     try {
       for (const doc of documents) {
         if (!doc.file) continue;
-        if (doc.name === "Student Photo") {
+        if (doc.name === "admin.admissionForm.docPhoto") {
           studentPhotoId = await uploadFile(doc.file, "STUDENT_PHOTO");
         } else {
           documentIds.push(await uploadFile(doc.file, "ADMISSION_DOCUMENT"));
         }
       }
     } catch {
-      setError("Failed to upload documents. Please try again.");
+      setError(t("admin.admissionForm.uploadFailed"));
       return;
     } finally {
       setUploading(false);
@@ -252,19 +260,19 @@ export default function AdmissionForm() {
   }
 
   const sections = [
-    "Student Information",
-    "Parent/Guardian",
-    "Address",
-    "Previous Academics",
-    "Documents",
-    "Admission Details",
+    "admin.admissionForm.sec.student",
+    "admin.admissionForm.sec.guardian",
+    "admin.admissionForm.sec.address",
+    "admin.admissionForm.sec.previous",
+    "admin.admissionForm.sec.documents",
+    "admin.admissionForm.sec.details",
   ];
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-ink dark:text-white">New Admission Application</h1>
-        <p className="mt-1 text-sm text-ink-2">Fill out the admission form with all required details.</p>
+        <h1 className="text-2xl font-semibold text-ink dark:text-white">{t("admin.admissionForm.title")}</h1>
+        <p className="mt-1 text-sm text-ink-2">{t("admin.admissionForm.subtitle")}</p>
       </div>
 
       {/* Section Navigation */}
@@ -288,7 +296,7 @@ export default function AdmissionForm() {
             >
               {status === "error" && <span>⚠</span>}
               {status === "complete" && <span>✓</span>}
-              {idx + 1}. {section}
+              {idx + 1}. {t(section)}
             </button>
           );
         })}
@@ -299,39 +307,39 @@ export default function AdmissionForm() {
           {/* Section 1: Student Information */}
           {activeSection === 0 && (
             <div className="space-y-4">
-              <SectionHeader title="Student Information" subtitle="Basic details of the applicant" />
+              <SectionHeader title={t("admin.admissionForm.sec.student")} subtitle={t("admin.admissionForm.studentInfoSub")} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <Label>First Name *</Label>
+                  <Label>{t("admin.forms.firstNameReq")}</Label>
                   <Input required value={form.applicant_first_name} onChange={(e) => update("applicant_first_name", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Middle Name</Label>
+                  <Label>{t("admin.admissionForm.middleName")}</Label>
                   <Input value={form.applicant_middle_name ?? ""} onChange={(e) => update("applicant_middle_name", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Last Name *</Label>
+                  <Label>{t("admin.forms.lastNameReq")}</Label>
                   <Input required value={form.applicant_last_name} onChange={(e) => update("applicant_last_name", e.target.value)} />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <Label>Date of Birth *</Label>
+                  <Label>{t("admin.admissionForm.dobReq")}</Label>
                   <Input type="date" required value={form.dob ?? ""} onChange={(e) => update("dob", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Gender *</Label>
+                  <Label>{t("admin.admissionForm.genderReq")}</Label>
                   <Select required value={form.gender ?? ""} onChange={(e) => update("gender", e.target.value)}>
-                    <option value="">Select Gender</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
-                    <option value="O">Other</option>
+                    <option value="">{t("admin.admissionForm.selectGender")}</option>
+                    <option value="M">{t("admin.common.male")}</option>
+                    <option value="F">{t("admin.common.female")}</option>
+                    <option value="O">{t("admin.common.other")}</option>
                   </Select>
                 </div>
                 <div>
-                  <Label>Blood Group</Label>
+                  <Label>{t("admin.studentForm.bloodGroup")}</Label>
                   <Select value={form.blood_group ?? ""} onChange={(e) => update("blood_group", e.target.value)}>
-                    <option value="">Select Blood Group</option>
+                    <option value="">{t("admin.admissionForm.selectBlood")}</option>
                     {BLOOD_GROUPS.map((bg) => (
                       <option key={bg} value={bg}>{bg}</option>
                     ))}
@@ -340,21 +348,21 @@ export default function AdmissionForm() {
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Applying For Class *</Label>
+                  <Label>{t("admin.admissionForm.applyingForClassReq")}</Label>
                   <Select required value={form.applying_for_class_id} onChange={(e) => update("applying_for_class_id", e.target.value)}>
-                    <option value="">Select Class</option>
+                    <option value="">{t("admin.admissionForm.selectClass")}</option>
                     {(classes ?? []).map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id}>{te("class", c.name)}</option>
                     ))}
                   </Select>
                   {(classes ?? []).length === 0 && (
-                    <p className="text-xs text-amber-600 mt-1">No classes found. Please create classes in Academic Setup first.</p>
+                    <p className="text-xs text-amber-600 mt-1">{t("admin.admissionForm.noClasses")}</p>
                   )}
                 </div>
                 <div>
-                  <Label>Academic Year *</Label>
+                  <Label>{t("admin.studentForm.academicYearReq")}</Label>
                   <Select value={form.academic_year_id ?? ""} onChange={(e) => update("academic_year_id", e.target.value)}>
-                    <option value="">Select Academic Year</option>
+                    <option value="">{t("admin.admissionForm.selectYear")}</option>
                     {(academicYears ?? []).map((ay) => (
                       <option key={ay.id} value={ay.id}>{ay.name}</option>
                     ))}
@@ -363,11 +371,11 @@ export default function AdmissionForm() {
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Previous School</Label>
-                  <Input value={form.previous_school ?? ""} onChange={(e) => update("previous_school", e.target.value)} placeholder="Name of previous school (if any)" />
+                  <Label>{t("admin.admissionForm.previousSchool")}</Label>
+                  <Input value={form.previous_school ?? ""} onChange={(e) => update("previous_school", e.target.value)} placeholder={t("admin.admissionForm.prevSchoolPlaceholder")} />
                 </div>
                 <div>
-                  <Label>Student Email</Label>
+                  <Label>{t("admin.admissionForm.studentEmail")}</Label>
                   <Input type="email" value={form.applicant_email ?? ""} onChange={(e) => update("applicant_email", e.target.value)} placeholder="student@email.com" />
                 </div>
               </div>
@@ -377,53 +385,53 @@ export default function AdmissionForm() {
           {/* Section 2: Parent/Guardian Information */}
           {activeSection === 1 && (
             <div className="space-y-4">
-              <SectionHeader title="Parent / Guardian Information" subtitle="Contact details of parents and guardians" />
+              <SectionHeader title={t("admin.admissionForm.guardianTitle")} subtitle={t("admin.admissionForm.guardianSub")} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <Label>Father's Name</Label>
+                  <Label>{t("admin.admissionForm.fatherName")}</Label>
                   <Input value={form.father_name ?? ""} onChange={(e) => update("father_name", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Father's Phone</Label>
+                  <Label>{t("admin.admissionForm.fatherPhone")}</Label>
                   <Input value={form.father_phone ?? ""} onChange={(e) => update("father_phone", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Father's Email</Label>
+                  <Label>{t("admin.admissionForm.fatherEmail")}</Label>
                   <Input type="email" value={form.father_email ?? ""} onChange={(e) => update("father_email", e.target.value)} />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <Label>Mother's Name</Label>
+                  <Label>{t("admin.admissionForm.motherName")}</Label>
                   <Input value={form.mother_name ?? ""} onChange={(e) => update("mother_name", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Mother's Phone</Label>
+                  <Label>{t("admin.admissionForm.motherPhone")}</Label>
                   <Input value={form.mother_phone ?? ""} onChange={(e) => update("mother_phone", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Mother's Email</Label>
+                  <Label>{t("admin.admissionForm.motherEmail")}</Label>
                   <Input type="email" value={form.mother_email ?? ""} onChange={(e) => update("mother_email", e.target.value)} />
                 </div>
               </div>
               <div className="border-t border-line pt-4 mt-4">
-                <p className="text-sm font-medium text-ink dark:text-white mb-3">Primary Guardian Details</p>
+                <p className="text-sm font-medium text-ink dark:text-white mb-3">{t("admin.admissionForm.primaryGuardianDetails")}</p>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <Label>Primary Guardian *</Label>
+                    <Label>{t("admin.admissionForm.primaryGuardianReq")}</Label>
                     <Select required value={form.primary_guardian} onChange={(e) => update("primary_guardian", e.target.value)}>
-                      <option value="Father">Father</option>
-                      <option value="Mother">Mother</option>
-                      <option value="Other">Other Guardian</option>
+                      <option value="Father">{t("admin.relationship.Father")}</option>
+                      <option value="Mother">{t("admin.relationship.Mother")}</option>
+                      <option value="Other">{t("admin.admissionForm.otherGuardian")}</option>
                     </Select>
                   </div>
                   {isOtherGuardian && (
                     <div>
-                      <Label>Guardian Relationship *</Label>
+                      <Label>{t("admin.admissionForm.guardianRelationshipReq")}</Label>
                       <Select required value={form.guardian_relationship ?? ""} onChange={(e) => update("guardian_relationship", e.target.value)}>
-                        <option value="">Select Relationship</option>
+                        <option value="">{t("admin.admissionForm.selectRelationship")}</option>
                         {GUARDIAN_RELATIONSHIPS.filter(r => r !== "Father" && r !== "Mother").map((rel) => (
-                          <option key={rel} value={rel}>{rel}</option>
+                          <option key={rel} value={rel}>{optLabel("admin.relationship", rel)}</option>
                         ))}
                       </Select>
                     </div>
@@ -432,22 +440,22 @@ export default function AdmissionForm() {
                 {isOtherGuardian ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4">
                     <div>
-                      <Label>Guardian Name *</Label>
+                      <Label>{t("admin.admissionForm.guardianNameReq")}</Label>
                       <Input required value={form.guardian_name} onChange={(e) => update("guardian_name", e.target.value)} />
                     </div>
                     <div>
-                      <Label>Guardian Phone *</Label>
+                      <Label>{t("admin.admissionForm.guardianPhoneReq")}</Label>
                       <Input required value={form.guardian_phone} onChange={(e) => update("guardian_phone", e.target.value)} />
                     </div>
                     <div>
-                      <Label>Guardian Email</Label>
+                      <Label>{t("admin.admissionForm.guardianEmail")}</Label>
                       <Input type="email" value={form.guardian_email ?? ""} onChange={(e) => update("guardian_email", e.target.value)} />
                     </div>
                   </div>
                 ) : (
                   <div className="mt-4 p-3 bg-surface-3 rounded-lg">
                     <p className="text-sm text-ink-2">
-                      Guardian details will be auto-filled from {form.primary_guardian}'s information above.
+                      {t("admin.admissionForm.autoFill", { who: optLabel("admin.relationship", form.primary_guardian) })}
                     </p>
                   </div>
                 )}
@@ -458,32 +466,32 @@ export default function AdmissionForm() {
           {/* Section 3: Address */}
           {activeSection === 2 && (
             <div className="space-y-4">
-              <SectionHeader title="Address" subtitle="Residential address of the student" />
+              <SectionHeader title={t("admin.admissionForm.addressTitle")} subtitle={t("admin.admissionForm.addressSub")} />
               <div>
-                <Label>Address Line 1 *</Label>
-                <Input required value={form.address_line1 ?? ""} onChange={(e) => update("address_line1", e.target.value)} placeholder="House No., Street Name" />
+                <Label>{t("admin.admissionForm.address1Req")}</Label>
+                <Input required value={form.address_line1 ?? ""} onChange={(e) => update("address_line1", e.target.value)} placeholder={t("admin.admissionForm.address1Placeholder")} />
               </div>
               <div>
-                <Label>Address Line 2</Label>
-                <Input value={form.address_line2 ?? ""} onChange={(e) => update("address_line2", e.target.value)} placeholder="Area, Landmark" />
+                <Label>{t("admin.admissionForm.address2")}</Label>
+                <Input value={form.address_line2 ?? ""} onChange={(e) => update("address_line2", e.target.value)} placeholder={t("admin.admissionForm.address2Placeholder")} />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>City *</Label>
+                  <Label>{t("admin.admissionForm.cityReq")}</Label>
                   <Input required value={form.city ?? ""} onChange={(e) => update("city", e.target.value)} />
                 </div>
                 <div>
-                  <Label>State *</Label>
+                  <Label>{t("admin.admissionForm.stateReq")}</Label>
                   <Input required value={form.state ?? ""} onChange={(e) => update("state", e.target.value)} />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Country</Label>
+                  <Label>{t("admin.admissionForm.country")}</Label>
                   <Input value={form.country ?? ""} onChange={(e) => update("country", e.target.value)} />
                 </div>
                 <div>
-                  <Label>PIN/Postal Code *</Label>
+                  <Label>{t("admin.admissionForm.postalReq")}</Label>
                   <Input required value={form.postal_code ?? ""} onChange={(e) => update("postal_code", e.target.value)} />
                 </div>
               </div>
@@ -493,43 +501,43 @@ export default function AdmissionForm() {
           {/* Section 4: Previous Academic Information */}
           {activeSection === 3 && (
             <div className="space-y-4">
-              <SectionHeader title="Previous Academic Information" subtitle="Details from previous school (if applicable)" />
+              <SectionHeader title={t("admin.admissionForm.prevTitle")} subtitle={t("admin.admissionForm.prevSub")} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Previous School</Label>
+                  <Label>{t("admin.admissionForm.previousSchool")}</Label>
                   <Input value={form.previous_school ?? ""} onChange={(e) => update("previous_school", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Previous Class</Label>
+                  <Label>{t("admin.admissionForm.previousClass")}</Label>
                   <Select value={form.previous_class ?? ""} onChange={(e) => update("previous_class", e.target.value)}>
-                    <option value="">Select Previous Class</option>
+                    <option value="">{t("admin.admissionForm.selectPrevClass")}</option>
                     {PREVIOUS_CLASS_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>{prevClassLabel(c)}</option>
                     ))}
                   </Select>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Board</Label>
+                  <Label>{t("admin.admissionForm.board")}</Label>
                   <Select value={form.previous_board ?? ""} onChange={(e) => update("previous_board", e.target.value)}>
-                    <option value="">Select Board</option>
-                    <option value="CBSE">CBSE</option>
-                    <option value="ICSE">ICSE</option>
-                    <option value="State Board">State Board</option>
-                    <option value="IB">IB</option>
-                    <option value="Cambridge">Cambridge</option>
-                    <option value="Other">Other</option>
+                    <option value="">{t("admin.admissionForm.selectBoard")}</option>
+                    <option value="CBSE">{t("admin.board.CBSE")}</option>
+                    <option value="ICSE">{t("admin.board.ICSE")}</option>
+                    <option value="State Board">{t("admin.board.State Board")}</option>
+                    <option value="IB">{t("admin.board.IB")}</option>
+                    <option value="Cambridge">{t("admin.board.Cambridge")}</option>
+                    <option value="Other">{t("admin.board.Other")}</option>
                   </Select>
                 </div>
                 <div>
-                  <Label>Previous School Location</Label>
-                  <Input value={form.previous_school_location ?? ""} onChange={(e) => update("previous_school_location", e.target.value)} placeholder="City, State" />
+                  <Label>{t("admin.admissionForm.prevLocation")}</Label>
+                  <Input value={form.previous_school_location ?? ""} onChange={(e) => update("previous_school_location", e.target.value)} placeholder={t("admin.admissionForm.prevLocationPlaceholder")} />
                 </div>
               </div>
               <div>
-                <Label>Transfer Certificate Number</Label>
-                <Input value={form.transfer_certificate_no ?? ""} onChange={(e) => update("transfer_certificate_no", e.target.value)} placeholder="TC Number (if applicable)" />
+                <Label>{t("admin.admissionForm.tcNumber")}</Label>
+                <Input value={form.transfer_certificate_no ?? ""} onChange={(e) => update("transfer_certificate_no", e.target.value)} placeholder={t("admin.admissionForm.tcPlaceholder")} />
               </div>
             </div>
           )}
@@ -537,12 +545,12 @@ export default function AdmissionForm() {
           {/* Section 5: Documents */}
           {activeSection === 4 && (
             <div className="space-y-4">
-              <SectionHeader title="Documents" subtitle="Upload required documents for admission" />
+              <SectionHeader title={t("admin.admissionForm.sec.documents")} subtitle={t("admin.admissionForm.docsSub")} />
               <div className="space-y-4">
                 {documents.map((doc, idx) => (
                   <div key={doc.name} className="flex items-center gap-4 p-4 border border-line rounded-lg bg-surface-3 dark:bg-surface-2">
                     <div className="flex-1">
-                      <Label>{doc.name}</Label>
+                      <Label>{t(doc.name)}</Label>
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
@@ -551,14 +559,14 @@ export default function AdmissionForm() {
                       />
                     </div>
                     {doc.file && (
-                      <span className="text-sm text-emerald-600 font-medium">✓ Selected</span>
+                      <span className="text-sm text-emerald-600 font-medium">{t("admin.admissionForm.selected")}</span>
                     )}
                   </div>
                 ))}
               </div>
               <div className="mt-4 p-4 bg-surface-3 rounded-lg">
                 <p className="text-sm text-ink-2">
-                  <strong>Note:</strong> Accepted formats: PDF, JPG, JPEG, PNG. Maximum file size: 5MB per document.
+                  <strong>{t("admin.admissionForm.note")}</strong> {t("admin.admissionForm.noteBody")}
                 </p>
               </div>
             </div>
@@ -567,29 +575,29 @@ export default function AdmissionForm() {
           {/* Section 6: Admission Details */}
           {activeSection === 5 && (
             <div className="space-y-4">
-              <SectionHeader title="Admission Details" subtitle="Administrative information" />
+              <SectionHeader title={t("admin.admissionForm.sec.details")} subtitle={t("admin.admissionForm.detailsSub")} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="p-4 bg-surface-3 dark:bg-surface-2 rounded-lg border border-line">
-                  <Label>Application Number</Label>
-                  <p className="text-sm text-ink-3 italic">Auto-generated on submission</p>
+                  <Label>{t("admin.admissionForm.applicationNumber")}</Label>
+                  <p className="text-sm text-ink-3 italic">{t("admin.admissionForm.autoOnSubmit")}</p>
                 </div>
                 <div className="p-4 bg-surface-3 dark:bg-surface-2 rounded-lg border border-line">
-                  <Label>Application Date</Label>
-                  <p className="text-sm text-ink-3">{new Date().toLocaleDateString()}</p>
+                  <Label>{t("admin.admissionForm.applicationDate")}</Label>
+                  <p className="text-sm text-ink-3">{fmtDate(new Date())}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Admission Type</Label>
+                  <Label>{t("admin.admissionForm.admissionType")}</Label>
                   <Select value={form.admission_type ?? ""} onChange={(e) => update("admission_type", e.target.value)}>
                     {ADMISSION_TYPES.map((type) => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type}>{optLabel("admin.admissionType", type)}</option>
                     ))}
                   </Select>
                 </div>
                 <div className="p-4 bg-surface-3 dark:bg-surface-2 rounded-lg border border-line">
-                  <Label>Status</Label>
-                  <p className="text-sm font-medium text-amber-500">Pending</p>
+                  <Label>{t("admin.common.status")}</Label>
+                  <p className="text-sm font-medium text-amber-500">{t("admin.admissionForm.pending")}</p>
                 </div>
               </div>
             </div>
@@ -601,21 +609,21 @@ export default function AdmissionForm() {
             <div>
               {activeSection > 0 && (
                 <Button type="button" variant="secondary" onClick={() => setActiveSection(activeSection - 1)}>
-                  ← Previous
+                  {t("admin.admissionForm.previous")}
                 </Button>
               )}
             </div>
             <div className="flex gap-3">
               <Button type="button" variant="secondary" onClick={() => navigate("/admin/admissions")}>
-                Cancel
+                {t("admin.common.cancel")}
               </Button>
               {activeSection < sections.length - 1 ? (
                 <Button type="button" onClick={() => setActiveSection(activeSection + 1)}>
-                  Next →
+                  {t("admin.admissionForm.next")}
                 </Button>
               ) : (
                 <Button type="submit" disabled={mutation.isPending || uploading}>
-                  {uploading ? "Uploading..." : mutation.isPending ? "Submitting..." : "Submit Application"}
+                  {uploading ? t("admin.forms.uploading") : mutation.isPending ? t("admin.admissionForm.submitting") : t("admin.admissionForm.submit")}
                 </Button>
               )}
             </div>

@@ -12,6 +12,7 @@ from beanie import PydanticObjectId
 from app.copilot import llm
 from app.copilot.features.export import export_markdown
 from app.copilot.grounding import build_study_context, context_options
+from app.core.lang import normalize_lang
 from app.copilot.qpg import rotation
 from app.copilot.qpg.schemas import (
     MARKS_BY_TYPE, TYPE_LABELS, BankItemIn, ExportRequest, GenerateRequest, allowed_types, validate_selection,
@@ -42,8 +43,8 @@ def suggested_duration(questions: list[dict]) -> str:
 
 # ------------------------------------------------------------------ options
 
-async def options(current: CurrentUser) -> dict:
-    ctx = await context_options(current)
+async def options(current: CurrentUser, lang: str = "en") -> dict:
+    ctx = await context_options(current, lang)
     classes = [{**c, "types": [
         {"key": k, "label": TYPE_LABELS[k], "marks": MARKS_BY_TYPE[k], "max": mx} for k, mx in allowed_types(c["name"]).items()
     ]} for c in ctx["classes"]]
@@ -76,7 +77,7 @@ def _clean_generated(raw: dict, allowed: set[str]) -> dict | None:
 
 async def _top_up(current: CurrentUser, class_id: str, subject_id: str, chapter: str, needs: dict[str, int], language: str) -> int:
     """Ask the model for questions of the missing types, grounded in the chapter's syllabus text. Returns how many were stored."""
-    ctx = await build_study_context(current, class_id, subject_id, chapter, require_subject=True)
+    ctx = await build_study_context(current, class_id, subject_id, chapter, require_subject=True, lang=normalize_lang(language))
     spec = ", ".join(f"{n} {t} ({MARKS_BY_TYPE[t]} mark{'s' if MARKS_BY_TYPE[t] != 1 else ''} each)" for t, n in needs.items())
     system = (
         "You write exam questions for school students from the curriculum material given (and general knowledge of the "
@@ -88,7 +89,7 @@ async def _top_up(current: CurrentUser, class_id: str, subject_id: str, chapter:
         '"options": ["..","..","..",".."] or null, "answer": "the correct option text for mcq, else a model answer", '
         '"keywords": "comma-separated key points a marker looks for"}]}'
     )
-    user = f"Class: {ctx.class_name}\nSubject: {ctx.subject_name}\nChapter: {chapter}\n\nMaterial:\n{ctx.text}"
+    user = f"Class: {ctx.class_name}\nSubject: {ctx.subject_name}\nChapter: {ctx.chapter_labels.get(chapter, chapter)}\n\nMaterial:\n{ctx.text}"
     data = await llm.call_json(system, user)
     stored = 0
     existing = {i.text_hash for i in await QuestionBankItem.find(
@@ -125,7 +126,9 @@ async def generate(current: CurrentUser, req: GenerateRequest) -> dict:
     if school_class is None or school_class.school_id != current.school_id:
         raise NotFoundError("Class not found")
     validate_selection(req, school_class.name)
-    ctx = await build_study_context(current, req.class_id, req.subject_id, require_subject=True)  # access check + names
+    ctx = await build_study_context(current, req.class_id, req.subject_id, require_subject=True, lang=normalize_lang(req.language))  # access check + names
+    for sel in req.chapters:  # a chapter picked in Arabic is the same chapter (and the same bank) as in English
+        sel.chapter = ctx.canon(sel.chapter) or sel.chapter
     unknown = [s.chapter for s in req.chapters if ctx.chapters and s.chapter not in ctx.chapters]
     if unknown:
         raise ValidationAppError(f"Not in this subject's syllabus: {', '.join(unknown)}")
@@ -154,7 +157,7 @@ async def generate(current: CurrentUser, req: GenerateRequest) -> dict:
         raise NotFoundError("No questions could be found or written for those chapters")
     paper = GeneratedPaper(
         school_id=current.school_id, user_id=current.id, class_id=req.class_id, class_name=school_class.name,
-        subject_id=req.subject_id, subject_name=ctx.subject_name or "", chapters=[s.chapter for s in req.chapters if any(q["chapter"] == s.chapter for q in questions)],
+        subject_id=req.subject_id, subject_name=ctx.subject_name or "", chapters=[ctx.chapter_labels.get(s.chapter, s.chapter) for s in req.chapters if any(q["chapter"] == s.chapter for q in questions)],
         total_marks=sum(q["marks"] for q in questions), suggested_duration=suggested_duration(questions), questions=questions,
     )
     await paper.insert()
@@ -248,7 +251,8 @@ async def add_to_bank(current: CurrentUser, body: BankItemIn) -> dict:
     school_class = await Class.get(body.class_id) if len(body.class_id) == 24 else None
     if school_class is None or school_class.school_id != current.school_id:
         raise NotFoundError("Class not found")
-    await build_study_context(current, body.class_id, body.subject_id, body.chapter, require_subject=True)  # access + chapter exist
+    ctx = await build_study_context(current, body.class_id, body.subject_id, body.chapter, require_subject=True)  # access + chapter exist
+    body = body.model_copy(update={"chapter": ctx.canon(body.chapter) or body.chapter})
     if body.question_type not in allowed_types(school_class.name):
         raise ValidationAppError(f"'{body.question_type}' isn't a question type for {school_class.name}")
     options, answer = body.options, (body.answer or "").strip()

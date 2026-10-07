@@ -17,17 +17,17 @@ import StudentSettings from "./Settings";
 import StudentAbout from "./About";
 
 export const studentNavItems: NavItem[] = [
-  { label: "Dashboard", to: "/student", end: true, icon: DashboardIcon },
-  { label: "My Profile", to: "/student/profile", icon: ProfileIcon },
-  { label: "Attendance", to: "/student/attendance", icon: AttendanceIcon },
-  { label: "Homework", to: "/student/homework", icon: HomeworkIcon },
-  { label: "Syllabus", to: "/student/syllabus", icon: SyllabusIcon },
-  { label: "Timetable", to: "/student/timetable", icon: TimetableIcon },
-  { label: "Exams", to: "/student/exams", icon: ExamsIcon },
-  { label: "Fees", to: "/student/fees", icon: FeesIcon },
-  { label: "Notifications", to: "/student/notifications", icon: NotificationsIcon },
-  { label: "Settings", to: "/student/settings", icon: SettingsIcon },
-  { label: "About", to: "/student/about", icon: AboutIcon },
+  { label: "navigation.dashboard", to: "/student", end: true, icon: DashboardIcon },
+  { label: "navigation.myProfile", to: "/student/profile", icon: ProfileIcon },
+  { label: "navigation.attendance", to: "/student/attendance", icon: AttendanceIcon },
+  { label: "navigation.homework", to: "/student/homework", icon: HomeworkIcon },
+  { label: "navigation.syllabus", to: "/student/syllabus", icon: SyllabusIcon },
+  { label: "timetable.title", to: "/student/timetable", icon: TimetableIcon },
+  { label: "student.nav.exams", to: "/student/exams", icon: ExamsIcon },
+  { label: "navigation.fees", to: "/student/fees", icon: FeesIcon },
+  { label: "navigation.notifications", to: "/student/notifications", icon: NotificationsIcon },
+  { label: "navigation.settings", to: "/student/settings", icon: SettingsIcon },
+  { label: "navigation.about", to: "/student/about", icon: AboutIcon },
 ];
 
 /** Spread into App.tsx's existing `/student` route: `<Route path="/student" ...>{studentChildRoutes}</Route>` */

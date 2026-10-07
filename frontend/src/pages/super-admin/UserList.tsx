@@ -4,6 +4,7 @@ import { Badge, Button, Card, Input, Select, Spinner } from "../../components/ui
 import { DataTable, Pagination } from "../../components/DataTable";
 import { api } from "../../api/client";
 import { exportDataToCsv } from "./api";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface User {
   id: string;
@@ -48,6 +49,11 @@ const ROLE_COLORS: Record<string, "violet" | "green" | "yellow" | "gray"> = {
 };
 
 export default function UserList() {
+  const { t, te, fmtDate, fmtNumber } = useLanguage();
+  const roleLabel = (role: string) => {
+    const label = te("role", role);
+    return label === role ? role.replace("_", " ") : label;
+  };
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -70,9 +76,9 @@ export default function UserList() {
     <div className="animate-fade-in-up">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink dark:text-white">User Directory</h1>
+          <h1 className="text-2xl font-semibold text-ink dark:text-white">{t("superAdmin.users.title")}</h1>
           <p className="mt-1 text-sm text-ink-2">
-            View all users registered across the platform
+            {t("superAdmin.users.subtitle")}
           </p>
         </div>
         <Button
@@ -90,7 +96,7 @@ export default function UserList() {
           )}
           disabled={!data?.items?.length}
         >
-          Export CSV
+          {t("superAdmin.common.exportCsv")}
         </Button>
       </div>
 
@@ -98,7 +104,7 @@ export default function UserList() {
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[250px]">
             <Input
-              placeholder="Search by name or email..."
+              placeholder={t("superAdmin.users.searchPlaceholder")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -114,10 +120,10 @@ export default function UserList() {
                 setPage(1);
               }}
             >
-              <option value="">All Roles</option>
+              <option value="">{t("superAdmin.users.allRoles")}</option>
               {roles.map((r) => (
                 <option key={r} value={r}>
-                  {r.replace("_", " ")}
+                  {roleLabel(r)}
                 </option>
               ))}
             </Select>
@@ -135,54 +141,54 @@ export default function UserList() {
             <DataTable<User>
               columns={[
                 {
-                  header: "User",
+                  header: t("superAdmin.users.user"),
                   cell: (row) => (
                     <div>
                       <p className="font-medium text-ink dark:text-white">{row.full_name}</p>
-                      <p className="text-xs text-ink-3">{row.email}</p>
+                      <p className="text-xs text-ink-3" dir="ltr">{row.email}</p>
                     </div>
                   ),
                 },
                 {
-                  header: "Role",
+                  header: t("superAdmin.profile.role"),
                   cell: (row) => (
                     <Badge tone={ROLE_COLORS[row.role] || "gray"}>
-                      {row.role.replace("_", " ")}
+                      {roleLabel(row.role)}
                     </Badge>
                   ),
                 },
                 {
-                  header: "School",
+                  header: t("superAdmin.users.school"),
                   cell: (row) => (
                     <span className="text-sm text-ink-2">
-                      {row.school_name || <span className="text-accent-fg">Platform</span>}
+                      {row.school_name || <span className="text-accent-fg">{t("superAdmin.users.platform")}</span>}
                     </span>
                   ),
                 },
                 {
-                  header: "Status",
+                  header: t("fees.status"),
                   cell: (row) => (
                     <Badge tone={row.is_active ? "green" : "red"}>
-                      {row.is_active ? "Active" : "Inactive"}
+                      {row.is_active ? t("superAdmin.common.active") : t("superAdmin.common.inactive")}
                     </Badge>
                   ),
                 },
                 {
-                  header: "Last Login",
+                  header: t("superAdmin.users.lastLogin"),
                   cell: (row) => (
                     <span className="text-sm text-ink-3">
                       {row.last_login_at
-                        ? new Date(row.last_login_at).toLocaleDateString()
-                        : "Never"}
+                        ? fmtDate(row.last_login_at)
+                        : t("superAdmin.users.never")}
                     </span>
                   ),
                 },
                 {
-                  header: "Joined",
+                  header: t("superAdmin.users.joined"),
                   cell: (row) => (
                     <span className="text-sm text-ink-3">
                       {row.created_at
-                        ? new Date(row.created_at).toLocaleDateString()
+                        ? fmtDate(row.created_at)
                         : "—"}
                     </span>
                   ),
@@ -190,11 +196,11 @@ export default function UserList() {
               ]}
               rows={data?.items ?? []}
               rowKey={(row) => row.id}
-              emptyLabel="No users found."
+              emptyLabel={t("superAdmin.users.empty")}
             />
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-ink-3">
-                Showing {((page - 1) * PAGE_SIZE) + 1} - {Math.min(page * PAGE_SIZE, data?.total ?? 0)} of {data?.total ?? 0} users
+                {t("superAdmin.users.showing", { from: fmtNumber(((page - 1) * PAGE_SIZE) + 1), to: fmtNumber(Math.min(page * PAGE_SIZE, data?.total ?? 0)), total: fmtNumber(data?.total ?? 0) })}
               </p>
               <Pagination
                 page={page}

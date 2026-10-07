@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import { fetchAcademicYears } from "./api";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface CalendarEvent {
   id: string;
@@ -14,14 +15,15 @@ interface CalendarEvent {
 }
 
 const EVENT_TYPES = [
-  { value: "HOLIDAY", label: "Holiday", color: "bg-red-100 text-red-700" },
-  { value: "EXAM", label: "Exam", color: "bg-yellow-100 text-yellow-700" },
-  { value: "MEETING", label: "Meeting", color: "bg-blue-100 text-blue-700" },
-  { value: "EVENT", label: "Event", color: "bg-green-100 text-green-700" },
-  { value: "OTHER", label: "Other", color: "bg-surface-3 text-ink-2" },
+  { value: "HOLIDAY", color: "bg-red-100 text-red-700" },
+  { value: "EXAM", color: "bg-yellow-100 text-yellow-700" },
+  { value: "MEETING", color: "bg-blue-100 text-blue-700" },
+  { value: "EVENT", color: "bg-green-100 text-green-700" },
+  { value: "OTHER", color: "bg-surface-3 text-ink-2" },
 ];
 
 export default function CalendarList() {
+  const { t, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>("");
@@ -67,7 +69,7 @@ export default function CalendarList() {
   });
 
   const groupedEvents = (eventsQuery.data || []).reduce((acc, event) => {
-    const month = new Date(event.event_date).toLocaleString("default", { month: "long", year: "numeric" });
+    const month = fmtDate(event.event_date, { month: "long", year: "numeric" });
     if (!acc[month]) acc[month] = [];
     acc[month].push(event);
     return acc;
@@ -75,19 +77,19 @@ export default function CalendarList() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Academic Calendar" subtitle="Holidays, events, and important dates">
-        <Button onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "Add Event"}</Button>
+      <PageHeader title={t("admin.calendar.title")} subtitle={t("admin.calendar.subtitle")}>
+        <Button onClick={() => setShowForm(!showForm)}>{showForm ? t("admin.common.cancel") : t("admin.common.addEvent")}</Button>
       </PageHeader>
 
       <Card className="mb-6">
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-ink-2">Academic Year:</label>
+          <label className="text-sm font-medium text-ink-2">{t("admin.calendar.academicYearColon")}</label>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
             className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
           >
-            <option value="">All Years</option>
+            <option value="">{t("admin.common.allYears")}</option>
             {yearsQuery.data?.map((y) => (
               <option key={y.id} value={y.id}>{y.name}</option>
             ))}
@@ -100,7 +102,7 @@ export default function CalendarList() {
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="col-span-2 md:col-span-1">
-                <label className="block text-sm font-medium text-ink-2 mb-1">Title</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.title")}</label>
                 <input
                   type="text"
                   value={form.title}
@@ -110,7 +112,7 @@ export default function CalendarList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Date</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.date")}</label>
                 <input
                   type="date"
                   value={form.event_date}
@@ -120,33 +122,33 @@ export default function CalendarList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Type</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.type")}</label>
                 <select
                   value={form.event_type}
                   onChange={(e) => setForm({ ...form, event_type: e.target.value })}
                   className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                 >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                  {EVENT_TYPES.map((et) => (
+                    <option key={et.value} value={et.value}>{t(`admin.eventType.${et.value}`)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Academic Year</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.academicYear")}</label>
                 <select
                   value={form.academic_year_id}
                   onChange={(e) => setForm({ ...form, academic_year_id: e.target.value })}
                   className="w-full rounded-lg border border-line px-3 py-2 focus:border-violet-500"
                   required
                 >
-                  <option value="">-- Select --</option>
+                  <option value="">{t("admin.common.selectDash")}</option>
                   {yearsQuery.data?.map((y) => (
                     <option key={y.id} value={y.id}>{y.name}</option>
                   ))}
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-ink-2 mb-1">Description</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.description")}</label>
                 <input
                   type="text"
                   value={form.description}
@@ -156,7 +158,7 @@ export default function CalendarList() {
               </div>
             </div>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Adding..." : "Add Event"}
+              {createMutation.isPending ? t("admin.calendarView.adding") : t("admin.common.addEvent")}
             </Button>
           </form>
         </Card>
@@ -165,7 +167,7 @@ export default function CalendarList() {
       {eventsQuery.isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : Object.keys(groupedEvents).length === 0 ? (
-        <Card><p className="text-center text-accent-fg py-8">No events found.</p></Card>
+        <Card><p className="text-center text-accent-fg py-8">{t("admin.calendar.empty")}</p></Card>
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedEvents).map(([month, events]) => (
@@ -181,13 +183,13 @@ export default function CalendarList() {
                             {new Date(event.event_date).getDate()}
                           </p>
                           <p className="text-xs text-accent-fg">
-                            {new Date(event.event_date).toLocaleString("default", { weekday: "short" })}
+                            {fmtDate(event.event_date, { weekday: "short" })}
                           </p>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-ink">{event.title}</p>
-                            <Badge tone={event.event_type === "HOLIDAY" ? "red" : event.event_type === "EXAM" ? "yellow" : event.event_type === "EVENT" ? "green" : event.event_type === "OTHER" ? "gray" : "violet"}>{event.event_type}</Badge>
+                            <Badge tone={event.event_type === "HOLIDAY" ? "red" : event.event_type === "EXAM" ? "yellow" : event.event_type === "EVENT" ? "green" : event.event_type === "OTHER" ? "gray" : "violet"}>{t(`admin.eventType.${event.event_type}`)}</Badge>
                           </div>
                           {event.description && <p className="text-sm text-accent-fg">{event.description}</p>}
                         </div>
@@ -196,7 +198,7 @@ export default function CalendarList() {
                         onClick={() => deleteMutation.mutate(event.id)}
                         className="text-sm text-red-500 hover:underline"
                       >
-                        Delete
+                        {t("admin.common.delete")}
                       </button>
                     </div>
                   </Card>

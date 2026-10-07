@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Spinner } from "../../components/ui";
 import { api } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { timeAgo } from "../../lib/time";
 import { AttendanceLineChart, FeeCollectionBarChart } from "../../components/Charts";
 import { fetchAttendanceTrend, fetchFeeCollection, fetchLeaveStats, fetchPendingFees, listAdmissions, listStudents, listTeachers } from "./api";
@@ -82,11 +83,11 @@ function SchoolIllustration() {
   );
 }
 
-function getGreeting(): string {
+function getGreetingKey(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
+  if (hour < 12) return "dashboard.goodMorning";
+  if (hour < 17) return "dashboard.goodAfternoon";
+  return "dashboard.goodEvening";
 }
 
 interface StatCardProps {
@@ -101,6 +102,7 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, trend, icon, color, bgColor, to, miniIllustration }: StatCardProps) {
+  const { t } = useLanguage();
 
   const content = (
     <div className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group glass`}>
@@ -111,7 +113,7 @@ function StatCard({ label, value, trend, icon, color, bgColor, to, miniIllustrat
         <div className={`p-3 rounded-xl shadow-lg ${bgColor} transition-transform duration-300 group-hover:scale-110`}>
           <div className={color}>{icon}</div>
         </div>
-        <ChevronRight size={18} className={`transition-all duration-300 group-hover:translate-x-1 text-ink-2 group-hover:text-ink-3`} />
+        <ChevronRight size={18} className={`transition-all duration-300 group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1 text-ink-2 group-hover:text-ink-3`} />
       </div>
       <div className="mt-4 relative z-10">
         <p className={`text-sm font-medium text-ink-3`}>{label}</p>
@@ -124,7 +126,7 @@ function StatCard({ label, value, trend, icon, color, bgColor, to, miniIllustrat
               {trend.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
             </span>
             <span>{trend.value}</span>
-            <span className={"text-ink-3 font-normal"}>vs last month</span>
+            <span className={"text-ink-3 font-normal"}>{t("admin.dashboard.vsLastMonth")}</span>
           </div>
         )}
       </div>
@@ -162,8 +164,8 @@ function QuickAction({ label, icon, to, color }: QuickActionProps) {
       <span className={`flex-1 text-sm font-medium text-ink-2`}>
         {label}
       </span>
-      <div className={`p-1 rounded-full transition-all duration-200 group-hover:translate-x-1 bg-surface-3 text-ink-3`}>
-        <ChevronRight size={14} />
+      <div className={`p-1 rounded-full transition-all duration-200 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 bg-surface-3 text-ink-3`}>
+        <ChevronRight size={14} className="rtl:-scale-x-100" />
       </div>
     </Link>
   );
@@ -208,11 +210,12 @@ const ACTIVITY_LOOK: Record<string, { Icon: typeof UserPlus; color: string }> = 
 };
 
 export default function AdminDashboard() {
-  const [greeting, setGreeting] = useState(getGreeting());
+  const { t, fmtDate } = useLanguage();
+  const [greetingKey, setGreetingKey] = useState(getGreetingKey());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setGreeting(getGreeting());
+      setGreetingKey(getGreetingKey());
     }, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -267,7 +270,7 @@ export default function AdminDashboard() {
       ? submittedAdmissions.total + underReviewAdmissions.total
       : 0;
 
-  const today = new Date().toLocaleDateString("en-IN", {
+  const today = fmtDate(new Date(), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -285,15 +288,14 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2">
               <Sparkles size={20} className="text-[#ffd60a] animate-pulse" />
               <p className="text-white/90 text-sm font-medium tracking-wide uppercase">
-                {greeting}
+                {t(greetingKey)}
               </p>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white">
-              Welcome to School ERP
+              {t("admin.dashboard.welcome")}
             </h1>
             <p className="text-white/80 text-sm max-w-md">
-              Manage your school efficiently with real-time insights and quick actions.
-              Here's what's happening today.
+              {t("admin.dashboard.welcomeDesc")}
             </p>
             <div className={`inline-flex items-center gap-2 mt-2 px-4 py-2.5 rounded-full text-sm font-medium backdrop-blur-sm bg-white/20 text-white border border-white/25`}>
               <CalendarDays size={16} />
@@ -318,7 +320,7 @@ export default function AdminDashboard() {
           {/* Stat Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <StatCard
-              label="Total Students"
+              label={t("admin.dashboard.totalStudents")}
               value={loadingStudents ? "..." : activeStudents?.total ?? 0}
               trend={{ value: "12%", up: true }}
               icon={<Users size={20} />}
@@ -327,7 +329,7 @@ export default function AdminDashboard() {
               to="/admin/students"
             />
             <StatCard
-              label="Total Teachers"
+              label={t("admin.dashboard.totalTeachers")}
               value={loadingTeachers ? "..." : activeTeachers?.total ?? 0}
               trend={{ value: "6%", up: true }}
               icon={<GraduationCap size={20} />}
@@ -336,7 +338,7 @@ export default function AdminDashboard() {
               to="/admin/teachers"
             />
             <StatCard
-              label="Pending Admissions"
+              label={t("admin.dashboard.pendingAdmissions")}
               value={pendingAdmissions}
               trend={{ value: "3%", up: true }}
               icon={<FileText size={20} />}
@@ -345,7 +347,7 @@ export default function AdminDashboard() {
               to="/admin/admissions"
             />
             <StatCard
-              label="Pending Fees"
+              label={t("admin.dashboard.pendingFees")}
               value={pendingFeesQuery.isLoading ? "..." : `₹${((pendingFeesQuery.data?.total_pending ?? 0) / 1000).toFixed(0)}K`}
               trend={{ value: "8%", up: false }}
               icon={<IndianRupee size={20} />}
@@ -354,7 +356,7 @@ export default function AdminDashboard() {
               to="/admin/fees"
             />
             <StatCard
-              label="Leave Requests"
+              label={t("admin.dashboard.leaveRequests")}
               value={leaveStatsQuery.isLoading ? "..." : leaveStatsQuery.data?.pending ?? 0}
               trend={{ value: "2%", up: true }}
               icon={<Calendar size={20} />}
@@ -371,17 +373,17 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className={`font-semibold text-lg text-ink`}>
-                    Attendance Overview
+                    {t("admin.dashboard.attendanceOverview")}
                   </h3>
                   <p className={`text-xs mt-1 text-ink-3`}>
-                    Last 14 days trend
+                    {t("admin.dashboard.last14Days")}
                   </p>
                 </div>
                 <Link
                   to="/admin/attendance"
                   className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                 >
-                  View Details <ArrowRight size={14} />
+                  {t("admin.dashboard.viewDetails")} <ArrowRight size={14} className="rtl:-scale-x-100" />
                 </Link>
               </div>
               {attendanceTrendQuery.isLoading ? (
@@ -390,7 +392,7 @@ export default function AdminDashboard() {
                 <AttendanceLineChart data={attendanceTrendQuery.data} height={200} />
               ) : (
                 <div className={`h-[200px] flex items-center justify-center text-sm text-ink-3`}>
-                  No data available
+                  {t("admin.dashboard.noData")}
                 </div>
               )}
             </div>
@@ -400,17 +402,17 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className={`font-semibold text-lg text-ink`}>
-                    Fee Collection
+                    {t("admin.dashboard.feeCollection")}
                   </h3>
                   <p className={`text-xs mt-1 text-ink-3`}>
-                    Last 6 months
+                    {t("admin.dashboard.last6Months")}
                   </p>
                 </div>
                 <Link
                   to="/admin/fees"
                   className="text-xs font-medium text-emerald-500 hover:text-emerald-600 flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
                 >
-                  View Details <ArrowRight size={14} />
+                  {t("admin.dashboard.viewDetails")} <ArrowRight size={14} className="rtl:-scale-x-100" />
                 </Link>
               </div>
               {feeCollectionQuery.isLoading ? (
@@ -419,7 +421,7 @@ export default function AdminDashboard() {
                 <FeeCollectionBarChart data={feeCollectionQuery.data} height={200} />
               ) : (
                 <div className={`h-[200px] flex items-center justify-center text-sm text-ink-3`}>
-                  No data available
+                  {t("admin.dashboard.noData")}
                 </div>
               )}
               {/* Summary Stats */}
@@ -428,7 +430,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/30" />
                     <div>
-                      <p className={`text-xs text-ink-3`}>Collected</p>
+                      <p className={`text-xs text-ink-3`}>{t("admin.dashboard.collected")}</p>
                       <p className={`text-sm font-bold text-ink`}>
                         ₹{((pendingFeesQuery.data.total_paid ?? 0) / 1000).toFixed(1)}K
                       </p>
@@ -437,7 +439,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/30" />
                     <div>
-                      <p className={`text-xs text-ink-3`}>Pending</p>
+                      <p className={`text-xs text-ink-3`}>{t("admin.dashboard.pending")}</p>
                       <p className={`text-sm font-bold text-ink`}>
                         ₹{((pendingFeesQuery.data.total_pending ?? 0) / 1000).toFixed(1)}K
                       </p>
@@ -451,10 +453,10 @@ export default function AdminDashboard() {
           {/* Quick Links */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Academic Calendar", desc: "View events", icon: <CalendarDays size={20} className="text-blue-500" />, to: "/admin/calendar", bg: "bg-blue-500/10" },
-              { label: "Timetable", desc: "Class schedule", icon: <Clock size={20} className="text-accent-fg" />, to: "/admin/timetable", bg: "bg-violet-500/10" },
-              { label: "Circulars", desc: "Announcements", icon: <Bell size={20} className="text-amber-500" />, to: "/admin/notifications", bg: "bg-amber-500/10" },
-              { label: "Reports", desc: "Performance", icon: <FileBarChart size={20} className="text-emerald-500" />, to: "/admin/report-cards", bg: "bg-emerald-500/10" },
+              { label: t("admin.dashboard.academicCalendar"), desc: t("admin.dashboard.viewEvents"), icon: <CalendarDays size={20} className="text-blue-500" />, to: "/admin/calendar", bg: "bg-blue-500/10" },
+              { label: t("admin.dashboard.timetable"), desc: t("admin.dashboard.classSchedule"), icon: <Clock size={20} className="text-accent-fg" />, to: "/admin/timetable", bg: "bg-violet-500/10" },
+              { label: t("admin.dashboard.circulars"), desc: t("admin.dashboard.announcements"), icon: <Bell size={20} className="text-amber-500" />, to: "/admin/notifications", bg: "bg-amber-500/10" },
+              { label: t("admin.dashboard.reports"), desc: t("admin.dashboard.performance"), icon: <FileBarChart size={20} className="text-emerald-500" />, to: "/admin/report-cards", bg: "bg-emerald-500/10" },
             ].map((item) => (
               <Link
                 key={item.label}
@@ -479,35 +481,35 @@ export default function AdminDashboard() {
               <span className="p-1.5 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">
                 <Sparkles size={14} className="text-white" />
               </span>
-              Quick Actions
+              {t("admin.dashboard.quickActions")}
             </h3>
             <div className="space-y-1">
               <QuickAction
-                label="Add New Student"
+                label={t("admin.dashboard.addStudent")}
                 icon={<UserPlus size={18} className="text-white" />}
                 to="/admin/students/new"
                 color="bg-gradient-to-br from-blue-500 to-blue-600"
               />
               <QuickAction
-                label="Add Teacher"
+                label={t("admin.dashboard.addTeacher")}
                 icon={<GraduationCap size={18} className="text-white" />}
                 to="/admin/teachers/new"
                 color="bg-gradient-to-br from-emerald-500 to-emerald-600"
               />
               <QuickAction
-                label="Record Attendance"
+                label={t("admin.dashboard.recordAttendance")}
                 icon={<ClipboardList size={18} className="text-white" />}
                 to="/admin/attendance"
                 color="bg-gradient-to-br from-violet-500 to-violet-600"
               />
               <QuickAction
-                label="Collect Fees"
+                label={t("admin.dashboard.collectFees")}
                 icon={<Wallet size={18} className="text-white" />}
                 to="/admin/fees"
                 color="bg-gradient-to-br from-amber-500 to-amber-600"
               />
               <QuickAction
-                label="Create Report"
+                label={t("admin.dashboard.createReport")}
                 icon={<FileBarChart size={18} className="text-white" />}
                 to="/admin/report-cards"
                 color="bg-gradient-to-br from-rose-500 to-rose-600"
@@ -519,13 +521,13 @@ export default function AdminDashboard() {
           <div className={`rounded-2xl p-5 glass`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className={`font-semibold flex items-center gap-2 text-ink`}>
-                <Clock size={18} className="text-ink-3" /> Recent Activity
+                <Clock size={18} className="text-ink-3" /> {t("admin.dashboard.recentActivity")}
               </h3>
               <Link
                 to="/admin/notifications"
                 className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-1"
               >
-                View All <ArrowRight size={12} />
+                {t("admin.dashboard.viewAll")} <ArrowRight size={12} className="rtl:-scale-x-100" />
               </Link>
             </div>
             <div className="divide-y divide-line">
@@ -546,7 +548,7 @@ export default function AdminDashboard() {
                   );
                 })
               ) : (
-                <p className="py-6 text-center text-sm text-ink-3">Nothing has happened yet.</p>
+                <p className="py-6 text-center text-sm text-ink-3">{t("admin.dashboard.nothingYet")}</p>
               )}
             </div>
           </div>

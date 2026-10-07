@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { Badge, Button, ErrorText, Input, Label, Select } from "../components/ui";
-import { errorMessage } from "./api";
 import type { CopilotFileInfo } from "./download";
+import { useCopilotText } from "./i18n";
 import Markdown from "./Markdown";
 import { ExportPanel } from "./results";
 import { Busy, Section, Shell } from "./toolkit";
@@ -27,6 +27,7 @@ function chapterCaps(n: number, limits: Options["limits"]): number[] {
 
 export default function QuestionPaperTool(props: ToolProps) {
   const { tool, onBack, initialContext, language } = props;
+  const { t, te, fmtDate, err, tr } = useCopilotText();
   const qc = useQueryClient();
   const options = useQuery({ queryKey: ["qpg", "options"], queryFn: async () => (await api.get<Options>(`${QP}/options`)).data });
   const papers = useQuery({ queryKey: ["qpg", "papers"], queryFn: async () => (await api.get<Paper[]>(`${QP}/papers`)).data });
@@ -72,28 +73,28 @@ export default function QuestionPaperTool(props: ToolProps) {
 
   return (
     <Shell tool={tool} onBack={onBack}>
-      {options.isLoading && <Busy label="Loading your classes…" />}
-      {options.isError && <ErrorText>{errorMessage(options.error)}</ErrorText>}
-      {options.data && options.data.classes.length === 0 && <p className="text-[13px] text-ink-3">No classes with a syllabus are assigned to you yet.</p>}
+      {options.isLoading && <Busy label={t("copilot.qp.loadingClasses")} />}
+      {options.isError && <ErrorText>{err(options.error)}</ErrorText>}
+      {options.data && options.data.classes.length === 0 && <p className="text-[13px] text-ink-3">{t("copilot.qp.noClasses")}</p>}
       {cls && (
         <>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label htmlFor="qp-class">Class</Label>
+              <Label htmlFor="qp-class">{t("copilot.picker.class")}</Label>
               <Select id="qp-class" value={cls.id} onChange={(e) => { setClassId(e.target.value); setSubjectId(""); setPicked({}); }}>
-                {options.data!.classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {options.data!.classes.map((c) => <option key={c.id} value={c.id}>{te("class", c.name)}</option>)}
               </Select>
             </div>
             <div>
-              <Label htmlFor="qp-subject">Subject</Label>
+              <Label htmlFor="qp-subject">{t("copilot.picker.subject")}</Label>
               <Select id="qp-subject" value={subject?.id ?? ""} onChange={(e) => { setSubjectId(e.target.value); setPicked({}); }}>
-                {cls.subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {cls.subjects.map((s) => <option key={s.id} value={s.id}>{te("subject", s.name)}</option>)}
               </Select>
             </div>
           </div>
 
-          <Section title="Chapters and questions" right={<span className="text-xs tabular text-ink-3">{totalMarks} / {options.data!.limits.paper_marks} marks</span>}>
-            {subject?.chapters.length === 0 && <p className="text-[13px] text-ink-3">This subject has no chapters yet.</p>}
+          <Section title={t("copilot.qp.chaptersAndQuestions")} right={<span className="text-xs tabular text-ink-3">{t("copilot.qp.marksOfTotal", { n: totalMarks, total: options.data!.limits.paper_marks })}</span>}>
+            {subject?.chapters.length === 0 && <p className="text-[13px] text-ink-3">{t("copilot.qp.noChapters")}</p>}
             {subject?.chapters.map((ch) => {
               const on = ch in picked;
               const i = chapters.indexOf(ch);
@@ -106,13 +107,13 @@ export default function QuestionPaperTool(props: ToolProps) {
                   </label>
                   {on && (
                     <div className="mt-2 grid gap-1.5">
-                      {cls.types.map((t) => (
-                        <div key={t.key} className="flex items-center justify-between gap-2 text-[13px]">
-                          <span className="text-ink-2">{t.label} <span className="text-ink-3">· {t.marks} mark{t.marks === 1 ? "" : "s"}</span></span>
+                      {cls.types.map((qt) => (
+                        <div key={qt.key} className="flex items-center justify-between gap-2 text-[13px]">
+                          <span className="text-ink-2">{tr(`copilot.qtypes.${qt.key}`, qt.label)} <span className="text-ink-3">· {t(qt.marks === 1 ? "copilot.qp.markOne" : "copilot.qp.markMany", { n: qt.marks })}</span></span>
                           <span className="flex items-center gap-1">
-                            <button type="button" aria-label={`Fewer ${t.label}`} className="lg-icon !h-7 !w-7" onClick={() => setCount(ch, t, -1)}><Minus size={13} /></button>
-                            <span className="w-6 text-center tabular" data-testid={`count-${ch}-${t.key}`}>{picked[ch]?.[t.key] ?? 0}</span>
-                            <button type="button" aria-label={`More ${t.label}`} className="lg-icon !h-7 !w-7" onClick={() => setCount(ch, t, 1)}><Plus size={13} /></button>
+                            <button type="button" aria-label={t("copilot.qp.fewer", { type: tr(`copilot.qtypes.${qt.key}`, qt.label) })} className="lg-icon !h-7 !w-7" onClick={() => setCount(ch, qt, -1)}><Minus size={13} /></button>
+                            <span className="w-6 text-center tabular" data-testid={`count-${ch}-${qt.key}`}>{picked[ch]?.[qt.key] ?? 0}</span>
+                            <button type="button" aria-label={t("copilot.qp.more", { type: tr(`copilot.qtypes.${qt.key}`, qt.label) })} className="lg-icon !h-7 !w-7" onClick={() => setCount(ch, qt, 1)}><Plus size={13} /></button>
                           </span>
                         </div>
                       ))}
@@ -124,31 +125,31 @@ export default function QuestionPaperTool(props: ToolProps) {
           </Section>
 
           <Button className="w-full" onClick={() => generate.mutate()} disabled={generate.isPending || totalMarks === 0 || over}>
-            {generate.isPending ? "Building the paper…" : "Generate question paper"}
+            {generate.isPending ? t("copilot.qp.building") : t("copilot.qp.generate")}
           </Button>
-          {over && <ErrorText>A chapter is over its mark limit.</ErrorText>}
-          {generate.isPending && <Busy label="Picking from your question bank and writing any missing questions…" />}
-          {generate.isError && <ErrorText>{errorMessage(generate.error)}</ErrorText>}
+          {over && <ErrorText>{t("copilot.qp.overLimit")}</ErrorText>}
+          {generate.isPending && <Busy label={t("copilot.qp.picking")} />}
+          {generate.isError && <ErrorText>{err(generate.error)}</ErrorText>}
 
           <button type="button" className="text-[13px] font-medium text-accent-fg" onClick={() => setShowBank(!showBank)}>
-            {showBank ? "Hide" : "Show"} question bank for this subject
+            {showBank ? t("copilot.qp.hideBank") : t("copilot.qp.showBank")}
           </button>
           {showBank && subject && <BankPanel classId={cls.id} subjectId={subject.id} chapters={subject.chapters} types={cls.types} />}
         </>
       )}
 
       {(papers.data ?? []).length > 0 && (
-        <Section title="Recent papers">
+        <Section title={t("copilot.qp.recentPapers")}>
           {papers.data!.slice(0, 8).map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-surface p-2 text-[13px]">
               <button type="button" className="min-w-0 flex-1 text-start" onClick={() => open.mutate(p.id)}>
-                <span className="block truncate font-medium text-ink">{p.subject_name} · {p.class_name}</span>
-                <span className="block truncate text-xs text-ink-3">{p.chapters.join(", ")} · {p.total_marks} marks · {new Date(p.created_at).toLocaleDateString()}</span>
+                <span className="block truncate font-medium text-ink">{te("subject", p.subject_name)} · {te("class", p.class_name)}</span>
+                <span className="block truncate text-xs text-ink-3">{p.chapters.join(t("copilot.listSeparator"))} · {t("copilot.qp.marksN", { n: p.total_marks })} · {fmtDate(p.created_at)}</span>
               </button>
-              <button type="button" aria-label="Delete paper" className="text-ink-3 hover:text-red-600" onClick={() => remove.mutate(p.id)}><Trash2 size={15} /></button>
+              <button type="button" aria-label={t("copilot.qp.deletePaper")} className="text-ink-3 hover:text-red-600" onClick={() => remove.mutate(p.id)}><Trash2 size={15} /></button>
             </div>
           ))}
-          {open.isPending && <Busy label="Opening…" />}
+          {open.isPending && <Busy label={t("copilot.qp.opening")} />}
         </Section>
       )}
     </Shell>
@@ -158,37 +159,38 @@ export default function QuestionPaperTool(props: ToolProps) {
 // ---------------------------------------------------------------------------------------------- a generated paper
 
 function PaperView({ tool, onBack, paper, onClose }: ToolProps & { paper: Paper; onClose: () => void }) {
+  const { t, te, tr } = useCopilotText();
   const [showAnswers, setShowAnswers] = useState(false);
   const sections = useMemo(() => {
     const order = ["mcq", "short", "state_precisely", "answer_in_brief", "long"];
     let n = 0;
     return order.map((t) => ({ type: t, items: (paper.questions ?? []).filter((q) => q.question_type === t).map((q) => ({ ...q, n: ++n })) })).filter((s) => s.items.length);
   }, [paper]);
-  const label = (t: string) => ({ mcq: "Multiple choice", short: "Short answer", state_precisely: "State precisely", answer_in_brief: "Answer in brief", long: "Long answer" }[t] ?? t);
+  const label = (type: string) => tr(`copilot.qtypes.${type}`, type.replace(/_/g, " "));
 
   return (
     <Shell tool={tool} onBack={onBack}>
-      <button type="button" className="text-[13px] font-medium text-accent-fg" onClick={onClose}>← New paper</button>
+      <button type="button" className="inline-flex items-center gap-1 text-[13px] font-medium text-accent-fg" onClick={onClose}><ArrowLeft size={13} className="rtl:rotate-180" /> {t("copilot.qp.newPaper")}</button>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="violet">{paper.subject_name} · {paper.class_name}</Badge>
-        <Badge tone="blue">{paper.total_marks} marks</Badge>
+        <Badge tone="violet">{te("subject", paper.subject_name)} · {te("class", paper.class_name)}</Badge>
+        <Badge tone="blue">{t("copilot.qp.marksN", { n: paper.total_marks })}</Badge>
         <Badge tone="gray">{paper.suggested_duration}</Badge>
-        {!!paper.new_questions_written && <Badge tone="green">{paper.new_questions_written} new questions saved to the bank</Badge>}
+        {!!paper.new_questions_written && <Badge tone="green">{t("copilot.qp.newSaved", { n: paper.new_questions_written })}</Badge>}
       </div>
       <label className="flex items-center gap-2 text-[13px] text-ink">
-        <input type="checkbox" checked={showAnswers} onChange={(e) => setShowAnswers(e.target.checked)} /> Show answers
+        <input type="checkbox" checked={showAnswers} onChange={(e) => setShowAnswers(e.target.checked)} /> {t("copilot.qp.showAnswers")}
       </label>
       <div className="space-y-3" id="qp-paper">
         {sections.map((s, i) => (
           <div key={s.type} className="space-y-2 rounded-2xl bg-surface-3 p-3">
-            <p className="text-[13px] font-semibold text-ink">Section {String.fromCharCode(65 + i)} · {label(s.type)} <span className="font-normal text-ink-3">({s.items[0].marks} mark{s.items[0].marks === 1 ? "" : "s"} each)</span></p>
+            <p className="text-[13px] font-semibold text-ink">{t("copilot.qp.section", { letter: String.fromCharCode(65 + i) })} · {label(s.type)} <span className="font-normal text-ink-3">({t(s.items[0].marks === 1 ? "copilot.qp.markEachOne" : "copilot.qp.markEachMany", { n: s.items[0].marks })})</span></p>
             {s.items.map((q) => (
               <div key={q.id} className="text-sm text-ink">
                 <div className="flex gap-1.5"><span className="font-semibold tabular">{q.n}.</span><div className="min-w-0 flex-1"><Markdown>{q.text}</Markdown></div></div>
                 {q.options && <ul className="ms-6 mt-0.5 space-y-0.5 text-[13px] text-ink-2">{q.options.map((o, j) => <li key={j}>({String.fromCharCode(97 + j)}) {o}</li>)}</ul>}
                 {showAnswers && (
                   <p className="ms-6 mt-1 rounded-lg bg-accent-soft px-2 py-1 text-[13px] text-accent-fg">
-                    <span className="font-semibold">Answer:</span> {q.answer}{q.keywords ? <span className="block text-xs text-ink-3">Key points: {q.keywords}</span> : null}
+                    <span className="font-semibold">{t("copilot.results.answer")}:</span> {q.answer}{q.keywords ? <span className="block text-xs text-ink-3">{t("copilot.qp.keyPoints")}: {q.keywords}</span> : null}
                   </p>
                 )}
               </div>
@@ -202,16 +204,17 @@ function PaperView({ tool, onBack, paper, onClose }: ToolProps & { paper: Paper;
 }
 
 function PaperExport({ paperId }: { paperId: string }) {
+  const { t } = useCopilotText();
   const [answers, setAnswers] = useState(false);
   const fields = [
-    { key: "school_name", label: "School name" }, { key: "exam_title", label: "Exam title" },
-    { key: "date_label", label: "Date" }, { key: "time_label", label: "Time allowed" },
+    { key: "school_name", label: t("copilot.export.schoolName") }, { key: "exam_title", label: t("copilot.export.examTitle") },
+    { key: "date_label", label: t("copilot.export.date") }, { key: "time_label", label: t("copilot.export.timeAllowed") },
   ];
   return (
     <div className="space-y-2">
       <div className="lg-seg w-full [&>button]:flex-1">
-        <button aria-pressed={!answers} onClick={() => setAnswers(false)}>Question paper</button>
-        <button aria-pressed={answers} onClick={() => setAnswers(true)}>Answer key</button>
+        <button aria-pressed={!answers} onClick={() => setAnswers(false)}>{t("copilot.qp.questionPaper")}</button>
+        <button aria-pressed={answers} onClick={() => setAnswers(true)}>{t("copilot.qp.answerKey")}</button>
       </div>
       <ExportPanel
         key={String(answers)}
@@ -225,6 +228,7 @@ function PaperExport({ paperId }: { paperId: string }) {
 // ---------------------------------------------------------------------------------------------- question bank
 
 function BankPanel({ classId, subjectId, chapters, types }: { classId: string; subjectId: string; chapters: string[]; types: QType[] }) {
+  const { t, tr, err } = useCopilotText();
   const qc = useQueryClient();
   const [chapter, setChapter] = useState(chapters[0] ?? "");
   const bank = useQuery({
@@ -248,32 +252,32 @@ function BankPanel({ classId, subjectId, chapters, types }: { classId: string; s
   const ready = text.trim().length > 2 && (type === "mcq" ? opts.every((o) => o.trim()) : answer.trim());
 
   return (
-    <Section title="Question bank">
-      <Select aria-label="Bank chapter" value={chapter} onChange={(e) => setChapter(e.target.value)}>
+    <Section title={t("copilot.qp.bank")}>
+      <Select aria-label={t("copilot.qp.bankChapter")} value={chapter} onChange={(e) => setChapter(e.target.value)}>
         {chapters.map((c) => <option key={c} value={c}>{c}</option>)}
       </Select>
-      <p className="text-xs text-ink-3">Papers draw from here first. Missing questions are written by the AI from the chapter's notes and saved here.</p>
+      <p className="text-xs text-ink-3">{t("copilot.qp.bankHint")}</p>
       <div className="max-h-40 space-y-1 overflow-y-auto">
         {(bank.data ?? []).map((q) => (
           <div key={q.id} className="flex items-start justify-between gap-2 rounded-lg bg-surface p-2 text-[13px]">
-            <span className="min-w-0 flex-1"><span className="font-medium text-ink">{q.text}</span><span className="block text-xs text-ink-3">{q.question_type} · {q.marks} · {q.source}</span></span>
-            <button type="button" aria-label="Remove from bank" className="text-ink-3 hover:text-red-600" onClick={() => del.mutate(q.id)}><Trash2 size={14} /></button>
+            <span className="min-w-0 flex-1"><span className="font-medium text-ink">{q.text}</span><span className="block text-xs text-ink-3">{tr(`copilot.qtypes.${q.question_type}`, q.question_type)} · {q.marks} · {q.source}</span></span>
+            <button type="button" aria-label={t("copilot.qp.removeFromBank")} className="text-ink-3 hover:text-red-600" onClick={() => del.mutate(q.id)}><Trash2 size={14} /></button>
           </div>
         ))}
-        {bank.data?.length === 0 && <p className="text-xs text-ink-3">Nothing here yet for this chapter.</p>}
+        {bank.data?.length === 0 && <p className="text-xs text-ink-3">{t("copilot.qp.bankEmpty")}</p>}
       </div>
       <div className="space-y-2 border-t border-line pt-2">
-        <p className="text-xs font-semibold text-ink">Add a question</p>
-        <Select aria-label="Question type" value={type} onChange={(e) => setType(e.target.value)}>{types.map((t) => <option key={t.key} value={t.key}>{t.label} ({t.marks})</option>)}</Select>
-        <Input placeholder="Question" value={text} onChange={(e) => setText(e.target.value)} />
+        <p className="text-xs font-semibold text-ink">{t("copilot.qp.addQuestion")}</p>
+        <Select aria-label={t("copilot.qp.questionType")} value={type} onChange={(e) => setType(e.target.value)}>{types.map((qt) => <option key={qt.key} value={qt.key}>{tr(`copilot.qtypes.${qt.key}`, qt.label)} ({qt.marks})</option>)}</Select>
+        <Input placeholder={t("copilot.qp.question")} value={text} onChange={(e) => setText(e.target.value)} />
         {type === "mcq" ? opts.map((o, i) => (
           <div key={i} className="flex items-center gap-2">
-            <input type="radio" name="bank-correct" aria-label={`Option ${i + 1} is correct`} checked={correct === i} onChange={() => setCorrect(i)} />
-            <Input placeholder={`Option ${i + 1}`} value={o} onChange={(e) => setOpts((v) => v.map((x, j) => (j === i ? e.target.value : x)))} />
+            <input type="radio" name="bank-correct" aria-label={t("copilot.qp.optionCorrect", { n: i + 1 })} checked={correct === i} onChange={() => setCorrect(i)} />
+            <Input placeholder={t("copilot.qp.option", { n: i + 1 })} value={o} onChange={(e) => setOpts((v) => v.map((x, j) => (j === i ? e.target.value : x)))} />
           </div>
-        )) : <Input placeholder="Model answer" value={answer} onChange={(e) => setAnswer(e.target.value)} />}
-        <Button size="sm" variant="secondary" onClick={() => add.mutate()} disabled={!ready || add.isPending}>Add to bank</Button>
-        {add.isError && <ErrorText>{errorMessage(add.error)}</ErrorText>}
+        )) : <Input placeholder={t("copilot.qp.modelAnswer")} value={answer} onChange={(e) => setAnswer(e.target.value)} />}
+        <Button size="sm" variant="secondary" onClick={() => add.mutate()} disabled={!ready || add.isPending}>{t("copilot.qp.addToBank")}</Button>
+        {add.isError && <ErrorText>{err(add.error)}</ErrorText>}
       </div>
     </Section>
   );

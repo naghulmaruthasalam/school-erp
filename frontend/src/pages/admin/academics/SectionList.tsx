@@ -3,9 +3,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button, Card, ErrorText, Input, Label, PageHeader } from "../../../components/ui";
 import { DataTable, type Column } from "../../../components/DataTable";
 import { createSection, listAcademicYears, listClasses, listSections, listTeachersLite } from "./api";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import type { Section } from "./types";
 
 export default function SectionList() {
+  const { t, te } = useLanguage();
   const queryClient = useQueryClient();
   const { data: years } = useQuery({ queryKey: ["academic-years"], queryFn: listAcademicYears });
 
@@ -53,13 +55,13 @@ export default function SectionList() {
       setClassTeacherId("");
       setError("");
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Failed to create section."),
+    onError: (err) => setError(err instanceof Error ? err.message : t("admin.sections.createFailed")),
   });
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!classId || !name) {
-      setError("Class and name are required.");
+      setError(t("admin.sections.classNameRequired"));
       return;
     }
     createMutation.mutate({
@@ -70,22 +72,22 @@ export default function SectionList() {
     });
   }
 
-  const teacherName = (id: string | null) => (id ? teachers?.find((t) => t.id === id)?.full_name ?? id : "—");
+  const teacherName = (id: string | null) => (id ? teachers?.find((tc) => tc.id === id)?.full_name ?? id : "—");
 
   const columns: Column<Section>[] = [
-    { header: "Name", cell: (s) => s.name },
-    { header: "Room No.", cell: (s) => s.room_no ?? "—" },
-    { header: "Class Teacher", cell: (s) => teacherName(s.class_teacher_id) },
+    { header: t("admin.common.name"), cell: (s) => te("section", s.name) },
+    { header: t("admin.common.roomNo"), cell: (s) => s.room_no ?? "—" },
+    { header: t("admin.common.classTeacher"), cell: (s) => teacherName(s.class_teacher_id) },
   ];
 
   return (
     <div>
-      <PageHeader title="Sections" subtitle="Sections are scoped to a class." />
+      <PageHeader title={t("admin.sections.title")} subtitle={t("admin.sections.subtitle")} />
 
       <Card className="mb-6">
         <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-lg">
           <div>
-            <Label htmlFor="sec-year">Academic Year</Label>
+            <Label htmlFor="sec-year">{t("admin.common.academicYear")}</Label>
             <select
               id="sec-year"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -93,7 +95,7 @@ export default function SectionList() {
               onChange={(e) => setAcademicYearId(e.target.value)}
             >
               <option value="" disabled>
-                Select academic year
+                {t("admin.common.selectAcademicYear")}
               </option>
               {(years ?? []).map((y) => (
                 <option key={y.id} value={y.id}>
@@ -103,7 +105,7 @@ export default function SectionList() {
             </select>
           </div>
           <div>
-            <Label htmlFor="sec-class">Class</Label>
+            <Label htmlFor="sec-class">{t("admin.common.class")}</Label>
             <select
               id="sec-class"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -111,51 +113,51 @@ export default function SectionList() {
               onChange={(e) => setClassId(e.target.value)}
             >
               <option value="" disabled>
-                Select class
+                {t("admin.common.selectClass")}
               </option>
               {(classes ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {te("class", c.name)}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        <h2 className="mb-4 text-sm font-semibold text-ink">Create Section</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t("admin.sections.createTitle")}</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
           <div>
-            <Label htmlFor="sec-name">Name</Label>
+            <Label htmlFor="sec-name">{t("admin.common.name")}</Label>
             <Input id="sec-name" placeholder="A" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="sec-room">Room No.</Label>
+            <Label htmlFor="sec-room">{t("admin.common.roomNo")}</Label>
             <Input id="sec-room" placeholder="101" value={roomNo} onChange={(e) => setRoomNo(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="sec-teacher">Class Teacher</Label>
+            <Label htmlFor="sec-teacher">{t("admin.common.classTeacher")}</Label>
             <select
               id="sec-teacher"
               className="w-full rounded-md border border-line px-3 py-2 text-sm text-ink focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               value={classTeacherId}
               onChange={(e) => setClassTeacherId(e.target.value)}
             >
-              <option value="">None</option>
-              {(teachers ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.full_name}
+              <option value="">{t("admin.common.none")}</option>
+              {(teachers ?? []).map((tc) => (
+                <option key={tc.id} value={tc.id}>
+                  {tc.full_name}
                 </option>
               ))}
             </select>
           </div>
           <Button type="submit" disabled={createMutation.isPending}>
-            {createMutation.isPending ? "Creating…" : "Create"}
+            {createMutation.isPending ? t("admin.common.creating") : t("admin.common.create")}
           </Button>
         </form>
         <ErrorText>{error}</ErrorText>
       </Card>
 
-      <DataTable columns={columns} rows={sections ?? []} isLoading={isLoading} rowKey={(s) => s.id} emptyLabel="No sections for this class yet." />
+      <DataTable columns={columns} rows={sections ?? []} isLoading={isLoading} rowKey={(s) => s.id} emptyLabel={t("admin.sections.empty")} />
     </div>
   );
 }

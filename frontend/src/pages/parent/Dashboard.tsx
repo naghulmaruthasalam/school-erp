@@ -4,10 +4,12 @@ import { Card, ErrorText, PageHeader, Spinner, StatTile } from "../../components
 import { fetchAttendanceSummary, fetchExams, fetchInvoices, fetchPendingHomework } from "./api";
 import { daysAgoIso, formatDisplayDate, todayIso } from "./dates";
 import { useSelectedChild } from "./SelectedChildContext";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 const ATTENDANCE_WINDOW_DAYS = 90;
 
 export default function ParentDashboard() {
+  const { t } = useLanguage();
   const { selectedChild, selectedChildId, isLoading: childrenLoading } = useSelectedChild();
 
   const attendanceQuery = useQuery({
@@ -38,7 +40,7 @@ export default function ParentDashboard() {
   if (childrenLoading) {
     return (
       <div>
-        <PageHeader title="My Children" subtitle="Attendance, homework, exams and fees for your children." />
+        <PageHeader title={t("parent.dashboard.title")} subtitle={t("parent.dashboard.subtitle")} />
         <Spinner />
       </div>
     );
@@ -47,7 +49,7 @@ export default function ParentDashboard() {
   if (!selectedChild) {
     return (
       <div>
-        <PageHeader title="My Children" subtitle="Attendance, homework, exams and fees for your children." />
+        <PageHeader title={t("parent.dashboard.title")} subtitle={t("parent.dashboard.subtitle")} />
       </div>
     );
   }
@@ -65,13 +67,13 @@ export default function ParentDashboard() {
     <div className="animate-fade-in-up">
       <PageHeader
         title={selectedChild.full_name}
-        subtitle={`Admission No. ${selectedChild.admission_no} — overview of attendance, homework, exams and fees.`}
+        subtitle={t("parent.dashboard.overview", { no: selectedChild.admission_no })}
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <StatTile
-            label="Attendance"
+            label={t("parent.dashboard.attendance")}
             value={
               attendanceQuery.isLoading
                 ? "…"
@@ -79,70 +81,70 @@ export default function ParentDashboard() {
                   ? `${attendancePct.toFixed(1)}%`
                   : "—"
             }
-            hint={`Last ${ATTENDANCE_WINDOW_DAYS} days`}
+            hint={t("parent.dashboard.lastDays", { n: ATTENDANCE_WINDOW_DAYS })}
           />
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
           <StatTile
-            label="Pending Homework"
+            label={t("parent.dashboard.pendingHomework")}
             value={homeworkQuery.isLoading ? "…" : pendingHomeworkCount}
-            hint="Not yet submitted"
+            hint={t("parent.dashboard.notSubmitted")}
           />
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           <StatTile
-            label="Upcoming Exam"
-            value={examsQuery.isLoading ? "…" : upcomingExam ? upcomingExam.name : "None scheduled"}
+            label={t("parent.dashboard.upcomingExam")}
+            value={examsQuery.isLoading ? "…" : upcomingExam ? upcomingExam.name : t("parent.dashboard.noneScheduled")}
             hint={upcomingExam ? formatDisplayDate(upcomingExam.start_date) : undefined}
           />
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
           <StatTile
-            label="Pending Fees"
+            label={t("parent.dashboard.pendingFees")}
             value={invoicesQuery.isLoading ? "…" : `₹${outstandingTotal.toFixed(2)}`}
-            hint="Outstanding amount"
+            hint={t("parent.dashboard.outstanding")}
           />
         </div>
       </div>
 
       {(attendanceQuery.error || homeworkQuery.error || examsQuery.error || invoicesQuery.error) && (
-        <ErrorText>Some data could not be loaded. Please refresh the page.</ErrorText>
+        <ErrorText>{t("parent.dashboard.loadError")}</ErrorText>
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-ink">Attendance</h2>
-            <p className="mb-3 text-sm text-accent-fg">Full history and date-range breakdown.</p>
+            <h2 className="mb-2 text-sm font-semibold text-ink">{t("parent.dashboard.attendance")}</h2>
+            <p className="mb-3 text-sm text-accent-fg">{t("parent.dashboard.attendanceDesc")}</p>
             <Link to={`/parent/attendance?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
-              View attendance →
+              {t("parent.dashboard.viewAttendance")} <span className="inline-block rtl:-scale-x-100">→</span>
             </Link>
           </Card>
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-ink">Homework</h2>
-            <p className="mb-3 text-sm text-accent-fg">Pending and past assignments.</p>
+            <h2 className="mb-2 text-sm font-semibold text-ink">{t("parent.dashboard.homework")}</h2>
+            <p className="mb-3 text-sm text-accent-fg">{t("parent.dashboard.homeworkDesc")}</p>
             <Link to={`/parent/homework?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
-              View homework →
+              {t("parent.dashboard.viewHomework")} <span className="inline-block rtl:-scale-x-100">→</span>
             </Link>
           </Card>
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-ink">Exams</h2>
-            <p className="mb-3 text-sm text-accent-fg">Results and report cards.</p>
+            <h2 className="mb-2 text-sm font-semibold text-ink">{t("parent.dashboard.exams")}</h2>
+            <p className="mb-3 text-sm text-accent-fg">{t("parent.dashboard.examsDesc")}</p>
             <Link to={`/parent/exams?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
-              View exams →
+              {t("parent.dashboard.viewExams")} <span className="inline-block rtl:-scale-x-100">→</span>
             </Link>
           </Card>
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
           <Card className="group">
-            <h2 className="mb-2 text-sm font-semibold text-ink">Fees</h2>
-            <p className="mb-3 text-sm text-accent-fg">Invoices, payment status and online payment.</p>
+            <h2 className="mb-2 text-sm font-semibold text-ink">{t("parent.dashboard.fees")}</h2>
+            <p className="mb-3 text-sm text-accent-fg">{t("parent.dashboard.feesDesc")}</p>
             <Link to={`/parent/fees?child=${selectedChildId}`} className="text-sm font-medium text-accent-fg group-hover:text-ink-2 transition-colors">
-              View fees →
+              {t("parent.dashboard.viewFees")} <span className="inline-block rtl:-scale-x-100">→</span>
             </Link>
           </Card>
         </div>

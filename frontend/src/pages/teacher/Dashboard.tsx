@@ -70,7 +70,7 @@ function StatCard({ label, value, icon, gradient, delay }: StatCardProps) {
   return (
     <div className="animate-fade-in-up" style={{ animationDelay: delay }}>
       <div className={`relative overflow-hidden rounded-2xl p-5 ${gradient} group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl`}>
-        <div className="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8">
+        <div className="absolute top-0 end-0 w-32 h-32 transform translate-x-8 rtl:-translate-x-8 -translate-y-8">
           <div className="w-full h-full rounded-full bg-white/10 animate-pulse-soft" />
         </div>
         <div className="relative z-10">
@@ -92,7 +92,7 @@ export default function TeacherDashboard() {
   const { data: slots, isLoading } = useMyTimetable();
   const { data: sections } = useSections();
   const { data: subjects } = useSubjects();
-  const { t } = useLanguage();
+  const { t, te } = useLanguage();
 
   const todayDow = todayBackendWeekday();
   const todaysClasses = (slots ?? [])
@@ -111,8 +111,8 @@ export default function TeacherDashboard() {
       {/* Hero Section - Teal/Cyan theme */}
       <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-[#14B8A6] to-[#2DD4BF] p-8">
         <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#06B6D4]/30 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-0 end-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 rtl:-translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
+        <div className="absolute bottom-0 start-0 w-64 h-64 bg-[#06B6D4]/30 rounded-full blur-3xl transform -translate-x-1/2 rtl:translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
@@ -123,7 +123,7 @@ export default function TeacherDashboard() {
               {t("dashboard.teacherPortal")}
             </span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">{greeting}, {t("roles.teacher")}!</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">{t("teacher.dashboard.greeting", { greeting, role: t("roles.teacher") })}</h1>
           <p className="text-white/70 max-w-lg">
             {todaysClasses.length > 0
               ? `${todaysClasses.length} ${t("dashboard.classesScheduledToday")}`
@@ -133,9 +133,9 @@ export default function TeacherDashboard() {
       </div>
 
       {!teacherId && (
-        <Card className="mb-6 border-l-4 border-l-amber-500">
+        <Card className="mb-6 border-s-4 border-s-amber-500">
           <p className="text-sm text-ink-3 dark:text-ink-2">
-            No teacher profile is linked to this account, so classes cannot be loaded.
+            {t("teacher.dashboard.noProfile")}
           </p>
         </Card>
       )}
@@ -178,7 +178,7 @@ export default function TeacherDashboard() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Link to="/teacher/attendance" className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
             <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-teal-50 to-white dark:from-[#042F2E] dark:to-surface border border-line hover:border-teal-500 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl" />
+              <div className="absolute top-0 end-0 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl" />
               <div className="relative z-10 flex items-center gap-4">
                 <div className="p-3 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl text-white">
                   <CheckCircleIcon />
@@ -192,7 +192,7 @@ export default function TeacherDashboard() {
           </Link>
           <Link to="/teacher/homework" className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
             <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-teal-50 to-white dark:from-[#042F2E] dark:to-surface border border-line hover:border-teal-500 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl" />
+              <div className="absolute top-0 end-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl" />
               <div className="relative z-10 flex items-center gap-4">
                 <div className="p-3 bg-gradient-to-br from-[#06B6D4] to-[#0891B2] rounded-xl text-white">
                   <ClipboardIcon />
@@ -206,7 +206,7 @@ export default function TeacherDashboard() {
           </Link>
           <Link to="/teacher/marks" className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
             <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-teal-50 to-white dark:from-[#042F2E] dark:to-surface border border-line hover:border-teal-500 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl" />
+              <div className="absolute top-0 end-0 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl" />
               <div className="relative z-10 flex items-center gap-4">
                 <div className="p-3 bg-gradient-to-br from-teal-600 to-[#0F766E] rounded-xl text-white">
                   <PencilIcon />
@@ -248,7 +248,7 @@ export default function TeacherDashboard() {
                 <div className="w-16 h-16 bg-[#F0FDFA] dark:bg-[#042F2E] rounded-full flex items-center justify-center mb-4">
                   <CalendarIcon />
                 </div>
-                <p className="text-sm text-ink-3 dark:text-ink-2">No classes scheduled for today</p>
+                <p className="text-sm text-ink-3 dark:text-ink-2">{t("teacher.dashboard.noClassesToday")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -263,20 +263,20 @@ export default function TeacherDashboard() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-bold">
-                          P{slot.period_number}
+                          {t("teacher.dashboard.periodShort", { n: slot.period_number })}
                         </div>
                         <div>
                           <p className="font-medium text-ink dark:text-white">
-                            {subject?.name ?? slot.subject_id}
+                            {subject ? te("subject", subject.name) : slot.subject_id}
                           </p>
                           <p className="text-sm text-ink-3 dark:text-ink-2">
-                            Section {section?.name ?? slot.section_id}
+                            {t("teacher.dashboard.section", { name: section ? te("section", section.name) : slot.section_id })}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-end">
                         <Badge tone="gray" className="bg-[#F0FDFA] dark:bg-[#042F2E] text-teal-600">
-                          {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                          <span dir="ltr">{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</span>
                         </Badge>
                       </div>
                     </div>

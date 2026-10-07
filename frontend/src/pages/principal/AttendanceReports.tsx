@@ -4,6 +4,7 @@ import { Card, PageHeader, Spinner, Select } from "../../components/ui";
 import { AttendanceLineChart } from "../../components/Charts";
 import { api } from "../../api/client";
 import { fetchAttendanceTrend } from "./api";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface AttendanceStats {
   total_students: number;
@@ -18,6 +19,7 @@ interface Class {
 }
 
 export default function AttendanceReports() {
+  const { t, te } = useLanguage();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [classFilter, setClassFilter] = useState("");
 
@@ -46,12 +48,12 @@ export default function AttendanceReports() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Attendance Reports" subtitle="View school-wide attendance statistics" />
+      <PageHeader title={t("principal.attendance.title")} subtitle={t("principal.attendance.subtitle")} />
 
       <Card className="mb-6">
         <div className="flex flex-wrap gap-4">
           <div className="w-48">
-            <label className="block text-sm font-medium text-ink-2 mb-1">Date</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.attendance.date")}</label>
             <input
               type="date"
               value={selectedDate}
@@ -60,11 +62,11 @@ export default function AttendanceReports() {
             />
           </div>
           <div className="w-48">
-            <label className="block text-sm font-medium text-ink-2 mb-1">Class</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("principal.common.class")}</label>
             <Select value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
-              <option value="">All Classes</option>
+              <option value="">{t("principal.common.allClasses")}</option>
               {classesQuery.data?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{te("class", c.name)}</option>
               ))}
             </Select>
           </div>
@@ -76,32 +78,32 @@ export default function AttendanceReports() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
-            <p className="text-sm font-medium text-ink-2">Total Students</p>
+            <p className="text-sm font-medium text-ink-2">{t("principal.attendance.totalStudents")}</p>
             <p className="text-3xl font-bold text-accent-fg dark:text-accent-fg mt-1">{stats.total_students}</p>
           </Card>
           <Card>
-            <p className="text-sm font-medium text-ink-2">Present Today</p>
+            <p className="text-sm font-medium text-ink-2">{t("principal.attendance.presentToday")}</p>
             <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.present_today}</p>
           </Card>
           <Card>
-            <p className="text-sm font-medium text-ink-2">Absent Today</p>
+            <p className="text-sm font-medium text-ink-2">{t("principal.attendance.absentToday")}</p>
             <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{stats.absent_today}</p>
           </Card>
           <Card>
-            <p className="text-sm font-medium text-ink-2">Attendance Rate</p>
+            <p className="text-sm font-medium text-ink-2">{t("principal.attendance.rate")}</p>
             <p className="text-3xl font-bold text-accent-fg dark:text-accent-fg mt-1">{(stats.attendance_percentage ?? 0).toFixed(1)}%</p>
           </Card>
         </div>
       )}
 
       <Card className="mt-6">
-        <h3 className="font-semibold text-ink dark:text-white mb-4">Attendance Trend (last 14 days)</h3>
+        <h3 className="font-semibold text-ink dark:text-white mb-4">{t("principal.attendance.trend")}</h3>
         {trendQuery.isLoading ? (
           <div className="flex h-64 items-center justify-center"><Spinner /></div>
         ) : trendQuery.data && trendQuery.data.length > 0 ? (
           <AttendanceLineChart data={trendQuery.data} height={260} />
         ) : (
-          <p className="flex h-64 items-center justify-center text-sm text-ink-3">No attendance has been marked in the last 14 days.</p>
+          <p className="flex h-64 items-center justify-center text-sm text-ink-3">{t("principal.attendance.noTrend")}</p>
         )}
       </Card>
     </div>

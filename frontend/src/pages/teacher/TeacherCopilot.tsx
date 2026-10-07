@@ -4,6 +4,7 @@ import { Card, PageHeader, Spinner, Button } from "../../components/ui";
 import { api } from "../../api/client";
 import { BookOpen, FileText, ClipboardList, Sparkles, Wand2, Download, Copy, Check, Languages, Printer } from "lucide-react";
 import { DocumentSheet } from "../../components/MarkdownRenderer";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 type Tab = "lesson-plan" | "question-paper" | "worksheet";
 type Language = "english" | "arabic";
@@ -11,10 +12,11 @@ type Language = "english" | "arabic";
 interface CurriculumOptions {
   grades: number[];
   subjects_by_grade: Record<number, string[]>;
-  chapters_by_grade_subject: Record<string, { unit_number: number; title_en: string; title_ar: string; id: string }[]>;
+  chapters_by_grade_subject: Record<string, { unit_number: number; title: string; title_en: string; title_ar: string | null; id: string; language: string; available_languages: string[] }[]>;
 }
 
 export default function TeacherCopilot() {
+  const { t, te, language: uiLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState<Tab>("lesson-plan");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -42,7 +44,7 @@ export default function TeacherCopilot() {
 
   // Fetch curriculum options
   const { data: curriculum, isLoading: loadingCurriculum } = useQuery({
-    queryKey: ["teacher-copilot", "curriculum-options"],
+    queryKey: ["teacher-copilot", "curriculum-options", uiLanguage],
     queryFn: async () => {
       const res = await api.get<CurriculumOptions>("/teacher-copilot/curriculum-options");
       return res.data;
@@ -72,7 +74,7 @@ export default function TeacherCopilot() {
 
   const extractTopics = async () => {
     if (!chapter) {
-      setError("Please select a chapter");
+      setError(t("teacherCopilot.pickChapter"));
       return;
     }
     setLoading(true);
@@ -80,7 +82,8 @@ export default function TeacherCopilot() {
     try {
       let chapterContent = "";
       if (chapterId) {
-        const contentRes = await api.get(`/teacher-copilot/curriculum-content/${chapterId}`);
+        // the textbook text in the language the content is being generated in (falls back to the other edition)
+        const contentRes = await api.get(`/teacher-copilot/curriculum-content/${chapterId}`, { params: { lang: language === "arabic" ? "ar" : "en" } });
         chapterContent = contentRes.data.full_text || "";
       }
 
@@ -93,7 +96,7 @@ export default function TeacherCopilot() {
       });
       setResult({ type: "topics", data: res.data, language });
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to extract topics");
+      setError(err.response?.data?.detail || t("teacherCopilot.failedTopics"));
     } finally {
       setLoading(false);
     }
@@ -101,7 +104,7 @@ export default function TeacherCopilot() {
 
   const generateQuestionPaper = async () => {
     if (!chapter) {
-      setError("Please select a chapter");
+      setError(t("teacherCopilot.pickChapter"));
       return;
     }
     setLoading(true);
@@ -123,7 +126,7 @@ export default function TeacherCopilot() {
       });
       setResult({ type: "question-paper", data: res.data, language });
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to generate question paper");
+      setError(err.response?.data?.detail || t("teacherCopilot.failedPaper"));
     } finally {
       setLoading(false);
     }
@@ -131,7 +134,7 @@ export default function TeacherCopilot() {
 
   const generateWorksheet = async () => {
     if (!chapter) {
-      setError("Please select a chapter");
+      setError(t("teacherCopilot.pickChapter"));
       return;
     }
     setLoading(true);
@@ -148,7 +151,7 @@ export default function TeacherCopilot() {
       });
       setResult({ type: "worksheet", data: res.data, language });
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to generate worksheet");
+      setError(err.response?.data?.detail || t("teacherCopilot.failedWorksheet"));
     } finally {
       setLoading(false);
     }
@@ -168,9 +171,9 @@ export default function TeacherCopilot() {
   };
 
   const tabs = [
-    { id: "lesson-plan" as Tab, label: "Lesson Plan", icon: BookOpen, color: "from-violet-500 to-purple-600" },
-    { id: "question-paper" as Tab, label: "Question Paper", icon: FileText, color: "from-blue-500 to-cyan-500" },
-    { id: "worksheet" as Tab, label: "Worksheet", icon: ClipboardList, color: "from-emerald-500 to-teal-500" },
+    { id: "lesson-plan" as Tab, label: t("teacherCopilot.tabs.lessonPlan"), icon: BookOpen, color: "from-violet-500 to-purple-600" },
+    { id: "question-paper" as Tab, label: t("teacherCopilot.tabs.questionPaper"), icon: FileText, color: "from-blue-500 to-cyan-500" },
+    { id: "worksheet" as Tab, label: t("teacherCopilot.tabs.worksheet"), icon: ClipboardList, color: "from-emerald-500 to-teal-500" },
   ];
 
   if (loadingCurriculum) {
@@ -184,8 +187,8 @@ export default function TeacherCopilot() {
   return (
     <div className="animate-fade-in-up">
       <PageHeader
-        title="Teacher Copilot"
-        subtitle="AI-powered tools for lesson planning, question papers & worksheets"
+        title={t("teacherCopilot.title")}
+        subtitle={t("teacherCopilot.subtitle")}
       />
 
       {/* Tabs */}
@@ -215,44 +218,44 @@ export default function TeacherCopilot() {
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-ink dark:text-white mb-4 flex items-center gap-2">
               <Wand2 className="w-5 h-5 text-violet-500" />
-              {activeTab === "lesson-plan" && "Generate Lesson Plan"}
-              {activeTab === "question-paper" && "Generate Question Paper"}
-              {activeTab === "worksheet" && "Generate Worksheet"}
+              {activeTab === "lesson-plan" && t("teacherCopilot.genLesson")}
+              {activeTab === "question-paper" && t("teacherCopilot.genPaper")}
+              {activeTab === "worksheet" && t("teacherCopilot.genWorksheet")}
             </h3>
 
             {/* Common Fields */}
             <div className="space-y-4">
               {/* Grade */}
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1.5">Grade</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1.5">{t("teacherCopilot.grade")}</label>
                 <select
                   value={grade}
                   onChange={(e) => setGrade(parseInt(e.target.value))}
                   className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                 >
                   {curriculum?.grades.map((g) => (
-                    <option key={g} value={g}>Grade {g}</option>
+                    <option key={g} value={g}>{te("class", `Class ${g}`)}</option>
                   ))}
                 </select>
               </div>
 
               {/* Subject */}
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1.5">Subject</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1.5">{t("teacherCopilot.subject")}</label>
                 <select
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                 >
                   {subjects.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+                    <option key={s} value={s}>{te("subject", s)}</option>
                   ))}
                 </select>
               </div>
 
               {/* Chapter */}
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1.5">Chapter</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1.5">{t("teacherCopilot.chapter")}</label>
                 <select
                   value={chapter}
                   onChange={(e) => {
@@ -262,10 +265,10 @@ export default function TeacherCopilot() {
                   }}
                   className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                 >
-                  <option value="">Select a chapter</option>
+                  <option value="">{t("teacherCopilot.selectChapter")}</option>
                   {chapters.map((c) => (
                     <option key={c.id} value={c.title_en}>
-                      Unit {c.unit_number}: {c.title_en}
+                      {t("teacherCopilot.unit", { n: c.unit_number })}: {c.title || c.title_en}{c.language !== (uiLanguage === "ar" ? "ar" : "en") ? ` (${t(c.language === "ar" ? "teacherCopilot.onlyArabic" : "teacherCopilot.onlyEnglish")})` : ""}
                     </option>
                   ))}
                 </select>
@@ -275,7 +278,7 @@ export default function TeacherCopilot() {
               <div>
                 <label className="block text-sm font-medium text-ink-2 mb-1.5 flex items-center gap-2">
                   <Languages className="w-4 h-4" />
-                  Language
+                  {t("teacherCopilot.outputLanguage")}
                 </label>
                 <div className="flex gap-2">
                   <button
@@ -287,7 +290,7 @@ export default function TeacherCopilot() {
                         : "bg-white dark:bg-surface border border-line text-ink-2 hover:border-violet-500"
                     }`}
                   >
-                    English
+                    {t("common.english")}
                   </button>
                   <button
                     type="button"
@@ -298,7 +301,7 @@ export default function TeacherCopilot() {
                         : "bg-white dark:bg-surface border border-line text-ink-2 hover:border-violet-500"
                     }`}
                   >
-                    العربية
+                    {t("common.arabic")}
                   </button>
                 </div>
               </div>
@@ -308,7 +311,7 @@ export default function TeacherCopilot() {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Total Marks</label>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">{t("teacherCopilot.totalMarks")}</label>
                       <input
                         type="number"
                         value={qpMarks}
@@ -317,7 +320,7 @@ export default function TeacherCopilot() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Duration (min)</label>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">{t("teacherCopilot.duration")}</label>
                       <input
                         type="number"
                         value={qpDuration}
@@ -328,7 +331,7 @@ export default function TeacherCopilot() {
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-ink-2 mb-1">MCQs</label>
+                      <label className="block text-xs font-medium text-ink-2 mb-1">{t("teacherCopilot.mcqs")}</label>
                       <input
                         type="number"
                         value={qpMcq}
@@ -337,7 +340,7 @@ export default function TeacherCopilot() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-ink-2 mb-1">Short Ans</label>
+                      <label className="block text-xs font-medium text-ink-2 mb-1">{t("teacherCopilot.shortAns")}</label>
                       <input
                         type="number"
                         value={qpShort}
@@ -346,7 +349,7 @@ export default function TeacherCopilot() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-ink-2 mb-1">Long Ans</label>
+                      <label className="block text-xs font-medium text-ink-2 mb-1">{t("teacherCopilot.longAns")}</label>
                       <input
                         type="number"
                         value={qpLong}
@@ -363,7 +366,7 @@ export default function TeacherCopilot() {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Questions</label>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">{t("teacherCopilot.questions")}</label>
                       <input
                         type="number"
                         value={wsQuestions}
@@ -372,15 +375,15 @@ export default function TeacherCopilot() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Difficulty</label>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">{t("teacherCopilot.difficulty")}</label>
                       <select
                         value={wsDifficulty}
                         onChange={(e) => setWsDifficulty(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-xl border border-line bg-white dark:bg-surface focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                       >
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
+                        <option value="easy">{t("teacherCopilot.easy")}</option>
+                        <option value="medium">{t("teacherCopilot.medium")}</option>
+                        <option value="hard">{t("teacherCopilot.hard")}</option>
                       </select>
                     </div>
                   </div>
@@ -391,7 +394,7 @@ export default function TeacherCopilot() {
                       onChange={(e) => setWsIncludeAnswers(e.target.checked)}
                       className="w-4 h-4 rounded border-line text-emerald-500 focus:ring-emerald-500"
                     />
-                    <span className="text-sm text-ink-2">Include answer key</span>
+                    <span className="text-sm text-ink-2">{t("teacherCopilot.includeAnswers")}</span>
                   </label>
                 </>
               )}
@@ -416,7 +419,7 @@ export default function TeacherCopilot() {
                 } text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all`}
               >
                 {loading ? <Spinner className="!w-5 !h-5" /> : <Sparkles className="w-5 h-5" />}
-                {loading ? "Generating..." : "Generate"}
+                {loading ? t("teacherCopilot.generating") : t("teacherCopilot.generate")}
               </Button>
             </div>
           </Card>
@@ -426,24 +429,24 @@ export default function TeacherCopilot() {
         <div className="lg:col-span-3 print:col-span-5">
           <Card className="p-6 min-h-[400px] print:shadow-none print:border-none">
             <div className="flex items-center justify-between mb-4 print:hidden">
-              <h3 className="text-lg font-semibold text-ink dark:text-white">Generated Content</h3>
+              <h3 className="text-lg font-semibold text-ink dark:text-white">{t("teacherCopilot.generated")}</h3>
               {result && (
                 <div className="flex gap-2">
                   <button
                     onClick={copyToClipboard}
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    title="Copy to clipboard"
+                    title={t("teacherCopilot.copy")}
                   >
                     {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-ink-3" />}
                   </button>
                   <button
                     onClick={handlePrint}
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    title="Print"
+                    title={t("teacherCopilot.print")}
                   >
                     <Printer className="w-5 h-5 text-ink-3" />
                   </button>
-                  <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Download">
+                  <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title={t("teacherCopilot.download")}>
                     <Download className="w-5 h-5 text-ink-3" />
                   </button>
                 </div>
@@ -455,20 +458,20 @@ export default function TeacherCopilot() {
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/20 dark:to-purple-500/20 flex items-center justify-center mb-4">
                   <Sparkles className="w-8 h-8 text-violet-500" />
                 </div>
-                <p className="text-ink-3 mb-2">Generated content will appear here</p>
-                <p className="text-sm text-ink-4">Select grade, subject, and chapter, then click Generate</p>
+                <p className="text-ink-3 mb-2">{t("teacherCopilot.placeholder1")}</p>
+                <p className="text-sm text-ink-4">{t("teacherCopilot.placeholder2")}</p>
               </div>
             ) : (
-              <div className={result.language === "arabic" ? "text-right" : ""} dir={result.language === "arabic" ? "rtl" : "ltr"}>
+              <div className={result.language === "arabic" ? "text-end" : ""} dir={result.language === "arabic" ? "rtl" : "ltr"}>
                 {result.type === "topics" && result.data.topics && (
                   <DocumentSheet
-                    title={`${subject} - Lesson Topics`}
-                    subtitle={`Grade ${grade} | ${chapter}`}
+                    title={`${te("subject", subject)} - ${t("teacherCopilot.lessonTopics")}`}
+                    subtitle={`${te("class", `Class ${grade}`)} | ${chapter}`}
                     metadata={[
-                      { label: "Subject", value: subject },
-                      { label: "Grade", value: `Grade ${grade}` },
-                      { label: "Chapter", value: chapter },
-                      { label: "Language", value: result.language === "arabic" ? "العربية" : "English" },
+                      { label: t("teacherCopilot.subject"), value: te("subject", subject) },
+                      { label: t("teacherCopilot.grade"), value: te("class", `Class ${grade}`) },
+                      { label: t("teacherCopilot.chapter"), value: chapter },
+                      { label: t("teacherCopilot.outputLanguage"), value: result.language === "arabic" ? "العربية" : "English" },
                     ]}
                     content={result.data.topics.map((t: string, i: number) => `${i + 1}. ${t}`).join("\n\n")}
                     type="lesson-plan"
@@ -477,14 +480,14 @@ export default function TeacherCopilot() {
 
                 {result.type === "question-paper" && (
                   <DocumentSheet
-                    title={`${subject} - Question Paper`}
-                    subtitle={`Grade ${grade} | ${chapter}`}
+                    title={`${te("subject", subject)} - ${t("teacherCopilot.tabs.questionPaper")}`}
+                    subtitle={`${te("class", `Class ${grade}`)} | ${chapter}`}
                     metadata={[
-                      { label: "Subject", value: subject },
-                      { label: "Grade", value: `Grade ${grade}` },
-                      { label: "Total Marks", value: qpMarks },
-                      { label: "Duration", value: `${qpDuration} minutes` },
-                      { label: "Language", value: result.language === "arabic" ? "العربية" : "English" },
+                      { label: t("teacherCopilot.subject"), value: te("subject", subject) },
+                      { label: t("teacherCopilot.grade"), value: te("class", `Class ${grade}`) },
+                      { label: t("teacherCopilot.totalMarks"), value: qpMarks },
+                      { label: t("teacherCopilot.duration"), value: qpDuration },
+                      { label: t("teacherCopilot.outputLanguage"), value: result.language === "arabic" ? "العربية" : "English" },
                     ]}
                     content={typeof result.data === "string" ? result.data : (result.data.content || result.data.question_paper || JSON.stringify(result.data, null, 2))}
                     type="question-paper"
@@ -493,15 +496,15 @@ export default function TeacherCopilot() {
 
                 {result.type === "worksheet" && (
                   <DocumentSheet
-                    title={`${subject} - Worksheet`}
-                    subtitle={`Grade ${grade} | ${chapter}`}
+                    title={`${te("subject", subject)} - ${t("teacherCopilot.tabs.worksheet")}`}
+                    subtitle={`${te("class", `Class ${grade}`)} | ${chapter}`}
                     metadata={[
-                      { label: "Subject", value: subject },
-                      { label: "Grade", value: `Grade ${grade}` },
-                      { label: "Topic", value: chapter },
-                      { label: "Difficulty", value: wsDifficulty.charAt(0).toUpperCase() + wsDifficulty.slice(1) },
-                      { label: "Questions", value: wsQuestions },
-                      { label: "Language", value: result.language === "arabic" ? "العربية" : "English" },
+                      { label: t("teacherCopilot.subject"), value: te("subject", subject) },
+                      { label: t("teacherCopilot.grade"), value: te("class", `Class ${grade}`) },
+                      { label: t("teacherCopilot.chapter"), value: chapter },
+                      { label: t("teacherCopilot.difficulty"), value: t(`teacherCopilot.${wsDifficulty}`) },
+                      { label: t("teacherCopilot.questions"), value: wsQuestions },
+                      { label: t("teacherCopilot.outputLanguage"), value: result.language === "arabic" ? "العربية" : "English" },
                     ]}
                     content={typeof result.data === "string" ? result.data : (result.data.content || result.data.worksheet || JSON.stringify(result.data, null, 2))}
                     type="worksheet"

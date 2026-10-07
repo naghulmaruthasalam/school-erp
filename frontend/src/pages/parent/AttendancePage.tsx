@@ -6,6 +6,7 @@ import { fetchAttendanceHistory, fetchAttendanceSummary } from "./api";
 import { daysAgoIso, formatDisplayDate, todayIso } from "./dates";
 import { useSelectedChild } from "./SelectedChildContext";
 import type { AttendanceStatus, StudentAttendanceOut } from "./types";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 const STATUS_TONE: Record<AttendanceStatus, "green" | "red" | "yellow" | "gray"> = {
   PRESENT: "green",
@@ -18,6 +19,7 @@ const STATUS_TONE: Record<AttendanceStatus, "green" | "red" | "yellow" | "gray">
 const PAGE_SIZE = 20;
 
 export default function AttendancePage() {
+  const { t, te } = useLanguage();
   const { selectedChild, selectedChildId } = useSelectedChild();
   const [dateFrom, setDateFrom] = useState(daysAgoIso(90));
   const [dateTo, setDateTo] = useState(todayIso());
@@ -45,8 +47,8 @@ export default function AttendancePage() {
   if (!selectedChild) {
     return (
       <div>
-        <PageHeader title="Attendance" />
-        <p className="text-sm text-accent-fg">Select a child above to view attendance.</p>
+        <PageHeader title={t("navigation.attendance")} />
+        <p className="text-sm text-accent-fg">{t("parent.attendance.selectChild")}</p>
       </div>
     );
   }
@@ -55,12 +57,12 @@ export default function AttendancePage() {
 
   return (
     <div>
-      <PageHeader title="Attendance" subtitle={`Attendance history for ${selectedChild.full_name}.`} />
+      <PageHeader title={t("navigation.attendance")} subtitle={t("parent.attendance.subtitle", { name: selectedChild.full_name })} />
 
       <Card className="mb-6">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <Label htmlFor="date_from">From</Label>
+            <Label htmlFor="date_from">{t("parent.attendance.from")}</Label>
             <Input
               id="date_from"
               type="date"
@@ -73,7 +75,7 @@ export default function AttendancePage() {
             />
           </div>
           <div>
-            <Label htmlFor="date_to">To</Label>
+            <Label htmlFor="date_to">{t("parent.attendance.to")}</Label>
             <Input
               id="date_to"
               type="date"
@@ -89,33 +91,33 @@ export default function AttendancePage() {
         </div>
       </Card>
 
-      {summaryQuery.error && <ErrorText>Could not load the attendance summary.</ErrorText>}
+      {summaryQuery.error && <ErrorText>{t("parent.attendance.summaryError")}</ErrorText>}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
-          label="Attendance %"
+          label={t("parent.attendance.percent")}
           value={summaryQuery.isLoading ? "…" : summary ? `${summary.percentage_present.toFixed(1)}%` : "—"}
         />
-        <StatTile label="Total Days" value={summaryQuery.isLoading ? "…" : (summary?.total_days ?? 0)} />
-        <StatTile label="Present" value={summaryQuery.isLoading ? "…" : (summary?.counts.PRESENT ?? 0)} />
-        <StatTile label="Absent" value={summaryQuery.isLoading ? "…" : (summary?.counts.ABSENT ?? 0)} />
+        <StatTile label={t("parent.attendance.totalDays")} value={summaryQuery.isLoading ? "…" : (summary?.total_days ?? 0)} />
+        <StatTile label={t("attendance.present")} value={summaryQuery.isLoading ? "…" : (summary?.counts.PRESENT ?? 0)} />
+        <StatTile label={t("attendance.absent")} value={summaryQuery.isLoading ? "…" : (summary?.counts.ABSENT ?? 0)} />
       </div>
 
-      {historyQuery.error && <ErrorText>Could not load the attendance history.</ErrorText>}
+      {historyQuery.error && <ErrorText>{t("parent.attendance.historyError")}</ErrorText>}
 
       <DataTable<StudentAttendanceOut>
         columns={[
-          { header: "Date", cell: (r) => formatDisplayDate(r.date) },
+          { header: t("parent.attendance.date"), cell: (r) => formatDisplayDate(r.date) },
           {
-            header: "Status",
-            cell: (r) => <Badge tone={STATUS_TONE[r.status]}>{r.status.replace("_", " ")}</Badge>,
+            header: t("parent.attendance.status"),
+            cell: (r) => <Badge tone={STATUS_TONE[r.status]}>{te("status", r.status.replace("_", " "))}</Badge>,
           },
-          { header: "Remarks", cell: (r) => r.remarks ?? "—" },
+          { header: t("parent.attendance.remarks"), cell: (r) => r.remarks ?? "—" },
         ]}
         rows={historyQuery.data?.items ?? []}
         isLoading={historyQuery.isLoading}
         rowKey={(r) => r.id}
-        emptyLabel="No attendance records in this date range."
+        emptyLabel={t("parent.attendance.empty")}
       />
       <Pagination
         page={page}

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Badge, Button, Card, Spinner } from "../../components/ui";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { fetchPlatformStats, fetchUsersByRole, fetchAuditLogs, listSchools, exportDataToCsv } from "./api";
 
 const SchoolIcon = () => (
@@ -67,10 +68,10 @@ function StatCard({ label, value, icon, gradient, delay, trend, trendUp }: StatC
   return (
     <div className="animate-fade-in-up" style={{ animationDelay: delay }}>
       <div className={`relative overflow-hidden rounded-2xl p-5 ${gradient} group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl`}>
-        <div className="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8">
+        <div className="absolute top-0 end-0 w-32 h-32 transform translate-x-8 rtl:-translate-x-8 -translate-y-8">
           <div className="w-full h-full rounded-full bg-white/10 animate-pulse-soft" />
         </div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 transform -translate-x-6 translate-y-6">
+        <div className="absolute bottom-0 start-0 w-24 h-24 transform -translate-x-6 rtl:translate-x-6 translate-y-6">
           <div className="w-full h-full rounded-full bg-white/5" />
         </div>
         <div className="relative z-10">
@@ -96,6 +97,11 @@ function StatCard({ label, value, icon, gradient, delay, trend, trendUp }: StatC
 }
 
 export default function SuperAdminDashboard() {
+  const { t, te, fmtDate } = useLanguage();
+  const roleLabel = (role: string) => {
+    const label = te("role", role);
+    return label === role ? role.replace("_", " ") : label;
+  };
   const statsQuery = useQuery({
     queryKey: ["super-admin", "stats"],
     queryFn: fetchPlatformStats,
@@ -124,8 +130,8 @@ export default function SuperAdminDashboard() {
       {/* Hero Section */}
       <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-accent via-[#7C3AED] to-accent-2 p-8">
         <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#EC4899]/20 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-0 end-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 rtl:-translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
+        <div className="absolute bottom-0 start-0 w-64 h-64 bg-[#EC4899]/20 rounded-full blur-3xl transform -translate-x-1/2 rtl:translate-x-1/2 translate-y-1/2 animate-pulse-soft" style={{ animationDelay: '1s' }} />
 
         <div className="relative z-10 flex items-start justify-between">
           <div>
@@ -134,12 +140,12 @@ export default function SuperAdminDashboard() {
                 <SparklesIcon />
               </div>
               <span className="text-white/80 text-sm font-medium px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm">
-                AI-Powered Platform
+                {t("superAdmin.dashboard.aiPlatform")}
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Platform Dashboard</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">{t("superAdmin.dashboard.title")}</h1>
             <p className="text-white/70 max-w-lg">
-              Real-time overview of all schools, users, and platform activity with intelligent insights
+              {t("superAdmin.dashboard.subtitle")}
             </p>
           </div>
           <div className="flex gap-3">
@@ -157,17 +163,17 @@ export default function SuperAdminDashboard() {
                 exportDataToCsv(exportData, "platform-overview.csv");
               }}
             >
-              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 me-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Export
+              {t("superAdmin.common.export")}
             </Button>
             <Link to="/super-admin/new">
               <Button className="!bg-white !text-accent-fg hover:!bg-white/90">
-                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 me-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Add School
+                {t("superAdmin.dashboard.addSchool")}
               </Button>
             </Link>
           </div>
@@ -177,7 +183,7 @@ export default function SuperAdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 mb-8">
         <StatCard
-          label="Total Schools"
+          label={t("superAdmin.dashboard.totalSchools")}
           value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_schools ?? 0}
           icon={<SchoolIcon />}
           gradient="bg-gradient-to-br from-accent to-[#4C1D95]"
@@ -186,7 +192,7 @@ export default function SuperAdminDashboard() {
           trendUp
         />
         <StatCard
-          label="Active Schools"
+          label={t("superAdmin.dashboard.activeSchools")}
           value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.active_schools ?? 0}
           icon={<ChartIcon />}
           gradient="bg-gradient-to-br from-emerald-600 to-[#047857]"
@@ -195,7 +201,7 @@ export default function SuperAdminDashboard() {
           trendUp
         />
         <StatCard
-          label="Total Users"
+          label={t("superAdmin.dashboard.totalUsers")}
           value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.total_users ?? 0}
           icon={<UsersIcon />}
           gradient="bg-gradient-to-br from-blue-600 to-[#1D4ED8]"
@@ -204,21 +210,21 @@ export default function SuperAdminDashboard() {
           trendUp
         />
         <StatCard
-          label="Students"
+          label={t("superAdmin.dashboard.students")}
           value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalStudents}
           icon={<StudentIcon />}
           gradient="bg-gradient-to-br from-[#7C3AED] to-[#5B21B6]"
           delay="0.25s"
         />
         <StatCard
-          label="Teachers"
+          label={t("superAdmin.dashboard.teachers")}
           value={usersQuery.isLoading ? <Spinner className="!text-white" /> : totalTeachers}
           icon={<TeacherIcon />}
           gradient="bg-gradient-to-br from-[#DB2777] to-[#BE185D]"
           delay="0.3s"
         />
         <StatCard
-          label="Inactive"
+          label={t("superAdmin.dashboard.inactive")}
           value={statsQuery.isLoading ? <Spinner className="!text-white" /> : statsQuery.data?.inactive_schools ?? 0}
           icon={<SchoolIcon />}
           gradient="bg-gradient-to-br from-[#64748B] to-[#475569]"
@@ -236,11 +242,11 @@ export default function SuperAdminDashboard() {
                   <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-xl">
                     <UsersIcon />
                   </div>
-                  <h3 className="text-lg font-semibold text-ink dark:text-white">Users by Role</h3>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">{t("superAdmin.dashboard.usersByRole")}</h3>
                 </div>
                 {usersQuery.data && usersQuery.data.length > 0 && (
                   <Button variant="secondary" onClick={() => exportDataToCsv(usersQuery.data!, "users-by-role.csv")}>
-                    Export
+                    {t("superAdmin.common.export")}
                   </Button>
                 )}
               </div>
@@ -258,12 +264,12 @@ export default function SuperAdminDashboard() {
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-[#6D28D9]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                       <p className="relative text-3xl font-bold bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">{item.count}</p>
-                      <p className="relative text-xs text-ink-3 uppercase mt-2 font-medium tracking-wide">{item.role.replace("_", " ")}</p>
+                      <p className="relative text-xs text-ink-3 uppercase mt-2 font-medium tracking-wide">{roleLabel(item.role)}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-ink-3">No user data available.</p>
+                <p className="text-sm text-ink-3">{t("superAdmin.dashboard.noUserData")}</p>
               )}
             </div>
           </Card>
@@ -278,10 +284,10 @@ export default function SuperAdminDashboard() {
                   <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl text-emerald-600">
                     <SchoolIcon />
                   </div>
-                  <h3 className="text-lg font-semibold text-ink dark:text-white">Recent Schools</h3>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">{t("superAdmin.dashboard.recentSchools")}</h3>
                 </div>
                 <Link to="/super-admin/schools">
-                  <Button variant="secondary">View All</Button>
+                  <Button variant="secondary">{t("superAdmin.common.viewAll")}</Button>
                 </Link>
               </div>
             </div>
@@ -314,13 +320,13 @@ export default function SuperAdminDashboard() {
                         </div>
                       </div>
                       <Badge tone={school.is_active ? "green" : "red"}>
-                        {school.is_active ? "Active" : "Inactive"}
+                        {school.is_active ? t("superAdmin.common.active") : t("superAdmin.common.inactive")}
                       </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-ink-3">No schools registered yet.</p>
+                <p className="text-sm text-ink-3">{t("superAdmin.dashboard.noSchools")}</p>
               )}
             </div>
           </Card>
@@ -337,12 +343,12 @@ export default function SuperAdminDashboard() {
                   <ActivityIcon />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-ink dark:text-white">Recent Activity</h3>
-                  <p className="text-xs text-ink-3">Platform-wide audit trail</p>
+                  <h3 className="text-lg font-semibold text-ink dark:text-white">{t("superAdmin.dashboard.recentActivity")}</h3>
+                  <p className="text-xs text-ink-3">{t("superAdmin.dashboard.auditTrail")}</p>
                 </div>
               </div>
               <Link to="/super-admin/audit">
-                <Button variant="secondary">View All Logs</Button>
+                <Button variant="secondary">{t("superAdmin.dashboard.viewAllLogs")}</Button>
               </Link>
             </div>
           </div>
@@ -371,13 +377,13 @@ export default function SuperAdminDashboard() {
                       </div>
                     </div>
                     <p className="text-xs text-ink-3 font-medium">
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : "—"}
+                      {log.created_at ? fmtDate(log.created_at, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-ink-3">No recent activity.</p>
+              <p className="text-sm text-ink-3">{t("superAdmin.dashboard.noActivity")}</p>
             )}
           </div>
         </Card>

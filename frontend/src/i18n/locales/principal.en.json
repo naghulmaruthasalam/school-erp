@@ -1,0 +1,141 @@
+{
+  "principal": {
+    "nav": {
+      "staff": "Staff",
+      "exams": "Examinations",
+      "feeReports": "Fee Reports",
+      "calendar": "Calendar",
+      "analytics": "Analytics"
+    },
+    "common": {
+      "class": "Class",
+      "allClasses": "All Classes",
+      "section": "Section",
+      "name": "Name",
+      "status": "Status"
+    },
+    "dashboard": {
+      "title": "Principal Dashboard",
+      "subtitle": "Today's school-wide summary.",
+      "loadError": "Some data failed to load. Please refresh to try again.",
+      "activeStudents": "Active Students",
+      "activeTeachers": "Active Teachers",
+      "pendingAdmissions": "Pending Admissions",
+      "statusSubmitted": "Status: Submitted",
+      "upcomingExams": "Upcoming Exams",
+      "attendanceTrend": "Attendance Trend (14 days)",
+      "feeCollection": "Fee Collection (6 months)",
+      "studentsByClass": "Students by Class",
+      "weeklyAttendance": "Weekly Attendance (Present vs Absent)",
+      "noAttendanceData": "No attendance data available.",
+      "noPaymentData": "No payment data available.",
+      "noStudentData": "No student data available.",
+      "todayStudentAttendance": "Today's Student Attendance",
+      "noStudentMarked": "No attendance has been marked yet today.",
+      "todayStaffAttendance": "Today's Staff Attendance",
+      "noStaffMarked": "No staff attendance has been marked yet today.",
+      "percentPresent": "{pct}% present",
+      "presentOfMarked": "{present} of {total} records marked today",
+      "recordsMarked": "records marked today",
+      "noExams": "No exams scheduled."
+    },
+    "students": {
+      "title": "Student Overview",
+      "subtitle": "View all enrolled students",
+      "allSections": "All Sections",
+      "admissionNo": "Admission No",
+      "classSection": "Class / Section",
+      "rollNo": "Roll No",
+      "empty": "No students found."
+    },
+    "staff": {
+      "title": "Staff Overview",
+      "subtitle": "View all teaching and non-teaching staff",
+      "teacher": "Teacher",
+      "general": "General",
+      "empty": "No staff members found."
+    },
+    "syllabus": {
+      "title": "Syllabus Overview",
+      "subtitle": "Review all course curricula across the school",
+      "subject": "Subject",
+      "allSubjects": "All Subjects",
+      "empty": "No syllabus available. Ask teachers to create and publish syllabi."
+    },
+    "exams": {
+      "title": "Examination Management",
+      "subtitle": "Schedule and manage school examinations",
+      "schedule": "Schedule Exam",
+      "scheduleNew": "Schedule New Examination",
+      "examName": "Exam Name",
+      "examNamePlaceholder": "e.g., First Unit Test",
+      "examType": "Exam Type",
+      "academicYear": "Academic Year",
+      "selectYear": "Select Academic Year",
+      "selectClass": "Select Class",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "scheduling": "Scheduling...",
+      "hideSubjects": "Hide subjects",
+      "subjectsMarks": "Subjects & marks",
+      "empty": "No exams scheduled yet. Click \"Schedule Exam\" to create one.",
+      "terms": {
+        "UNIT_TEST": "Unit Test",
+        "QUARTERLY": "Quarterly Exam",
+        "HALF_YEARLY": "Half Yearly Exam",
+        "ANNUAL": "Annual Exam",
+        "PRELIMS": "Preliminary Exam"
+      }
+    },
+    "attendance": {
+      "title": "Attendance Reports",
+      "subtitle": "View school-wide attendance statistics",
+      "date": "Date",
+      "totalStudents": "Total Students",
+      "presentToday": "Present Today",
+      "absentToday": "Absent Today",
+      "rate": "Attendance Rate",
+      "trend": "Attendance Trend (last 14 days)",
+      "noTrend": "No attendance has been marked in the last 14 days."
+    },
+    "fees": {
+      "title": "Fee Reports",
+      "subtitle": "View fee collection statistics and reports",
+      "loadError": "Fee statistics could not be loaded. Please refresh to try again.",
+      "totalExpected": "Total Expected",
+      "collected": "Collected",
+      "pending": "Pending",
+      "rate": "Collection Rate",
+      "byMonth": "Collection by Month",
+      "noPayments": "No payments recorded yet.",
+      "byClass": "Class-wise Collection",
+      "noInvoices": "No invoices raised yet."
+    },
+    "calendar": {
+      "title": "School Calendar",
+      "subtitle": "View upcoming events, holidays, and exams",
+      "month": "Month:",
+      "empty": "No events scheduled for this month.",
+      "types": {
+        "HOLIDAY": "Holiday",
+        "EXAM": "Exam",
+        "EVENT": "Event",
+        "MEETING": "Meeting"
+      }
+    },
+    "profile": {
+      "subtitle": "Your account details and contact information.",
+      "contactInfo": "Contact Information",
+      "role": "Role"
+    },
+    "settings": {
+      "subtitle": "Manage your preferences",
+      "accountInfo": "Account Information",
+      "preferences": "Preferences",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive email updates",
+      "pushNotifications": "Push Notifications",
+      "pushNotificationsDesc": "Receive push notifications"
+    }
+  }
+}

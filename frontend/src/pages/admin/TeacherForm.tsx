@@ -5,6 +5,7 @@ import { Button, Card, ErrorText, Input, Label, PageHeader } from "../../compone
 import { api } from "../../api/client";
 import { createTeacher } from "./api";
 import { useClasses, useSubjects } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { TeacherCreateRequest } from "./types";
 
 const emptyForm: TeacherCreateRequest = {
@@ -27,6 +28,7 @@ function selectClass(className = "") {
 }
 
 export default function TeacherForm() {
+  const { t, te } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<TeacherCreateRequest>(emptyForm);
@@ -39,9 +41,9 @@ export default function TeacherForm() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [documents, setDocuments] = useState<{ name: string; file: File | null }[]>([
-    { name: "ID Proof", file: null },
-    { name: "Address Proof", file: null },
-    { name: "Educational Certificates", file: null },
+    { name: "admin.teacherForm.docIdProof", file: null },
+    { name: "admin.teacherForm.docAddressProof", file: null },
+    { name: "admin.teacherForm.docCertificates", file: null },
   ]);
   const [uploading, setUploading] = useState(false);
 
@@ -80,7 +82,7 @@ export default function TeacherForm() {
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to create teacher.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.teacherForm.createFailed");
       setError(message);
     },
   });
@@ -134,7 +136,7 @@ export default function TeacherForm() {
       };
       mutation.mutate(payload);
     } catch {
-      setError("Failed to upload files.");
+      setError(t("admin.forms.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -142,60 +144,60 @@ export default function TeacherForm() {
 
   return (
     <div>
-      <PageHeader title="New Teacher" subtitle="Add a new teacher to the school staff." />
+      <PageHeader title={t("admin.teacherForm.title")} subtitle={t("admin.teacherForm.subtitle")} />
       <Card className="max-w-3xl">
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label>First Name *</Label>
+              <Label>{t("admin.forms.firstNameReq")}</Label>
               <Input required value={form.first_name} onChange={(e) => update("first_name", e.target.value)} />
             </div>
             <div>
-              <Label>Last Name *</Label>
+              <Label>{t("admin.forms.lastNameReq")}</Label>
               <Input required value={form.last_name} onChange={(e) => update("last_name", e.target.value)} />
             </div>
             <div>
-              <Label>Date of Birth</Label>
+              <Label>{t("admin.common.dob")}</Label>
               <Input type="date" value={form.dob ?? ""} onChange={(e) => update("dob", e.target.value)} />
             </div>
             <div>
-              <Label>Gender</Label>
+              <Label>{t("admin.common.gender")}</Label>
               <select className={selectClass()} value={form.gender ?? ""} onChange={(e) => update("gender", e.target.value)}>
-                <option value="">Select</option>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-                <option value="O">Other</option>
+                <option value="">{t("admin.common.select")}</option>
+                <option value="M">{t("admin.common.male")}</option>
+                <option value="F">{t("admin.common.female")}</option>
+                <option value="O">{t("admin.common.other")}</option>
               </select>
             </div>
             <div>
-              <Label>Phone *</Label>
+              <Label>{t("admin.forms.phoneReq")}</Label>
               <Input required value={form.phone} onChange={(e) => update("phone", e.target.value)} />
             </div>
             <div>
-              <Label>Email *</Label>
+              <Label>{t("admin.forms.emailReq")}</Label>
               <Input required type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
             </div>
             <div>
-              <Label>Joining Date</Label>
+              <Label>{t("admin.forms.joiningDate")}</Label>
               <Input type="date" value={form.joining_date ?? ""} onChange={(e) => update("joining_date", e.target.value)} />
             </div>
             <div className="sm:col-span-2">
-              <Label>Address</Label>
+              <Label>{t("admin.common.address")}</Label>
               <Input value={form.address ?? ""} onChange={(e) => update("address", e.target.value)} />
             </div>
             <div className="sm:col-span-2">
-              <Label>Qualifications (comma separated)</Label>
-              <Input value={qualificationsText} onChange={(e) => setQualificationsText(e.target.value)} placeholder="B.Ed, M.Sc Mathematics" />
+              <Label>{t("admin.forms.qualificationsHint")}</Label>
+              <Input value={qualificationsText} onChange={(e) => setQualificationsText(e.target.value)} placeholder={t("admin.forms.qualificationsPlaceholder")} />
             </div>
           </div>
 
           {/* Photo Upload */}
           <div className="border-t border-line pt-4">
-            <Label>Profile Photo</Label>
+            <Label>{t("admin.forms.profilePhoto")}</Label>
             <div className="flex items-center gap-4 mt-2">
               <div className="w-24 h-24 rounded-xl bg-violet-50 border-2 border-dashed border-line flex items-center justify-center overflow-hidden">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img src={photoPreview} alt={t("admin.forms.photoPreview")} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-ink-2 text-3xl">👤</span>
                 )}
@@ -207,18 +209,18 @@ export default function TeacherForm() {
                   onChange={handlePhotoChange}
                   className="text-sm text-accent-fg file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-violet-100 file:text-ink-2 hover:file:bg-violet-200"
                 />
-                <p className="text-xs text-accent-fg mt-1">JPG, PNG up to 5MB</p>
+                <p className="text-xs text-accent-fg mt-1">{t("admin.forms.photoHint")}</p>
               </div>
             </div>
           </div>
 
           {/* Documents Upload */}
           <div className="border-t border-line pt-4">
-            <Label>Documents</Label>
+            <Label>{t("admin.forms.documents")}</Label>
             <div className="space-y-3 mt-2">
               {documents.map((doc, idx) => (
                 <div key={doc.name} className="flex items-center gap-3 p-3 bg-violet-50/50 rounded-lg">
-                  <span className="text-sm font-medium text-ink-2 w-40">{doc.name}</span>
+                  <span className="text-sm font-medium text-ink-2 w-40">{t(doc.name)}</span>
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
@@ -232,14 +234,14 @@ export default function TeacherForm() {
           </div>
 
           <div>
-            <Label>Assigned Classes/Grades *</Label>
+            <Label>{t("admin.forms.assignedClasses")}</Label>
             <p className="text-xs text-accent-fg dark:text-ink-3 mb-2">
-              Select the classes this teacher can manage (attendance, exam results)
+              {t("admin.forms.assignedClassesHint")}
             </p>
             <div className="flex flex-wrap gap-2 rounded-md border border-line bg-violet-50/30 dark:bg-slate-800/50 p-3">
               {(classes ?? []).length === 0 && (
                 <span className="text-sm text-accent-fg dark:text-ink-3">
-                  No classes configured. <a href="/admin/academic-setup" className="underline text-amber-600 dark:text-amber-400">Create classes first</a>
+                  {t("admin.forms.noClassesConfigured")} <a href="/admin/academic-setup" className="underline text-amber-600 dark:text-amber-400">{t("admin.forms.createClassesFirst")}</a>
                 </span>
               )}
               {(classes ?? []).map((c) => {
@@ -255,7 +257,7 @@ export default function TeacherForm() {
                         : "border-line text-accent-fg hover:bg-violet-100 dark:border-slate-500 dark:text-ink-2 dark:hover:bg-surface-3"
                     }`}
                   >
-                    {c.name}
+                    {te("class", c.name)}
                   </button>
                 );
               })}
@@ -263,11 +265,11 @@ export default function TeacherForm() {
           </div>
 
           <div>
-            <Label>Subjects</Label>
+            <Label>{t("admin.forms.subjects")}</Label>
             <div className="flex flex-wrap gap-2 rounded-md border border-line bg-violet-50/30 dark:bg-slate-800/50 p-3">
               {(subjects ?? []).length === 0 && (
                 <span className="text-sm text-accent-fg dark:text-ink-3">
-                  No subjects configured. <a href="/admin/academic-setup" className="underline text-amber-600 dark:text-amber-400">Create subjects first</a>
+                  {t("admin.forms.noSubjectsConfigured")} <a href="/admin/academic-setup" className="underline text-amber-600 dark:text-amber-400">{t("admin.forms.createSubjectsFirst")}</a>
                 </span>
               )}
               {(subjects ?? []).map((s) => {
@@ -283,7 +285,7 @@ export default function TeacherForm() {
                         : "border-line text-accent-fg hover:bg-violet-100 dark:border-slate-500 dark:text-ink-2 dark:hover:bg-surface-3"
                     }`}
                   >
-                    {s.name}
+                    {te("subject", s.name)}
                   </button>
                 );
               })}
@@ -294,10 +296,10 @@ export default function TeacherForm() {
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => navigate("/admin/teachers")}>
-              Cancel
+              {t("admin.common.cancel")}
             </Button>
             <Button type="submit" disabled={mutation.isPending || uploading}>
-              {uploading ? "Uploading..." : mutation.isPending ? "Creating..." : "Create Teacher"}
+              {uploading ? t("admin.forms.uploading") : mutation.isPending ? t("admin.forms.creating") : t("admin.teacherForm.create")}
             </Button>
           </div>
         </form>

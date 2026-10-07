@@ -6,6 +6,7 @@ import { Badge, Button, Card, ErrorText, Input, Label, PageHeader, Spinner } fro
 import { api } from "../../api/client";
 import { getTeacher, updateTeacher } from "./api";
 import { useClasses, useSubjects } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { TeacherStatus, TeacherUpdateRequest } from "./types";
 
 const STATUS_TONE: Record<TeacherStatus, "gray" | "green" | "red" | "yellow"> = {
@@ -19,6 +20,7 @@ function selectClass(className = "") {
 }
 
 export default function TeacherDetail() {
+  const { t, te, fmtDate } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +94,7 @@ export default function TeacherDetail() {
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to update teacher.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.teacherDetail.updateFailed");
       setError(message);
     },
   });
@@ -137,20 +139,20 @@ export default function TeacherDetail() {
     );
   }
 
-  const subjectNameById = new Map((subjects ?? []).map((s) => [s.id, s.name]));
-  const classNameById = new Map((classes ?? []).map((c) => [c.id, c.name]));
+  const subjectNameById = new Map((subjects ?? []).map((s) => [s.id, te("subject", s.name)]));
+  const classNameById = new Map((classes ?? []).map((c) => [c.id, te("class", c.name)]));
 
   return (
     <div>
       <PageHeader
         title={teacher.full_name}
-        subtitle={`Employee No ${teacher.employee_no}`}
+        subtitle={t("admin.teacherDetail.employeeNoSubtitle", { no: teacher.employee_no })}
         actions={
           <div className="flex gap-3">
             <Link to="/admin/teachers">
-              <Button variant="secondary">Back to list</Button>
+              <Button variant="secondary">{t("admin.common.backToList")}</Button>
             </Link>
-            {!editing && <Button onClick={() => setEditing(true)}>Edit</Button>}
+            {!editing && <Button onClick={() => setEditing(true)}>{t("admin.common.edit")}</Button>}
           </div>
         }
       />
@@ -186,7 +188,7 @@ export default function TeacherDetail() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute -bottom-1 -right-1 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full border-2 border-white/50 flex items-center justify-center transition-colors cursor-pointer"
-                title="Change photo"
+                title={t("admin.teacherDetail.changePhoto")}
               >
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -197,8 +199,8 @@ export default function TeacherDetail() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-1">{teacher.full_name}</h2>
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-white/20 rounded-full text-sm text-white">ID: {teacher.employee_no}</span>
-                <Badge tone={STATUS_TONE[teacher.status]}>{teacher.status}</Badge>
+                <span className="px-3 py-1 bg-white/20 rounded-full text-sm text-white">{t("admin.teacherDetail.idLabel", { id: teacher.employee_no })}</span>
+                <Badge tone={STATUS_TONE[teacher.status]}>{te("status", teacher.status)}</Badge>
               </div>
             </div>
           </div>
@@ -210,69 +212,69 @@ export default function TeacherDetail() {
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label>Employee No</Label>
+                <Label>{t("admin.common.employeeNo")}</Label>
                 <Input value={form.employee_no ?? ""} onChange={(e) => update("employee_no", e.target.value)} />
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>{t("admin.common.status")}</Label>
                 <select
                   className={selectClass()}
                   value={form.status ?? "ACTIVE"}
                   onChange={(e) => update("status", e.target.value as TeacherStatus)}
                 >
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="ON_LEAVE">ON_LEAVE</option>
-                  <option value="INACTIVE">INACTIVE</option>
+                  <option value="ACTIVE">{te("status", "ACTIVE")}</option>
+                  <option value="ON_LEAVE">{te("status", "ON_LEAVE")}</option>
+                  <option value="INACTIVE">{te("status", "INACTIVE")}</option>
                 </select>
               </div>
               <div>
-                <Label>First Name</Label>
+                <Label>{t("admin.common.firstName")}</Label>
                 <Input value={form.first_name ?? ""} onChange={(e) => update("first_name", e.target.value)} />
               </div>
               <div>
-                <Label>Last Name</Label>
+                <Label>{t("admin.common.lastName")}</Label>
                 <Input value={form.last_name ?? ""} onChange={(e) => update("last_name", e.target.value)} />
               </div>
               <div>
-                <Label>Date of Birth</Label>
+                <Label>{t("admin.common.dob")}</Label>
                 <Input type="date" value={form.dob ?? ""} onChange={(e) => update("dob", e.target.value)} />
               </div>
               <div>
-                <Label>Gender</Label>
+                <Label>{t("admin.common.gender")}</Label>
                 <select className={selectClass()} value={form.gender ?? ""} onChange={(e) => update("gender", e.target.value)}>
-                  <option value="">Select</option>
-                  <option value="M">Male</option>
-                  <option value="F">Female</option>
-                  <option value="O">Other</option>
+                  <option value="">{t("admin.common.select")}</option>
+                  <option value="M">{t("admin.common.male")}</option>
+                  <option value="F">{t("admin.common.female")}</option>
+                  <option value="O">{t("admin.common.other")}</option>
                 </select>
               </div>
               <div>
-                <Label>Phone</Label>
+                <Label>{t("admin.common.phone")}</Label>
                 <Input value={form.phone ?? ""} onChange={(e) => update("phone", e.target.value)} />
               </div>
               <div>
-                <Label>Email</Label>
+                <Label>{t("common.email")}</Label>
                 <Input type="email" value={form.email ?? ""} onChange={(e) => update("email", e.target.value)} />
               </div>
               <div>
-                <Label>Joining Date</Label>
+                <Label>{t("admin.forms.joiningDate")}</Label>
                 <Input type="date" value={form.joining_date ?? ""} onChange={(e) => update("joining_date", e.target.value)} />
               </div>
               <div className="sm:col-span-2">
-                <Label>Address</Label>
+                <Label>{t("admin.common.address")}</Label>
                 <Input value={form.address ?? ""} onChange={(e) => update("address", e.target.value)} />
               </div>
               <div className="sm:col-span-2">
-                <Label>Qualifications (comma separated)</Label>
+                <Label>{t("admin.forms.qualificationsHint")}</Label>
                 <Input value={qualificationsText} onChange={(e) => setQualificationsText(e.target.value)} />
               </div>
             </div>
 
             <div>
-              <Label>Assigned Classes/Grades</Label>
-              <p className="text-xs text-accent-fg mb-2">Classes this teacher can manage (attendance, exam results)</p>
+              <Label>{t("admin.teacherDetail.assignedClassesLabel")}</Label>
+              <p className="text-xs text-accent-fg mb-2">{t("admin.teacherDetail.assignedClassesHint")}</p>
               <div className="flex flex-wrap gap-2 rounded-md border border-line p-3">
-                {(classes ?? []).length === 0 && <span className="text-sm text-accent-fg">No classes configured yet.</span>}
+                {(classes ?? []).length === 0 && <span className="text-sm text-accent-fg">{t("admin.teacherDetail.noClasses")}</span>}
                 {(classes ?? []).map((c) => {
                   const active = (form.assigned_class_ids ?? []).includes(c.id);
                   return (
@@ -284,7 +286,7 @@ export default function TeacherDetail() {
                         active ? "border-emerald-600 bg-emerald-50 text-emerald-700" : "border-line text-ink-2 hover:bg-violet-50"
                       }`}
                     >
-                      {c.name}
+                      {te("class", c.name)}
                     </button>
                   );
                 })}
@@ -292,9 +294,9 @@ export default function TeacherDetail() {
             </div>
 
             <div>
-              <Label>Subjects</Label>
+              <Label>{t("admin.forms.subjects")}</Label>
               <div className="flex flex-wrap gap-2 rounded-md border border-line p-3">
-                {(subjects ?? []).length === 0 && <span className="text-sm text-accent-fg">No subjects configured yet.</span>}
+                {(subjects ?? []).length === 0 && <span className="text-sm text-accent-fg">{t("admin.teacherDetail.noSubjects")}</span>}
                 {(subjects ?? []).map((s) => {
                   const active = (form.subject_ids ?? []).includes(s.id);
                   return (
@@ -306,7 +308,7 @@ export default function TeacherDetail() {
                         active ? "border-violet-600 bg-violet-50 text-ink-2" : "border-line text-ink-2 hover:bg-violet-50"
                       }`}
                     >
-                      {s.name}
+                      {te("subject", s.name)}
                     </button>
                   );
                 })}
@@ -324,30 +326,30 @@ export default function TeacherDetail() {
                   setError(null);
                 }}
               >
-                Cancel
+                {t("admin.common.cancel")}
               </Button>
               <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? "Saving..." : "Save changes"}
+                {updateMutation.isPending ? t("admin.common.saving") : t("admin.common.saveChangesLower")}
               </Button>
             </div>
           </form>
         ) : (
           <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-            <Field label="First Name" value={teacher.first_name} />
-            <Field label="Last Name" value={teacher.last_name} />
-            <Field label="Date of Birth" value={teacher.dob ?? "—"} />
-            <Field label="Gender" value={teacher.gender ?? "—"} />
-            <Field label="Phone" value={teacher.phone} />
-            <Field label="Email" value={teacher.email ?? "—"} />
-            <Field label="Joining Date" value={teacher.joining_date ?? "—"} />
-            <Field label="Address" value={teacher.address ?? "—"} />
-            <Field label="Qualifications" value={teacher.qualifications.join(", ") || "—"} />
+            <Field label={t("admin.common.firstName")} value={teacher.first_name} />
+            <Field label={t("admin.common.lastName")} value={teacher.last_name} />
+            <Field label={t("admin.common.dob")} value={teacher.dob ? fmtDate(teacher.dob) : "—"} />
+            <Field label={t("admin.common.gender")} value={teacher.gender ? te("gender", teacher.gender) : "—"} />
+            <Field label={t("admin.common.phone")} value={teacher.phone} ltr />
+            <Field label={t("common.email")} value={teacher.email ?? "—"} ltr />
+            <Field label={t("admin.forms.joiningDate")} value={teacher.joining_date ? fmtDate(teacher.joining_date) : "—"} />
+            <Field label={t("admin.common.address")} value={teacher.address ?? "—"} />
+            <Field label={t("admin.teacherDetail.qualifications")} value={teacher.qualifications.join(", ") || "—"} />
             <Field
-              label="Assigned Classes"
+              label={t("admin.teacherDetail.assignedClasses")}
               value={teacher.assigned_class_ids?.map((cid) => classNameById.get(cid) ?? cid).join(", ") || "—"}
             />
             <Field
-              label="Subjects"
+              label={t("admin.forms.subjects")}
               value={teacher.subject_ids.map((sid) => subjectNameById.get(sid) ?? sid).join(", ") || "—"}
             />
           </dl>
@@ -357,11 +359,11 @@ export default function TeacherDetail() {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, ltr }: { label: string; value: string; ltr?: boolean }) {
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-accent-fg">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{value}</dd>
+      <dd className="mt-0.5 text-sm text-ink" dir={ltr ? "ltr" : undefined}>{value}</dd>
     </div>
   );
 }

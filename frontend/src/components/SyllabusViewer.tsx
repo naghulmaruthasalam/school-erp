@@ -1,5 +1,6 @@
 import { openDocument } from "../api/files";
 import { useState } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
 import { Card, Spinner, Badge } from "./ui";
 import { BookOpen, FileText, ChevronDown, Download, GraduationCap, Layers, Video, PlayCircle } from "lucide-react";
 
@@ -48,8 +49,9 @@ export function SyllabusViewer({
   getClassName,
   getSubjectName,
   getYearName,
-  emptyMessage = "No syllabus available.",
+  emptyMessage,
 }: SyllabusViewerProps) {
+  const { t, te, fmtNumber } = useLanguage();
   const [expandedSyllabus, setExpandedSyllabus] = useState<string | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
 
@@ -70,7 +72,7 @@ export function SyllabusViewer({
             <BookOpen className="w-10 h-10 text-accent-fg" />
           </div>
         </div>
-        <p className="text-ink-3">{emptyMessage}</p>
+        <p className="text-ink-3">{emptyMessage ?? t("shell.syllabusViewer.empty")}</p>
       </Card>
     );
   }
@@ -93,7 +95,7 @@ export function SyllabusViewer({
         >
           <button
             onClick={() => toggleSyllabus(syl.id)}
-            className="w-full p-5 flex items-center justify-between text-left transition-colors hover:bg-surface-3 dark:hover:bg-[#2D1B4E]/50"
+            className="w-full p-5 flex items-center justify-between text-start transition-colors hover:bg-surface-3 dark:hover:bg-[#2D1B4E]/50"
           >
             <div className="flex items-center gap-4">
               <div className="relative group">
@@ -105,8 +107,8 @@ export function SyllabusViewer({
               <div>
                 <h3 className="font-bold text-lg text-ink dark:text-white">{syl.title}</h3>
                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                  <Badge tone="violet">{getClassName(syl.class_id)}</Badge>
-                  <Badge tone="blue">{getSubjectName(syl.subject_id)}</Badge>
+                  <Badge tone="violet">{te("class", getClassName(syl.class_id))}</Badge>
+                  <Badge tone="blue">{te("subject", getSubjectName(syl.subject_id))}</Badge>
                   <span className="text-xs text-ink-3">{getYearName(syl.academic_year_id)}</span>
                 </div>
               </div>
@@ -114,7 +116,7 @@ export function SyllabusViewer({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-ink-3 bg-surface-3 px-3 py-1.5 rounded-full">
                 <Layers size={16} className="text-accent-fg" />
-                <span>{syl.chapters?.length || 0} chapters</span>
+                <span>{t("shell.syllabusViewer.chapterCount", { n: fmtNumber(syl.chapters?.length || 0) })}</span>
               </div>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                 expandedSyllabus === syl.id
@@ -141,7 +143,7 @@ export function SyllabusViewer({
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                       <GraduationCap size={16} className="text-white" />
                     </div>
-                    Chapters
+                    {t("shell.syllabusViewer.chapters")}
                   </h4>
                   {syl.chapters && syl.chapters.length > 0 ? (
                     <div className="space-y-2">
@@ -154,11 +156,11 @@ export function SyllabusViewer({
                         >
                           <button
                             onClick={() => toggleChapter(chapterKey)}
-                            className="w-full p-4 flex items-center justify-between text-left"
+                            className="w-full p-4 flex items-center justify-between text-start"
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-md shadow-violet-500/30 group-hover:scale-110 transition-transform">
-                                {idx + 1}
+                                {fmtNumber(idx + 1)}
                               </div>
                               <span className="font-medium text-ink dark:text-white">{ch.name}</span>
                             </div>
@@ -171,7 +173,7 @@ export function SyllabusViewer({
                             )}
                           </button>
                           {expandedChapters.has(chapterKey) && (ch.description || ch.video_url) && (
-                            <div className="px-4 pb-4 pt-0 pl-[68px] animate-page-enter space-y-3">
+                            <div className="px-4 pb-4 pt-0 ps-[68px] animate-page-enter space-y-3">
                               {ch.description && (
                                 <p className="text-sm text-ink-3">{ch.description}</p>
                               )}
@@ -183,9 +185,9 @@ export function SyllabusViewer({
                                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 hover:border-pink-500/40 hover:shadow-lg hover:shadow-pink-500/10 transition-all text-sm font-medium text-pink-700 dark:text-pink-400"
                                 >
                                   <PlayCircle size={16} />
-                                  Watch Video Lesson
+                                  {t("shell.syllabusViewer.watchVideo")}
                                   {ch.duration_minutes && (
-                                    <span className="text-xs text-pink-500/70">({ch.duration_minutes} min)</span>
+                                    <span className="text-xs text-pink-500/70">({t("shell.syllabusViewer.minutes", { n: fmtNumber(ch.duration_minutes) })})</span>
                                   )}
                                 </a>
                               )}
@@ -196,7 +198,7 @@ export function SyllabusViewer({
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-ink-3 italic">No chapters defined yet.</p>
+                    <p className="text-sm text-ink-3 italic">{t("shell.syllabusViewer.noChapters")}</p>
                   )}
                 </div>
 
@@ -207,7 +209,7 @@ export function SyllabusViewer({
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
                         <FileText size={16} className="text-white" />
                       </div>
-                      Study Materials
+                      {t("shell.syllabusViewer.materials")}
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {syl.documents.map((doc) => {
@@ -241,7 +243,7 @@ export function SyllabusViewer({
                               <span className={`block truncate text-sm font-medium ${isVideo ? "text-pink-700 dark:text-pink-400" : "text-emerald-700 dark:text-emerald-400"}`}>
                                 {doc.filename}
                               </span>
-                              {isVideo && <span className="text-xs text-pink-500/70">Video Content</span>}
+                              {isVideo && <span className="text-xs text-pink-500/70">{t("shell.syllabusViewer.videoContent")}</span>}
                             </div>
                             {isVideo ? (
                               <Video size={18} className="text-pink-500 opacity-0 group-hover:opacity-100 transition-opacity" />

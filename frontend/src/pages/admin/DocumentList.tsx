@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Document {
   id: string;
@@ -28,6 +29,8 @@ const CATEGORIES = [
 ];
 
 export default function DocumentList() {
+  const { t, fmtDate } = useLanguage();
+  const categoryLabel = (c: string) => (CATEGORIES.includes(c) ? t(`admin.documents.categories.${c}`) : c);
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -69,9 +72,9 @@ export default function DocumentList() {
   });
 
   const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024) return t("admin.documents.sizeB", { n: bytes });
+    if (bytes < 1024 * 1024) return t("admin.documents.sizeKB", { n: (bytes / 1024).toFixed(1) });
+    return t("admin.documents.sizeMB", { n: (bytes / (1024 * 1024)).toFixed(1) });
   };
 
   const getFileIcon = (contentType: string) => {
@@ -89,33 +92,33 @@ export default function DocumentList() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Document Management" subtitle="Upload and manage school documents" />
+      <PageHeader title={t("admin.documents.title")} subtitle={t("admin.documents.subtitle")} />
 
       <Card className="mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Filter by Category</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.documents.filterByCategory")}</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
-              <option value="">All Categories</option>
+              <option value="">{t("admin.documents.allCategories")}</option>
               {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{categoryLabel(c)}</option>
               ))}
             </select>
           </div>
           <div className="flex-1" />
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Upload Category</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.documents.uploadCategory")}</label>
             <select
               value={uploadCategory}
               onChange={(e) => setUploadCategory(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
             >
               {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{categoryLabel(c)}</option>
               ))}
             </select>
           </div>
@@ -131,7 +134,7 @@ export default function DocumentList() {
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadMutation.isPending}
             >
-              {uploadMutation.isPending ? "Uploading..." : "Upload Document"}
+              {uploadMutation.isPending ? t("admin.common.uploading") : t("admin.documents.upload")}
             </Button>
           </div>
         </div>
@@ -150,11 +153,11 @@ export default function DocumentList() {
                     {doc.original_filename}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge tone="violet">{doc.category}</Badge>
+                    <Badge tone="violet">{categoryLabel(doc.category)}</Badge>
                     <span className="text-xs text-accent-fg">{formatSize(doc.size)}</span>
                   </div>
                   <p className="text-xs text-accent-fg mt-2">
-                    By {doc.uploaded_by_name} · {new Date(doc.created_at).toLocaleDateString()}
+                    {t("admin.documents.by", { name: doc.uploaded_by_name, date: fmtDate(doc.created_at) })}
                   </p>
                 </div>
               </div>
@@ -164,25 +167,25 @@ export default function DocumentList() {
                   onClick={() => openDocument(doc.id)}
                   className="text-sm text-accent-fg hover:underline"
                 >
-                  Download
+                  {t("admin.documents.download")}
                 </button>
                 <span className="text-ink-2">|</span>
                 <button
                   onClick={() => {
-                    if (confirm("Delete this document?")) {
+                    if (confirm(t("admin.documents.confirmDelete"))) {
                       deleteMutation.mutate(doc.id);
                     }
                   }}
                   className="text-sm text-red-500 hover:underline"
                 >
-                  Delete
+                  {t("admin.common.delete")}
                 </button>
               </div>
             </Card>
           ))}
           {documentsQuery.data?.items.length === 0 && (
             <Card className="col-span-full">
-              <p className="text-center text-accent-fg py-8">No documents uploaded.</p>
+              <p className="text-center text-accent-fg py-8">{t("admin.documents.empty")}</p>
             </Card>
           )}
         </div>

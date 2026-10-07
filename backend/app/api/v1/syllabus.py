@@ -3,7 +3,8 @@ from fastapi.responses import PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from app.core.deps import CurrentUser, require_tenant_user
-from app.core.enums import DocumentModule, SyllabusStatus
+from app.core.enums import DocumentModule, Role, SyllabusStatus
+from app.core.lang import Lang, get_lang
 from app.core.s3 import build_object_key, generate_presigned_url_with_log, upload_bytes_with_log
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.document import PresignedUrlOut
@@ -13,7 +14,7 @@ from app.schemas.syllabus import (
     SyllabusOut,
     SyllabusUpdateRequest,
 )
-from app.services import curriculum_source_service, syllabus_import_service, syllabus_service, upload_service
+from app.services import curriculum_service, curriculum_source_service, syllabus_import_service, syllabus_service, upload_service
 
 router = APIRouter(prefix="/syllabus", tags=["syllabus"])
 
@@ -22,8 +23,9 @@ router = APIRouter(prefix="/syllabus", tags=["syllabus"])
 async def create_syllabus(
     payload: SyllabusCreateRequest,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> SyllabusOut:
-    return await syllabus_service.create_syllabus(current, payload)
+    return await syllabus_service.create_syllabus(current, payload, lang)
 
 
 @router.get("", response_model=PageResponse[SyllabusOut])
@@ -34,17 +36,18 @@ async def list_syllabus(
     status: SyllabusStatus | None = None,
     params: PageParams = Depends(),
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> PageResponse[SyllabusOut]:
-    return await syllabus_service.list_syllabus(current, class_id, subject_id, academic_year_id, params, status)
+    return await syllabus_service.list_syllabus(current, class_id, subject_id, academic_year_id, params, status, lang)
 
 
 # Fixed paths first, so "documents", "tree" and "import" are never read as a syllabus id.
 
 
 @router.get("/tree")
-async def syllabus_tree(current: CurrentUser = Depends(require_tenant_user)) -> dict:
-    """Class -> subject -> chapter outline for the browser (scoped to what the user may see)."""
-    return await syllabus_service.get_tree(current)
+async def syllabus_tree(current: CurrentUser = Depends(require_tenant_user), lang: Lang = Depends(get_lang)) -> dict:
+    """Class -> subject -> chapter outline for the browser (scoped to what the user may see), in the caller's language."""
+    return await syllabus_service.get_tree(current, lang)
 
 
 class SourceIn(BaseModel):
@@ -84,6 +87,16 @@ async def test_source(payload: SourceIn, current: CurrentUser = Depends(require_
 async def sync_source(force: bool = False, current: CurrentUser = Depends(require_tenant_user)) -> dict:
     """Load the saved source into the syllabus now (skipped when the file is unchanged, unless force=true)."""
     return await curriculum_source_service.sync_as(current, force=force)
+
+
+@router.post("/sync-curriculum")
+async def sync_curriculum(
+    dry_run: bool = True, create_missing: bool = False, current: CurrentUser = Depends(require_tenant_user)
+) -> dict:
+    """Load the textbook library (both languages) into this school's syllabus. Preview first (dry_run=true), then apply."""
+    if current.role not in (Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL):
+        raise HTTPException(status_code=403, detail="Only teachers or school admins/principals can load the curriculum")
+    return await curriculum_service.sync_to_syllabus(current.school_id, str(current.user.id), dry_run=dry_run, create_missing=create_missing)
 
 
 @router.get("/import/template", response_class=PlainTextResponse)
@@ -138,8 +151,9 @@ async def upload_syllabus_document(
 async def get_syllabus(
     syllabus_id: str,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> SyllabusOut:
-    return await syllabus_service.get_syllabus(current, syllabus_id)
+    return await syllabus_service.get_syllabus(current, syllabus_id, lang)
 
 
 @router.patch("/{syllabus_id}", response_model=SyllabusOut)
@@ -147,8 +161,9 @@ async def update_syllabus(
     syllabus_id: str,
     payload: SyllabusUpdateRequest,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> SyllabusOut:
-    return await syllabus_service.update_syllabus(current, syllabus_id, payload)
+    return await syllabus_service.update_syllabus(current, syllabus_id, payload, lang)
 
 
 @router.delete("/{syllabus_id}", status_code=204)

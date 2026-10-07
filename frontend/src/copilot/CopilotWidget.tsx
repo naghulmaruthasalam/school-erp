@@ -7,12 +7,12 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import { useAuthStore } from "../auth/store";
 import { Button, ErrorText, Select } from "../components/ui";
-import { useLanguage } from "../i18n/LanguageContext";
 import {
-  deleteSession, errorMessage, fetchContext, fetchProfile, getSession, listSessions, sendMessage, startSession,
+  deleteSession, fetchContext, fetchProfile, getSession, listSessions, sendMessage, startSession,
   streamMessage, type CopilotMessage, type CopilotProfile, type CopilotSession, type Mode, type StudyContextSel, type ToolSpec,
 } from "./api";
 import ContextPicker from "./ContextPicker";
+import { useCopilotText } from "./i18n";
 import Markdown from "./Markdown";
 import { downloadCopilotFile, type CopilotFileInfo } from "./download";
 import ToolRunner from "./ToolRunner";
@@ -25,15 +25,11 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   MessageSquareText, NotebookPen,
 };
 
-const MODE_LABEL: Record<Mode, string> = { school: "My school", study: "Study help" };
-const KIND_LABEL: Record<string, string> = {
-  worksheet: "Worksheet", lesson_plan: "Lesson plan", question_paper: "Question paper", answer_key: "Answer key", grading_report: "Grading report",
-};
-
 /** The one Copilot button for every login (student, parent, teacher, principal, school admin, super admin). What it
  * offers (modes, quick actions, tools) comes from the server's profile for the signed-in role; in demo mode the same
  * panel runs on sample data. Shows nothing only if an operator switched the Copilot off for the role. */
 export default function CopilotWidget() {
+  const { t, err } = useCopilotText();
   const user = useAuthStore((s) => s.user);
   const isDemo = useAuthStore((s) => s.isDemo);
   const profileQuery = useQuery({
@@ -44,24 +40,25 @@ export default function CopilotWidget() {
     staleTime: 10 * 60 * 1000,
   });
   if (!user) return null;
-  if (profileQuery.isError) return <CopilotUnavailable reason={errorMessage(profileQuery.error, "The Copilot can't reach the server right now.")} onRetry={() => void profileQuery.refetch()} />;
+  if (profileQuery.isError) return <CopilotUnavailable reason={err(profileQuery.error, t("copilot.unavailable.unreachable"))} onRetry={() => void profileQuery.refetch()} />;
   if (!profileQuery.data || profileQuery.data.enabled === false) return null;
   return <CopilotPanel profile={profileQuery.data} />;
 }
 
 /** Same round button, so the Copilot is always in the same place; explains why it isn't ready and lets the user retry. */
 function CopilotUnavailable({ reason, onRetry }: { reason: string; onRetry: () => void }) {
+  const { t } = useCopilotText();
   const [open, setOpen] = useState(false);
   return (
     <div className="fixed bottom-24 end-4 z-50 lg:bottom-6 lg:end-6">
       {open && (
         <div role="dialog" aria-label="Copilot" className="glass-strong mb-3 w-[min(22rem,calc(100vw-2rem))] space-y-2 rounded-[24px] p-4 animate-pop-in">
-          <p className="text-sm font-semibold text-ink">The Copilot isn't ready</p>
+          <p className="text-sm font-semibold text-ink">{t("copilot.unavailable.title")}</p>
           <p className="text-[13px] text-ink-3">{reason}</p>
-          <Button size="sm" onClick={onRetry}>Try again</Button>
+          <Button size="sm" onClick={onRetry}>{t("copilot.unavailable.retry")}</Button>
         </div>
       )}
-      <button onClick={() => setOpen(!open)} className="group relative ms-auto block" aria-label="Open AI Copilot">
+      <button onClick={() => setOpen(!open)} className="group relative ms-auto block" aria-label={t("copilot.open")}>
         <div className="glass relative grid h-14 w-14 place-items-center !rounded-full transition-transform duration-300 group-hover:scale-110">
           <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-accent to-accent-2 opacity-70" />
           <Sparkles className="relative text-white" size={24} />
@@ -73,7 +70,7 @@ function CopilotUnavailable({ reason, onRetry }: { reason: string; onRetry: () =
 
 function CopilotPanel({ profile }: { profile: CopilotProfile }) {
   const qc = useQueryClient();
-  const { language: uiLanguage } = useLanguage();
+  const { t, tr, fmtDate, language: uiLanguage, err, toolTitle, toolDescription, profileTitle, profileTagline, quick: quickLabel, languageName } = useCopilotText();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("chat");
   const [mode, setMode] = useState<Mode>(profile.default_mode);
@@ -112,7 +109,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
       setError(null);
       setMode("study");
       setCtx({ classId: d.classId, subjectId: d.subjectId, chapter: d.chapter });
-      const wanted = d.tool ? profile.tools.find((t) => t.key === d.tool) : undefined;
+      const wanted = d.tool ? profile.tools.find((x) => x.key === d.tool) : undefined;
       if (wanted) {
         setTool(wanted);
         setTab("tools");
@@ -130,10 +127,10 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, open, tab]);
 
-  const welcome =
-    mode === "school"
-      ? `Hi! I'm your ${profile.title}. Ask me about your own school information, for example attendance, homework, timetable or results.`
-      : `Hi! I'm your ${profile.title}. ${profile.tagline}. Pick a subject and chapter below, then ask away.`;
+  const title = profileTitle(profile);
+  const tagline = profileTagline(profile);
+  const modeLabel = (m: Mode) => t(`copilot.modes.${m}`);
+  const welcome = mode === "school" ? t("copilot.welcome.school", { title }) : t("copilot.welcome.study", { title, tagline });
 
   function reset(next?: Partial<{ mode: Mode; ctx: StudyContextSel; language: string }>) {
     setSession(null);
@@ -160,7 +157,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
         qc.invalidateQueries({ queryKey: ["copilot", "sessions"] });
       }
     } catch (e) {
-      setError(errorMessage(e));
+      setError(err(e));
       setBusy(false);
       setInput(text);
       return;
@@ -175,7 +172,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
       await streamMessage(active.id, text, append);
     } catch (e) {
       if (received) {
-        setError(errorMessage(e));
+        setError(err(e));
       } else {
         try {
           // The stream couldn't start (e.g. an expired token being refreshed): use the plain endpoint.
@@ -184,7 +181,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
         } catch (e2) {
           setMessages((m) => m.slice(0, -2));
           setInput(text);
-          setError(errorMessage(e2));
+          setError(err(e2));
         }
       }
     } finally {
@@ -215,7 +212,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
   if (!open) {
     return (
       <div className="fixed bottom-24 end-4 z-50 lg:bottom-6 lg:end-6">
-        <button onClick={() => setOpen(true)} className="animate-float group relative" aria-label="Open AI Copilot">
+        <button onClick={() => setOpen(true)} className="animate-float group relative" aria-label={t("copilot.open")}>
           <div className="glass relative grid h-14 w-14 place-items-center !rounded-full transition-transform duration-300 group-hover:scale-110">
             <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-accent to-accent-2 shadow-[0_8px_20px_-6px_var(--accent-glow)]" />
             <div className="absolute inset-1.5 rounded-full bg-gradient-to-b from-white/35 to-transparent" />
@@ -231,28 +228,28 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
 
   return (
     <div className="fixed bottom-24 end-4 z-50 lg:bottom-6 lg:end-6">
-      <div role="dialog" aria-label={profile.title} className="glass-strong flex h-[min(42rem,84vh)] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] animate-pop-in origin-bottom-right">
+      <div role="dialog" aria-label={title} className="glass-strong flex h-[min(42rem,84vh)] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] animate-pop-in origin-bottom-right rtl:origin-bottom-left">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 px-4 pb-2 pt-3.5">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-accent" />
-              <span className="truncate text-sm font-semibold tracking-tight text-ink">{profile.title}</span>
+              <span className="truncate text-sm font-semibold tracking-tight text-ink">{title}</span>
             </div>
-            <p className="truncate text-xs text-ink-3">{profile.tagline}</p>
+            <p className="truncate text-xs text-ink-3">{tagline}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <Select
-              aria-label="Reply language"
+              aria-label={t("copilot.replyLanguage")}
               className="!min-h-8 !w-auto !px-2 !py-0 !text-xs"
               value={language}
               onChange={(e) => reset({ language: e.target.value })}
             >
               {profile.languages.map((l) => (
-                <option key={l} value={l}>{l}</option>
+                <option key={l} value={l}>{languageName(l)}</option>
               ))}
             </Select>
-            <button onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-3 text-ink-3 hover:text-ink" aria-label="Close">
+            <button onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-3 text-ink-3 hover:text-ink" aria-label={t("copilot.close")}>
               <X size={15} />
             </button>
           </div>
@@ -261,11 +258,11 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
         {/* Tabs */}
         <div className="px-4 pb-2">
           <div className="lg-seg w-full [&>button]:flex-1">
-            <button aria-pressed={tab === "chat"} onClick={() => setTab("chat")}><MessageSquareText size={14} className="me-1 inline" />Chat</button>
+            <button aria-pressed={tab === "chat"} onClick={() => setTab("chat")}><MessageSquareText size={14} className="me-1 inline" />{t("copilot.tabs.chat")}</button>
             {profile.tools.length > 0 && (
-              <button aria-pressed={tab === "tools"} onClick={() => { setTab("tools"); setTool(null); }}><Wrench size={14} className="me-1 inline" />Tools</button>
+              <button aria-pressed={tab === "tools"} onClick={() => { setTab("tools"); setTool(null); }}><Wrench size={14} className="me-1 inline" />{t("copilot.tabs.tools")}</button>
             )}
-            {!profile.platform && <button aria-pressed={tab === "history"} onClick={() => setTab("history")}><History size={14} className="me-1 inline" />History</button>}
+            {!profile.platform && <button aria-pressed={tab === "history"} onClick={() => setTab("history")}><History size={14} className="me-1 inline" />{t("copilot.tabs.history")}</button>}
           </div>
         </div>
 
@@ -277,7 +274,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
                 <div className="lg-seg w-full [&>button]:flex-1">
                   {profile.modes.map((m) => (
                     <button key={m} aria-pressed={mode === m} onClick={() => mode !== m && reset({ mode: m })}>
-                      {m === "study" ? <BookOpen size={13} className="me-1 inline" /> : null}{MODE_LABEL[m]}
+                      {m === "study" ? <BookOpen size={13} className="me-1 inline" /> : null}{modeLabel(m)}
                     </button>
                   ))}
                 </div>
@@ -287,7 +284,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
               )}
               {mode === "study" && !profile.ai_configured && (
                 <p className="rounded-xl bg-amber-500/15 px-3 py-2 text-xs text-ink-2">
-                  Study help needs the AI key to be set on the server. “My school” works without it.
+                  {t("copilot.aiKeyMissing")}
                 </p>
               )}
             </div>
@@ -297,15 +294,15 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
               )}
               {messages.map((m, i) =>
                 m.role === "user" ? (
-                  <div key={i} className="ms-auto max-w-[85%] rounded-[20px] rounded-ee-md bg-gradient-to-br from-accent to-accent-2 px-3.5 py-2 text-sm leading-snug text-white shadow-md shadow-accent/25">
+                  <div key={i} className="ms-auto max-w-[85%] rounded-[20px] rounded-ee-md rtl:ms-0 rtl:me-auto rtl:rounded-ee-[20px] rtl:rounded-es-md bg-gradient-to-br from-accent to-accent-2 px-3.5 py-2 text-sm leading-snug text-white shadow-md shadow-accent/25">
                     {m.content}
                   </div>
                 ) : (
-                  <div key={i} className="max-w-[92%] rounded-[20px] rounded-es-md bg-surface-3 px-3.5 py-2.5 text-ink">
+                  <div key={i} className="max-w-[92%] rtl:ms-auto rounded-[20px] rounded-es-md rtl:rounded-es-[20px] rtl:rounded-ee-md bg-surface-3 px-3.5 py-2.5 text-ink">
                     {m.content ? (
                       <Markdown>{m.content}</Markdown>
                     ) : (
-                      <div className="flex w-fit gap-1 py-1" aria-label="Thinking">
+                      <div className="flex w-fit gap-1 py-1" aria-label={t("copilot.thinking")}>
                         {[0, 150, 300].map((d) => (
                           <div key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-3" style={{ animationDelay: `${d}ms` }} />
                         ))}
@@ -317,7 +314,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
               {!hasUserMessage && canChat && quick.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {quick.map((q) => (
-                    <button key={q} onClick={() => send(q)} className="lg-chip !text-xs">{q}</button>
+                    <button key={q} onClick={() => send(q)} className="lg-chip !text-xs">{quickLabel(q)}</button>
                   ))}
                 </div>
               )}
@@ -331,10 +328,10 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
                 disabled={!canChat}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send(input)}
-                placeholder={canChat ? "Type a question…" : "Choose a class to start"}
+                placeholder={canChat ? t("copilot.input.placeholder") : t("copilot.input.chooseClass")}
                 maxLength={2000}
               />
-              <Button onClick={() => send(input)} disabled={busy || !canChat || !input.trim()} className="!px-3.5" aria-label="Send">
+              <Button onClick={() => send(input)} disabled={busy || !canChat || !input.trim()} className="!px-3.5" aria-label={t("copilot.send")}>
                 <Send size={16} className="rtl:-scale-x-100" />
               </Button>
             </div>
@@ -343,17 +340,17 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
 
         {tab === "tools" && (
           <div className="flex-1 overflow-y-auto px-4 pb-4">
-            {contextQuery.isLoading && <p className="text-[13px] text-ink-3">Loading…</p>}
+            {contextQuery.isLoading && <p className="text-[13px] text-ink-3">{t("copilot.loading")}</p>}
             {contextQuery.data && !tool && (
               <div className="grid gap-2">
-                {profile.tools.map((t) => {
-                  const Icon = TOOL_ICONS[t.icon] ?? Wrench;
+                {profile.tools.map((tl) => {
+                  const Icon = TOOL_ICONS[tl.icon] ?? Wrench;
                   return (
-                    <button key={t.key} onClick={() => setTool(t)} className="glass-row !items-start text-start">
+                    <button key={tl.key} onClick={() => setTool(tl)} className="glass-row !items-start text-start">
                       <span className="lg-icon !h-9 !w-9 shrink-0 !rounded-[12px]"><Icon size={18} /></span>
                       <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-ink">{t.title}</span>
-                        <span className="block text-xs text-ink-3">{t.description}</span>
+                        <span className="block text-sm font-semibold text-ink">{toolTitle(tl)}</span>
+                        <span className="block text-xs text-ink-3">{toolDescription(tl)}</span>
                       </span>
                     </button>
                   );
@@ -369,37 +366,37 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
         {tab === "history" && (
           <div className="flex-1 space-y-2 overflow-y-auto px-4 pb-4">
             <div className="lg-seg w-full [&>button]:flex-1">
-              <button aria-pressed={historyView === "chats"} onClick={() => setHistoryView("chats")}>Chats</button>
-              <button aria-pressed={historyView === "files"} onClick={() => setHistoryView("files")}>Files</button>
+              <button aria-pressed={historyView === "chats"} onClick={() => setHistoryView("chats")}>{t("copilot.history.chats")}</button>
+              <button aria-pressed={historyView === "files"} onClick={() => setHistoryView("files")}>{t("copilot.history.files")}</button>
             </div>
             {historyView === "chats" && (
               <>
-                {historyQuery.isLoading && <p className="text-[13px] text-ink-3">Loading…</p>}
-                {historyQuery.data?.length === 0 && <p className="text-[13px] text-ink-3">No chats yet. Your conversations will appear here.</p>}
+                {historyQuery.isLoading && <p className="text-[13px] text-ink-3">{t("copilot.loading")}</p>}
+                {historyQuery.data?.length === 0 && <p className="text-[13px] text-ink-3">{t("copilot.history.noChats")}</p>}
                 {historyQuery.data?.map((s) => (
                   <div key={s.id} className="glass-row !py-2">
                     <button className="min-w-0 flex-1 text-start" onClick={() => loadSession.mutate(s.id)}>
-                      <span className="block truncate text-sm font-medium text-ink">{s.title ?? "New chat"}</span>
-                      <span className="block truncate text-xs text-ink-3">{MODE_LABEL[s.mode]}{s.label ? ` · ${s.label}` : ""} · {new Date(s.updated_at).toLocaleDateString()}</span>
+                      <span className="block truncate text-sm font-medium text-ink">{s.title ?? t("copilot.history.newChatTitle")}</span>
+                      <span className="block truncate text-xs text-ink-3">{modeLabel(s.mode)}{s.label ? ` · ${s.label}` : ""} · {fmtDate(s.updated_at)}</span>
                     </button>
-                    <button aria-label="Delete chat" className="text-ink-3 hover:text-red-500" onClick={() => removeSession.mutate(s.id)}><Trash2 size={15} /></button>
+                    <button aria-label={t("copilot.history.deleteChat")} className="text-ink-3 hover:text-red-500" onClick={() => removeSession.mutate(s.id)}><Trash2 size={15} /></button>
                   </div>
                 ))}
-                <Button variant="secondary" size="sm" className="w-full" onClick={() => { reset(); setTab("chat"); }}>New chat</Button>
+                <Button variant="secondary" size="sm" className="w-full" onClick={() => { reset(); setTab("chat"); }}>{t("copilot.history.newChat")}</Button>
               </>
             )}
             {historyView === "files" && (
               <>
-                {filesQuery.isLoading && <p className="text-[13px] text-ink-3">Loading…</p>}
-                {filesQuery.data?.length === 0 && <p className="text-[13px] text-ink-3">No files yet. Worksheets, lesson plans, question papers and reports you export are kept here.</p>}
+                {filesQuery.isLoading && <p className="text-[13px] text-ink-3">{t("copilot.loading")}</p>}
+                {filesQuery.data?.length === 0 && <p className="text-[13px] text-ink-3">{t("copilot.history.noFiles")}</p>}
                 {filesQuery.data?.map((f) => (
                   <div key={f.id} className="glass-row !py-2">
                     <div className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-ink">{f.title}</span>
-                      <span className="block truncate text-xs text-ink-3">{KIND_LABEL[f.kind] ?? f.kind} · {new Date(f.created_at).toLocaleDateString()} · {Math.max(1, Math.round(f.size_bytes / 1024))} KB</span>
+                      <span className="block truncate text-xs text-ink-3">{tr(`copilot.kinds.${f.kind}`, f.kind)} · {fmtDate(f.created_at)} · {t("copilot.history.sizeKb", { n: Math.max(1, Math.round(f.size_bytes / 1024)) })}</span>
                     </div>
-                    <button aria-label="Download file" className="text-ink-3 hover:text-accent" onClick={() => downloadCopilotFile(f.id, f.filename)}><Download size={16} /></button>
-                    <button aria-label="Delete file" className="text-ink-3 hover:text-red-500" onClick={() => removeFile.mutate(f.id)}><Trash2 size={15} /></button>
+                    <button aria-label={t("copilot.history.download")} className="text-ink-3 hover:text-accent" onClick={() => downloadCopilotFile(f.id, f.filename)}><Download size={16} /></button>
+                    <button aria-label={t("copilot.history.deleteFile")} className="text-ink-3 hover:text-red-500" onClick={() => removeFile.mutate(f.id)}><Trash2 size={15} /></button>
                   </div>
                 ))}
               </>

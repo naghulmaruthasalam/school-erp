@@ -1,13 +1,14 @@
 import { Check, Copy, Printer } from "lucide-react";
 import { useState } from "react";
 import { Button, ErrorText, Input, Label } from "../components/ui";
-import { errorMessage } from "./api";
 import { downloadCopilotFile, type CopilotFileInfo } from "./download";
+import { useCopilotText } from "./i18n";
 import Markdown from "./Markdown";
 
 /** Copy / print actions for generated content. Printing opens a clean window with the page's own styles
  * (incl. KaTeX) so the result can be saved as PDF from the browser. */
 export function ResultActions({ text, title, containerId }: { text: string; title: string; containerId: string }) {
+  const { t, dir } = useCopilotText();
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -27,7 +28,7 @@ export function ResultActions({ text, title, containerId }: { text: string; titl
     if (!w) return;
     const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map((n) => n.outerHTML).join("");
     w.document.write(
-      `<!doctype html><html><head><meta charset="utf-8"><title>${title.replace(/</g, "&lt;")}</title>${styles}` +
+      `<!doctype html><html dir="${dir}"><head><meta charset="utf-8"><title>${title.replace(/</g, "&lt;")}</title>${styles}` +
         `<style>body{background:#fff;color:#000;padding:24px;font-family:system-ui,sans-serif}</style></head>` +
         `<body><h2 style="margin-top:0">${title.replace(/</g, "&lt;")}</h2>${el.innerHTML}</body></html>`,
     );
@@ -38,10 +39,10 @@ export function ResultActions({ text, title, containerId }: { text: string; titl
   return (
     <div className="flex gap-2">
       <Button variant="secondary" size="sm" onClick={copy}>
-        {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy"}
+        {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? t("copilot.results.copied") : t("copilot.results.copy")}
       </Button>
       <Button variant="secondary" size="sm" onClick={print}>
-        <Printer size={14} /> Print / PDF
+        <Printer size={14} /> {t("copilot.results.print")}
       </Button>
     </div>
   );
@@ -71,13 +72,14 @@ interface QuizQuestion {
 
 /** Interactive quiz: pick an option (or think of an answer), then reveal the answer and explanation. */
 export function QuizResult({ title, questions }: { title: string; questions: QuizQuestion[] }) {
+  const { t } = useCopilotText();
   const [picked, setPicked] = useState<Record<number, string>>({});
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
   const score = questions.filter((q, i) => q.type === "mcq" && picked[i] === q.answer).length;
   const mcqs = questions.filter((q) => q.type === "mcq").length;
   const answered = questions.filter((q, i) => q.type === "mcq" && picked[i] !== undefined).length;
   const markdown = questions
-    .map((q, i) => `${i + 1}. ${q.question}${q.options ? "\n" + q.options.map((o, j) => `   ${"ABCD"[j]}. ${o}`).join("\n") : ""}\n   **Answer:** ${q.answer}${q.explanation ? ` - ${q.explanation}` : ""}`)
+    .map((q, i) => `${i + 1}. ${q.question}${q.options ? "\n" + q.options.map((o, j) => `   ${"ABCD"[j]}. ${o}`).join("\n") : ""}\n   **${t("copilot.results.answer")}:** ${q.answer}${q.explanation ? ` - ${q.explanation}` : ""}`)
     .join("\n\n");
 
   return (
@@ -88,7 +90,7 @@ export function QuizResult({ title, questions }: { title: string; questions: Qui
       </div>
       {mcqs > 0 && answered === mcqs && (
         <p className="rounded-2xl bg-accent-soft px-3 py-2 text-[13px] font-medium text-accent-fg">
-          Score: {score} / {mcqs}
+          {t("copilot.results.score", { score, total: mcqs })}
         </p>
       )}
       <ol id="copilot-quiz-print" className="space-y-3">
@@ -131,12 +133,12 @@ export function QuizResult({ title, questions }: { title: string; questions: Qui
               )}
               {!show && q.type === "short" && (
                 <button type="button" className="mt-2 text-[13px] font-medium text-accent-fg" onClick={() => setRevealed((r) => ({ ...r, [i]: true }))}>
-                  Show answer
+                  {t("copilot.results.showAnswer")}
                 </button>
               )}
               {show && (
                 <div className="mt-2 rounded-xl bg-surface px-3 py-2 text-[13px] text-ink-2">
-                  <span className="font-semibold text-ink">Answer: </span>
+                  <span className="font-semibold text-ink">{t("copilot.results.answer")}: </span>
                   {q.answer}
                   {q.explanation && <p className="mt-1">{q.explanation}</p>}
                 </div>
@@ -157,6 +159,7 @@ export function ExportPanel({
   fields: { key: string; label: string; default?: string }[];
   run: (format: "pdf" | "text", header: Record<string, string>) => Promise<{ file: CopilotFileInfo }>;
 }) {
+  const { t, err } = useCopilotText();
   const [header, setHeader] = useState<Record<string, string>>(() => Object.fromEntries(fields.map((f) => [f.key, f.default ?? ""])));
   const [busy, setBusy] = useState<"pdf" | "text" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +173,7 @@ export function ExportPanel({
       setSaved(file);
       await downloadCopilotFile(file.id, file.filename);
     } catch (e) {
-      setError(errorMessage(e));
+      setError(err(e));
     } finally {
       setBusy(null);
     }
@@ -178,7 +181,7 @@ export function ExportPanel({
 
   return (
     <div className="space-y-2 rounded-2xl bg-surface-3 p-3">
-      <p className="text-[13px] font-semibold text-ink">Export</p>
+      <p className="text-[13px] font-semibold text-ink">{t("copilot.results.export")}</p>
       <div className="grid grid-cols-2 gap-2">
         {fields.map((f) => (
           <div key={f.key}>
@@ -189,14 +192,14 @@ export function ExportPanel({
       </div>
       <div className="flex gap-2">
         <Button size="sm" onClick={() => go("pdf")} disabled={busy !== null}>
-          {busy === "pdf" ? "Rendering PDF…" : "Download PDF"}
+          {busy === "pdf" ? t("copilot.results.renderingPdf") : t("copilot.results.downloadPdf")}
         </Button>
         <Button size="sm" variant="secondary" onClick={() => go("text")} disabled={busy !== null}>
-          {busy === "text" ? "Saving…" : "Download text"}
+          {busy === "text" ? t("copilot.results.saving") : t("copilot.results.downloadText")}
         </Button>
       </div>
       {error && <ErrorText>{error}</ErrorText>}
-      {saved && !error && <p className="text-xs text-ink-3">Saved to your Files: {saved.filename}</p>}
+      {saved && !error && <p className="text-xs text-ink-3">{t("copilot.results.savedToFiles", { name: saved.filename })}</p>}
     </div>
   );
 }

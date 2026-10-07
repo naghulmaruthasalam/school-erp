@@ -5,6 +5,7 @@ import { Badge, Button, Card, ErrorText, Input, Label, PageHeader, Spinner } fro
 import { getAdmission, reviewAdmission } from "./api";
 import { useAcademicYears, useClasses, useSections } from "./hooks";
 import { api } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { AdmissionStatus } from "./types";
 
 const STATUS_TONE: Record<AdmissionStatus, "gray" | "green" | "red" | "yellow"> = {
@@ -20,6 +21,7 @@ function selectClass(className = "") {
 }
 
 export default function AdmissionDetail() {
+  const { t, te, fmtDate } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -64,7 +66,7 @@ export default function AdmissionDetail() {
   const { data: classes } = useClasses(academicYearId || undefined);
   const { data: sections } = useSections(classId || undefined);
 
-  const classNameById = new Map((classes ?? []).map((c) => [c.id, c.name]));
+  const classNameById = new Map((classes ?? []).map((c) => [c.id, te("class", c.name)]));
 
   const reviewMutation = useMutation({
     mutationFn: (action: "approve" | "reject") =>
@@ -89,7 +91,7 @@ export default function AdmissionDetail() {
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to review admission.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.admissionDetail.reviewFailed");
       setError(message);
     },
   });
@@ -98,7 +100,7 @@ export default function AdmissionDetail() {
     e.preventDefault();
     setError(null);
     if (!academicYearId || !sectionId) {
-      setError("Academic year and section are required to approve.");
+      setError(t("admin.admissionDetail.approveRequired"));
       return;
     }
     reviewMutation.mutate("approve");
@@ -123,58 +125,58 @@ export default function AdmissionDetail() {
     <div>
       <PageHeader
         title={`${admission.applicant_first_name} ${admission.applicant_last_name}`}
-        subtitle="Admission application"
+        subtitle={t("admin.admissionDetail.subtitle")}
         actions={
           <Link to="/admin/admissions">
-            <Button variant="secondary">Back to list</Button>
+            <Button variant="secondary">{t("admin.common.backToList")}</Button>
           </Link>
         }
       />
 
       <div className="mb-4">
-        <Badge tone={STATUS_TONE[admission.status]}>{admission.status}</Badge>
+        <Badge tone={STATUS_TONE[admission.status]}>{te("status", admission.status)}</Badge>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 space-y-6">
           {/* Student Information */}
           <div>
-            <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">Student Information</h3>
+            <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">{t("admin.admissionDetail.studentInfo")}</h3>
             <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-3">
-              <Field label="Full Name" value={`${admission.applicant_first_name} ${admission.applicant_last_name}`} />
-              <Field label="Date of Birth" value={admission.dob ?? "—"} />
-              <Field label="Gender" value={admission.gender === "M" ? "Male" : admission.gender === "F" ? "Female" : admission.gender ?? "—"} />
-              <Field label="Email" value={admission.applicant_email ?? "—"} />
-              <Field label="Applying For Class" value={classNameById.get(admission.applying_for_class_id) ?? admission.applying_for_class_id} />
-              <Field label="Application Date" value={new Date(admission.created_at).toLocaleDateString()} />
-              <Field label="Blood Group" value={admission.blood_group || "—"} />
-              <Field label="Admission Type" value={admission.admission_type || "—"} />
-              <Field label="Previous School" value={admission.previous_school || "—"} />
+              <Field label={t("admin.admissionDetail.fullName")} value={`${admission.applicant_first_name} ${admission.applicant_last_name}`} />
+              <Field label={t("admin.common.dob")} value={admission.dob ? fmtDate(admission.dob) : "—"} />
+              <Field label={t("admin.common.gender")} value={admission.gender === "M" ? t("admin.common.male") : admission.gender === "F" ? t("admin.common.female") : admission.gender ? te("gender", admission.gender) : "—"} />
+              <Field label={t("common.email")} value={admission.applicant_email ?? "—"} ltr />
+              <Field label={t("admin.admissionDetail.applyingForClass")} value={classNameById.get(admission.applying_for_class_id) ?? admission.applying_for_class_id} />
+              <Field label={t("admin.admissionDetail.applicationDate")} value={fmtDate(admission.created_at)} />
+              <Field label={t("admin.studentForm.bloodGroup")} value={admission.blood_group || "—"} ltr />
+              <Field label={t("admin.admissionDetail.admissionType")} value={admission.admission_type || "—"} />
+              <Field label={t("admin.admissionDetail.previousSchool")} value={admission.previous_school || "—"} />
             </dl>
           </div>
 
           {/* Guardian Information */}
           <div>
-            <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">Guardian Information</h3>
+            <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">{t("admin.admissionDetail.guardianInfo")}</h3>
             <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-3">
-              <Field label="Guardian Name" value={admission.guardian_name} />
-              <Field label="Guardian Phone" value={admission.guardian_phone} />
-              <Field label="Guardian Email" value={admission.guardian_email ?? "—"} />
-              <Field label="Relationship" value={admission.guardian_relationship || admission.primary_guardian || "—"} />
-              <Field label="Father" value={admission.father_name || "—"} />
-              <Field label="Mother" value={admission.mother_name || "—"} />
+              <Field label={t("admin.admissionDetail.guardianName")} value={admission.guardian_name} />
+              <Field label={t("admin.admissionDetail.guardianPhone")} value={admission.guardian_phone} ltr />
+              <Field label={t("admin.admissionDetail.guardianEmail")} value={admission.guardian_email ?? "—"} ltr />
+              <Field label={t("admin.admissionDetail.relationship")} value={admission.guardian_relationship || admission.primary_guardian || "—"} />
+              <Field label={t("admin.admissionDetail.father")} value={admission.father_name || "—"} />
+              <Field label={t("admin.admissionDetail.mother")} value={admission.mother_name || "—"} />
               <Field
-                label="Address"
+                label={t("admin.common.address")}
                 value={[admission.address_line1, admission.address_line2, admission.city, admission.state, admission.postal_code].filter(Boolean).join(", ") || "—"}
               />
-              <Field label="Documents" value={`${admission.document_ids.length + (admission.student_photo_id ? 1 : 0)} uploaded`} />
+              <Field label={t("admin.common.documents")} value={t("admin.admissionDetail.uploaded", { n: admission.document_ids.length + (admission.student_photo_id ? 1 : 0) })} />
             </dl>
           </div>
 
           {/* Review Information */}
           {admission.review_notes && (
             <div>
-              <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">Review Notes</h3>
+              <h3 className="text-sm font-semibold text-ink mb-3 pb-2 border-b border-line">{t("admin.admissionDetail.reviewNotesTitle")}</h3>
               <p className="text-sm text-ink-2">{admission.review_notes}</p>
             </div>
           )}
@@ -182,7 +184,7 @@ export default function AdmissionDetail() {
           {admission.created_student_id && (
             <div className="pt-4 border-t border-line">
               <Link to={`/admin/students/${admission.created_student_id}`} className="text-sm font-medium text-accent-fg hover:underline">
-                View enrolled student →
+                {t("admin.admissionDetail.viewEnrolled")}
               </Link>
             </div>
           )}
@@ -190,10 +192,10 @@ export default function AdmissionDetail() {
 
         {canReview && (
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-ink">Review Application</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink">{t("admin.admissionDetail.reviewApplication")}</h2>
             <form className="space-y-3" onSubmit={handleApprove}>
               <div>
-                <Label>Academic Year *</Label>
+                <Label>{t("admin.studentForm.academicYearReq")}</Label>
                 <select
                   className={selectClass()}
                   value={academicYearId}
@@ -203,7 +205,7 @@ export default function AdmissionDetail() {
                     setSectionId("");
                   }}
                 >
-                  <option value="">Select year</option>
+                  <option value="">{t("admin.studentForm.selectYear")}</option>
                   {(years ?? []).map((y) => (
                     <option key={y.id} value={y.id}>
                       {y.name}
@@ -212,7 +214,7 @@ export default function AdmissionDetail() {
                 </select>
               </div>
               <div>
-                <Label>Class</Label>
+                <Label>{t("admin.common.class")}</Label>
                 <select
                   className={selectClass()}
                   value={classId}
@@ -222,46 +224,46 @@ export default function AdmissionDetail() {
                     setSectionId("");
                   }}
                 >
-                  <option value="">Select class</option>
+                  <option value="">{t("admin.studentForm.selectClass")}</option>
                   {(classes ?? []).map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {te("class", c.name)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <Label>Section *</Label>
+                <Label>{t("admin.studentForm.sectionReq")}</Label>
                 <select className={selectClass()} value={sectionId} disabled={!classId} onChange={(e) => setSectionId(e.target.value)}>
-                  <option value="">Select section</option>
+                  <option value="">{t("admin.studentForm.selectSection")}</option>
                   {(sections ?? []).map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name}
+                      {te("section", s.name)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <Label>Admission No</Label>
-                <Input value={admissionNo} onChange={(e) => setAdmissionNo(e.target.value)} placeholder="Auto-generated if left blank" />
+                <Label>{t("admin.common.admissionNo")}</Label>
+                <Input value={admissionNo} onChange={(e) => setAdmissionNo(e.target.value)} placeholder={t("admin.admissionDetail.admissionNoPlaceholder")} />
               </div>
               <div>
-                <Label>Roll Number</Label>
+                <Label>{t("admin.studentDetail.rollNumber")}</Label>
                 <Input value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} />
               </div>
               <div>
-                <Label>Review Notes</Label>
-                <Input value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} placeholder="Optional" />
+                <Label>{t("admin.admissionDetail.reviewNotesTitle")}</Label>
+                <Input value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} placeholder={t("admin.admissionDetail.optional")} />
               </div>
 
               <ErrorText>{error}</ErrorText>
 
               <div className="flex gap-2 pt-1">
                 <Button type="submit" className="flex-1" disabled={reviewMutation.isPending}>
-                  {reviewMutation.isPending ? "Approving..." : "Approve"}
+                  {reviewMutation.isPending ? t("admin.admissionDetail.approving") : t("admin.admissionDetail.approve")}
                 </Button>
                 <Button type="button" variant="danger" className="flex-1" disabled={reviewMutation.isPending} onClick={handleReject}>
-                  Reject
+                  {t("admin.admissionDetail.reject")}
                 </Button>
               </div>
             </form>
@@ -270,19 +272,19 @@ export default function AdmissionDetail() {
               <div className="mt-4 rounded-md border border-line bg-violet-50 p-3 text-sm text-ink-2">
                 <p className="font-medium text-ink">
                   {result.studentLoginCreated || result.guardianLoginCreated
-                    ? "Student and parent accounts created."
-                    : "Review recorded."}
+                    ? t("admin.admissionDetail.accountsCreated")
+                    : t("admin.admissionDetail.reviewRecorded")}
                 </p>
                 <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-ink-2">
-                  <li>Student login created: {result.studentLoginCreated ? "Yes" : "No"}</li>
-                  <li>Guardian login created: {result.guardianLoginCreated ? "Yes" : "No"}</li>
+                  <li>{t("admin.admissionDetail.studentLoginCreated", { v: result.studentLoginCreated ? t("admin.admissionDetail.yes") : t("admin.admissionDetail.no") })}</li>
+                  <li>{t("admin.admissionDetail.guardianLoginCreated", { v: result.guardianLoginCreated ? t("admin.admissionDetail.yes") : t("admin.admissionDetail.no") })}</li>
                   {result.notes.map((note, i) => (
                     <li key={i}>{note}</li>
                   ))}
                 </ul>
                 {admission.created_student_id && (
                   <Button className="mt-3" variant="secondary" onClick={() => navigate(`/admin/students/${admission.created_student_id}`)}>
-                    View student
+                    {t("admin.admissionDetail.viewStudent")}
                   </Button>
                 )}
               </div>
@@ -294,11 +296,11 @@ export default function AdmissionDetail() {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, ltr }: { label: string; value: string; ltr?: boolean }) {
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-accent-fg">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{value}</dd>
+      <dd className="mt-0.5 text-sm text-ink" dir={ltr ? "ltr" : undefined}>{value}</dd>
     </div>
   );
 }

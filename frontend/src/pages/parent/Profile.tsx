@@ -1,21 +1,23 @@
 import { Badge, Card, PageHeader } from "../../components/ui";
 import { useAuthStore } from "../../auth/store";
+import { useLanguage } from "../../i18n/LanguageContext";
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({ label, value, dir }: { label: string; value: string | null | undefined; dir?: "ltr" | "rtl" }) {
   return (
     <div className="animate-fade-in-up">
       <p className="text-xs font-medium uppercase tracking-wide text-accent-fg dark:text-accent-fg">{label}</p>
-      <p className="mt-0.5 text-sm text-ink dark:text-white">{value || "—"}</p>
+      <p className="mt-0.5 text-sm text-ink dark:text-white" dir={dir}>{value || "—"}</p>
     </div>
   );
 }
 
 export default function ParentProfile() {
+  const { t } = useLanguage();
   const user = useAuthStore((s) => s.user);
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="My Profile" subtitle="Your account information and linked children." />
+      <PageHeader title={t("navigation.myProfile")} subtitle={t("parent.profile.subtitle")} />
 
       <div className="space-y-6">
         {/* Profile Header Card */}
@@ -29,7 +31,7 @@ export default function ParentProfile() {
                     {user?.full_name?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                <div className="absolute -bottom-1 -end-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
                   <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
@@ -41,9 +43,9 @@ export default function ParentProfile() {
                 <h2 className="text-2xl font-bold text-white mb-1">{user?.full_name}</h2>
                 <div className="flex items-center gap-3">
                   <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
-                    <p className="text-sm font-medium text-white">Parent / Guardian</p>
+                    <p className="text-sm font-medium text-white">{t("parent.profile.role")}</p>
                   </div>
-                  <Badge tone="green">Active</Badge>
+                  <Badge tone="green">{t("parent.profile.active")}</Badge>
                 </div>
               </div>
             </div>
@@ -59,13 +61,13 @@ export default function ParentProfile() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-ink dark:text-white">Account Information</h3>
+              <h3 className="text-lg font-semibold text-ink dark:text-white">{t("parent.profile.accountInfo")}</h3>
             </div>
           </div>
           <div className="p-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
-            <Field label="Full Name" value={user?.full_name} />
-            <Field label="Email" value={user?.email} />
-            <Field label="Role" value="Parent / Guardian" />
+            <Field label={t("parent.profile.fullName")} value={user?.full_name} />
+            <Field label={t("common.email")} value={user?.email} dir="ltr" />
+            <Field label={t("parent.profile.roleLabel")} value={t("parent.profile.role")} />
           </div>
         </Card>
 
@@ -78,9 +80,9 @@ export default function ParentProfile() {
               </svg>
             </div>
             <div>
-              <p className="font-medium text-ink dark:text-white">Linked Children</p>
+              <p className="font-medium text-ink dark:text-white">{t("parent.profile.linkedChildren")}</p>
               <p className="text-sm text-ink-3 mt-1">
-                Your linked children can be selected from the dropdown at the top of the dashboard. Contact the school admin if you need to link additional children to your account.
+                {t("parent.profile.linkedChildrenNote")}
               </p>
             </div>
           </div>

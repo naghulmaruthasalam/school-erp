@@ -1,0 +1,479 @@
+{
+  "copilot": {
+    "allTools": "All tools",
+    "picker": {
+      "child": "Child",
+      "chooseChild": "Choose a child…",
+      "class": "Class",
+      "chooseClass": "Choose a class…",
+      "subject": "Subject",
+      "chooseSubject": "Choose a subject…",
+      "anySubject": "Any subject",
+      "chapter": "Chapter",
+      "chooseChapter": "Choose a chapter…",
+      "wholeSubject": "Whole subject"
+    },
+    "results": {
+      "copied": "Copied",
+      "copy": "Copy",
+      "print": "Print / PDF",
+      "answer": "Answer",
+      "score": "Score: {score} / {total}",
+      "showAnswer": "Show answer",
+      "export": "Export",
+      "renderingPdf": "Rendering PDF…",
+      "downloadPdf": "Download PDF",
+      "saving": "Saving…",
+      "downloadText": "Download text",
+      "savedToFiles": "Saved to your Files: {name}"
+    },
+    "tool": {
+      "noChild": "No child linked",
+      "approxMinutes": "~{n} min",
+      "check": "What to check",
+      "createHomework": "Create this homework",
+      "result": "Result",
+      "working": "Working…",
+      "generate": "Generate",
+      "aiWriting": "The AI is writing this, it can take a few seconds…"
+    },
+    "worksheet": {
+      "reading": "Reading the chapter…",
+      "findAgain": "Find topics again",
+      "find": "Find topics in this chapter",
+      "pick": "Pick up to 3 topics and the activity types you want.",
+      "writing": "Writing the worksheet…",
+      "generateOne": "Generate worksheet ({n} topic)",
+      "generateMany": "Generate worksheet ({n} topics)"
+    },
+    "export": {
+      "schoolName": "School name",
+      "title": "Title",
+      "examTitle": "Exam title",
+      "date": "Date",
+      "timeAllowed": "Time allowed"
+    },
+    "lessonPlan": {
+      "reread": "Re-read topics",
+      "breakDown": "Break the chapter into topics",
+      "topics": "Topics, in teaching order (one per line, edit freely)",
+      "startDate": "Start date",
+      "finishBy": "Finish by",
+      "teachingDays": "Teaching days (up to 30 days apart)",
+      "dayDate": "Day {n} date",
+      "dayMinutes": "Day {n} minutes",
+      "min": "min",
+      "removeDay": "Remove day",
+      "addDay": "Add a day",
+      "planning": "Planning…",
+      "generate": "Generate lesson plan",
+      "datesHint": "Every teaching day must fall between the start and finish dates.",
+      "title": "Lesson plan: {chapter}",
+      "minutesShort": "{n} min",
+      "teacherNote": "Teacher note",
+      "pacing": "Pacing",
+      "noSessions": "No sessions came back. Try again or adjust the dates."
+    },
+    "qp": {
+      "loadingClasses": "Loading your classes…",
+      "noClasses": "No classes with a syllabus are assigned to you yet.",
+      "chaptersAndQuestions": "Chapters and questions",
+      "marksOfTotal": "{n} / {total} marks",
+      "noChapters": "This subject has no chapters yet.",
+      "markOne": "{n} mark",
+      "markMany": "{n} marks",
+      "fewer": "Fewer {type}",
+      "more": "More {type}",
+      "building": "Building the paper…",
+      "generate": "Generate question paper",
+      "overLimit": "A chapter is over its mark limit.",
+      "picking": "Picking from your question bank and writing any missing questions…",
+      "hideBank": "Hide question bank for this subject",
+      "showBank": "Show question bank for this subject",
+      "recentPapers": "Recent papers",
+      "marksN": "{n} marks",
+      "deletePaper": "Delete paper",
+      "opening": "Opening…",
+      "newPaper": "New paper",
+      "newSaved": "{n} new questions saved to the bank",
+      "showAnswers": "Show answers",
+      "section": "Section {letter}",
+      "markEachOne": "{n} mark each",
+      "markEachMany": "{n} marks each",
+      "keyPoints": "Key points",
+      "questionPaper": "Question paper",
+      "answerKey": "Answer key",
+      "bank": "Question bank",
+      "bankChapter": "Bank chapter",
+      "bankHint": "Papers draw from here first. Missing questions are written by the AI from the chapter's notes and saved here.",
+      "removeFromBank": "Remove from bank",
+      "bankEmpty": "Nothing here yet for this chapter.",
+      "addQuestion": "Add a question",
+      "questionType": "Question type",
+      "question": "Question",
+      "optionCorrect": "Option {n} is correct",
+      "option": "Option {n}",
+      "modelAnswer": "Model answer",
+      "addToBank": "Add to bank"
+    },
+    "grading": {
+      "addPages": "Add more pages",
+      "removeFile": "Remove {name}",
+      "loadingPapers": "Loading your papers…",
+      "noPapers": "Generate a question paper first (Tools → Question paper). Answer sheets are graded against its questions and answer key.",
+      "questionCount": "{n} questions",
+      "oneStudent": "One student",
+      "severalStudents": "Several students",
+      "answerSheet": "Answer sheet",
+      "studentName": "Student name",
+      "choosePhotos": "Choose photos or a PDF",
+      "pagesHint": "Pages in reading order. JPG, PNG, WEBP or PDF, up to 20 pages.",
+      "grading": "Grading…",
+      "grade": "Grade answer sheet",
+      "busy": "Reading the pages and marking each question. This can take a minute…",
+      "classSet": "Class set",
+      "student": "Student",
+      "studentNName": "Student {n} name",
+      "removeStudent": "Remove student {n}",
+      "choosePages": "Choose pages",
+      "uploading": "Uploading…",
+      "gradeOne": "Grade {n} student",
+      "gradeMany": "Grade {n} students",
+      "questionOf": "Question {n} of {total}",
+      "status": {
+        "queued": "queued",
+        "grading": "grading",
+        "done": "done",
+        "failed": "failed"
+      },
+      "gradedSheets": "Graded sheets",
+      "nothingGraded": "Nothing graded for this paper yet.",
+      "toCheck": "{n} to check",
+      "qShort": "Q{n}",
+      "check": "check",
+      "edited": "edited",
+      "marksFor": "Marks for question {n}",
+      "studentWrote": "Student wrote",
+      "nothing": "nothing",
+      "saveChanges": "Save changes"
+    },
+    "listSeparator": ", ",
+    "loading": "Loading…",
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "network": "Can't reach the server. Check your connection and try again."
+    },
+    "unavailable": {
+      "unreachable": "The Copilot can't reach the server right now.",
+      "title": "The Copilot isn't ready",
+      "retry": "Try again"
+    },
+    "open": "Open AI Copilot",
+    "close": "Close",
+    "replyLanguage": "Reply language",
+    "tabs": {
+      "chat": "Chat",
+      "tools": "Tools",
+      "history": "History"
+    },
+    "modes": {
+      "school": "My school",
+      "study": "Study help"
+    },
+    "aiKeyMissing": "Study help needs the AI key to be set on the server. “My school” works without it.",
+    "thinking": "Thinking",
+    "input": {
+      "placeholder": "Type a question…",
+      "chooseClass": "Choose a class to start"
+    },
+    "send": "Send",
+    "welcome": {
+      "school": "Hi! I'm your {title}. Ask me about your own school information, for example attendance, homework, timetable or results.",
+      "study": "Hi! I'm your {title}. {tagline}. Pick a subject and chapter below, then ask away."
+    },
+    "history": {
+      "chats": "Chats",
+      "files": "Files",
+      "noChats": "No chats yet. Your conversations will appear here.",
+      "newChatTitle": "New chat",
+      "deleteChat": "Delete chat",
+      "newChat": "New chat",
+      "noFiles": "No files yet. Worksheets, lesson plans, question papers and reports you export are kept here.",
+      "sizeKb": "{n} KB",
+      "download": "Download file",
+      "deleteFile": "Delete file"
+    },
+    "kinds": {
+      "worksheet": "Worksheet",
+      "lesson_plan": "Lesson plan",
+      "question_paper": "Question paper",
+      "answer_key": "Answer key",
+      "grading_report": "Grading report"
+    },
+    "languages": {
+      "English": "English",
+      "Arabic": "Arabic",
+      "Hindi": "Hindi",
+      "Tamil": "Tamil"
+    },
+    "qtypes": {
+      "mcq": "Multiple choice",
+      "short": "Short answer",
+      "state_precisely": "State precisely",
+      "answer_in_brief": "Answer in brief",
+      "long": "Long answer"
+    },
+    "facts": {
+      "pending_homework": "Pending homework",
+      "invoices": "Invoices",
+      "exams_with_results": "Exams with results"
+    },
+    "profiles": {
+      "STUDENT": {
+        "title": "Study Buddy",
+        "tagline": "Explains lessons, quizzes you and keeps track of what's due"
+      },
+      "PARENT": {
+        "title": "Parent Companion",
+        "tagline": "Understands your child's progress and how to support learning at home"
+      },
+      "TEACHER": {
+        "title": "Teaching Copilot",
+        "tagline": "Chapter help, worksheets, lesson plans and class tests"
+      },
+      "PRINCIPAL": {
+        "title": "School Insights",
+        "tagline": "Attendance, fee and academic overviews across the school"
+      },
+      "SCHOOL_ADMIN": {
+        "title": "Operations Copilot",
+        "tagline": "School operations, admissions, fees and staff at a glance"
+      },
+      "SUPER_ADMIN": {
+        "title": "Platform Copilot",
+        "tagline": "Platform-wide questions"
+      }
+    },
+    "tools": {
+      "explain": {
+        "title": "Explain it",
+        "description": "Explain a chapter or a tricky word as a story, with examples, an analogy or in simple words.",
+        "fields": {
+          "style": {
+            "label": "How should it be explained?"
+          },
+          "concept": {
+            "label": "A specific idea or term (optional)",
+            "help": "Leave empty to explain the whole chapter"
+          }
+        },
+        "options": {
+          "style": {
+            "simple": "simple",
+            "story": "story",
+            "analogy": "analogy",
+            "example": "example",
+            "worked": "worked",
+            "steps": "steps",
+            "memory": "memory"
+          }
+        }
+      },
+      "quiz": {
+        "title": "Practice quiz",
+        "description": "Questions with answers and explanations on a chapter.",
+        "fields": {
+          "count": {
+            "label": "Number of questions"
+          },
+          "difficulty": {
+            "label": "Difficulty"
+          },
+          "question_type": {
+            "label": "Question type"
+          }
+        },
+        "options": {
+          "difficulty": {
+            "easy": "easy",
+            "medium": "medium",
+            "hard": "hard"
+          },
+          "question_type": {
+            "mixed": "mixed",
+            "mcq": "mcq",
+            "short": "short"
+          }
+        }
+      },
+      "study_plan": {
+        "title": "Study plan",
+        "description": "A day-by-day plan around your homework deadlines and exams.",
+        "fields": {
+          "days": {
+            "label": "Days to plan"
+          },
+          "minutes_per_day": {
+            "label": "Study minutes per day"
+          },
+          "focus": {
+            "label": "Anything to focus on? (optional)"
+          }
+        }
+      },
+      "child_report": {
+        "title": "Child progress summary",
+        "description": "Attendance, homework, results and fees explained simply, with tips to help at home.",
+        "fields": {
+          "student_id": {
+            "label": "Child"
+          },
+          "days": {
+            "label": "Period (days)"
+          }
+        }
+      },
+      "homework_ideas": {
+        "title": "Homework ideas",
+        "description": "Suitable homework tasks for a chapter, ready to assign to a class with one click.",
+        "fields": {
+          "count": {
+            "label": "How many ideas"
+          },
+          "kind": {
+            "label": "Type of task"
+          },
+          "minutes": {
+            "label": "Minutes per task"
+          }
+        },
+        "options": {
+          "kind": {
+            "written": "written",
+            "practical": "practical",
+            "project": "project",
+            "reading": "reading",
+            "mixed": "mixed"
+          }
+        }
+      },
+      "worksheet": {
+        "title": "Worksheet generator",
+        "description": "Choose topics and activities from a chapter, get a printable worksheet."
+      },
+      "lesson_plan": {
+        "title": "Lesson plan",
+        "description": "A day-by-day teaching plan for a chapter across the dates you pick."
+      },
+      "question_paper": {
+        "title": "Question paper",
+        "description": "Build a question paper from your question bank with marks per chapter, then export the paper and answer key as PDF."
+      },
+      "grading": {
+        "title": "Grade answer sheets",
+        "description": "Upload scanned or photographed answer sheets and get marks, feedback and a report against a question paper you generated."
+      },
+      "parent_note": {
+        "title": "Parent note",
+        "description": "Draft a message to a parent: appreciation, concern, reminder or meeting request.",
+        "fields": {
+          "purpose": {
+            "label": "Purpose"
+          },
+          "student_name": {
+            "label": "Student name (optional)"
+          },
+          "tone": {
+            "label": "Tone"
+          },
+          "details": {
+            "label": "What should the message say?"
+          }
+        },
+        "options": {
+          "purpose": {
+            "general": "general",
+            "appreciation": "appreciation",
+            "concern": "concern",
+            "reminder": "reminder",
+            "meeting_request": "meeting request",
+            "homework_follow_up": "homework follow-up"
+          },
+          "tone": {
+            "warm": "warm",
+            "formal": "formal",
+            "firm_but_kind": "firm but kind"
+          }
+        }
+      },
+      "announcement": {
+        "title": "Announcement draft",
+        "description": "Draft a notice for parents, students or staff.",
+        "fields": {
+          "topic": {
+            "label": "Topic"
+          },
+          "audience": {
+            "label": "Audience"
+          },
+          "tone": {
+            "label": "Tone"
+          },
+          "details": {
+            "label": "Details (dates, venue, actions)"
+          }
+        },
+        "options": {
+          "audience": {
+            "parents_and_students": "parents and students",
+            "parents": "parents",
+            "students": "students",
+            "staff": "staff"
+          },
+          "tone": {
+            "formal": "formal",
+            "friendly": "friendly",
+            "urgent": "urgent"
+          }
+        }
+      }
+    },
+    "quick": {
+      "explain_this_chapter_in_simple_words": "Explain this chapter in simple words",
+      "tell_it_to_me_as_a_story": "Tell it to me as a story",
+      "give_me_a_real_life_example": "Give me a real-life example",
+      "quiz_me_on_this_chapter": "Quiz me on this chapter",
+      "what_homework_is_due_this_week": "What homework is due this week?",
+      "what_is_my_attendance": "What is my attendance?",
+      "when_are_my_exams": "When are my exams?",
+      "show_my_timetable_for_today": "Show my timetable for today",
+      "explain_this_chapter_so_i_can_help_at_home": "Explain this chapter so I can help at home",
+      "explain_it_the_way_i_would_tell_a_child": "Explain it the way I would tell a child",
+      "how_can_i_support_my_child_with_this_topic": "How can I support my child with this topic?",
+      "simple_activities_to_practise_this": "Simple activities to practise this",
+      "how_is_my_child_doing_in_attendance": "How is my child doing in attendance?",
+      "is_any_homework_pending": "Is any homework pending?",
+      "are_there_any_fees_due": "Are there any fees due?",
+      "what_are_the_upcoming_school_events": "What are the upcoming school events?",
+      "summarise_this_chapter_for_a_lesson": "Summarise this chapter for a lesson",
+      "suggest_homework_for_this_chapter": "Suggest homework for this chapter",
+      "common_misconceptions_in_this_chapter": "Common misconceptions in this chapter",
+      "explain_this_concept_with_an_analogy": "Explain this concept with an analogy",
+      "which_classes_do_i_teach_today": "Which classes do I teach today?",
+      "who_is_absent_today": "Who is absent today?",
+      "which_homework_submissions_are_pending": "Which homework submissions are pending?",
+      "show_my_timetable": "Show my timetable",
+      "how_can_we_improve_results_in_this_subject": "How can we improve results in this subject?",
+      "teaching_strategies_for_this_chapter": "Teaching strategies for this chapter",
+      "give_me_today_s_school_summary": "Give me today's school summary",
+      "attendance_trend_this_month": "Attendance trend this month",
+      "fee_collection_summary": "Fee collection summary",
+      "any_admissions_awaiting_approval": "Any admissions awaiting approval?",
+      "today_s_school_summary": "Today's school summary",
+      "pending_admission_approvals": "Pending admission approvals",
+      "staff_attendance_today": "Staff attendance today",
+      "outline_of_this_subject_s_syllabus": "Outline of this subject's syllabus",
+      "give_me_a_platform_overview": "Give me a platform overview"
+    }
+  }
+}

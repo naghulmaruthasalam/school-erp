@@ -2,14 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge, Button, Card, ErrorText, PageHeader, Spinner } from "../../components/ui";
 import { DataTable } from "../../components/DataTable";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { fetchExamResult, fetchExams, fetchReportCardPdf } from "./api";
 import { useMyProfile, useSubjects, subjectMap } from "./hooks";
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-}
-
 function ReportCardButton({ examId, studentId, examName }: { examId: string; studentId: string; examName: string }) {
+  const { t } = useLanguage();
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,7 +25,7 @@ function ReportCardButton({ examId, studentId, examName }: { examId: string; stu
       a.remove();
       URL.revokeObjectURL(url);
     } catch {
-      setError("Report card is not available yet.");
+      setError(t("student.exams.reportUnavailable"));
     } finally {
       setIsDownloading(false);
     }
@@ -36,7 +34,7 @@ function ReportCardButton({ examId, studentId, examName }: { examId: string; stu
   return (
     <div>
       <Button variant="secondary" onClick={handleDownload} disabled={isDownloading}>
-        {isDownloading ? "Preparing…" : "Download Report Card"}
+        {isDownloading ? t("student.exams.preparing") : t("student.exams.downloadReport")}
       </Button>
       {error && <ErrorText>{error}</ErrorText>}
     </div>
@@ -52,33 +50,34 @@ function ExamResultPanel({
   studentId: string;
   subjectNames: Record<string, string>;
 }) {
+  const { t, te } = useLanguage();
   const { data: result, isLoading, error } = useQuery({
     queryKey: ["student", "exam-result", examId, studentId],
     queryFn: () => fetchExamResult(examId, studentId),
   });
 
   if (isLoading) return <Spinner />;
-  if (error || !result) return <p className="text-sm text-accent-fg">Result not published yet for this exam.</p>;
+  if (error || !result) return <p className="text-sm text-accent-fg">{t("student.exams.notPublished")}</p>;
 
   return (
     <div>
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Total</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">{t("student.exams.total")}</p>
           <p className="mt-0.5 text-sm text-ink">
             {result.total_marks_obtained} / {result.total_max_marks}
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Percentage</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">{t("exams.percentage")}</p>
           <p className="mt-0.5 text-sm text-ink">{result.percentage.toFixed(1)}%</p>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Grade</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">{t("exams.grade")}</p>
           <p className="mt-0.5 text-sm text-ink">{result.overall_grade}</p>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">Roll No.</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-accent-fg">{t("student.exams.rollNo")}</p>
           <p className="mt-0.5 text-sm text-ink">{result.roll_number || "—"}</p>
         </div>
       </div>
@@ -86,16 +85,16 @@ function ExamResultPanel({
         <table className="min-w-full divide-y divide-line text-sm">
           <thead className="bg-violet-50">
             <tr>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Subject</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Marks</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Max</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-accent-fg">Grade</th>
+              <th className="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wide text-accent-fg">{t("student.exams.subject")}</th>
+              <th className="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wide text-accent-fg">{t("student.exams.marks")}</th>
+              <th className="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wide text-accent-fg">{t("student.exams.max")}</th>
+              <th className="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wide text-accent-fg">{t("exams.grade")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
             {result.subjects.map((s) => (
               <tr key={s.exam_subject_id}>
-                <td className="px-4 py-2.5 text-ink-2">{subjectNames[s.subject_id] ?? s.subject_id}</td>
+                <td className="px-4 py-2.5 text-ink-2">{subjectNames[s.subject_id] ? te("subject", subjectNames[s.subject_id]) : s.subject_id}</td>
                 <td className="px-4 py-2.5 text-ink-2">{s.marks_obtained ?? "—"}</td>
                 <td className="px-4 py-2.5 text-ink-2">{s.max_marks}</td>
                 <td className="px-4 py-2.5 text-ink-2">{s.grade ?? "—"}</td>
@@ -109,6 +108,7 @@ function ExamResultPanel({
 }
 
 export default function StudentExams() {
+  const { t, fmtDate } = useLanguage();
   const { data: profile } = useMyProfile();
   const { data: subjects } = useSubjects();
   const subjectNames = Object.fromEntries(Object.entries(subjectMap(subjects)).map(([id, s]) => [id, s.name]));
@@ -124,17 +124,17 @@ export default function StudentExams() {
 
   return (
     <div>
-      <PageHeader title="Exams" subtitle="Your exam schedule, results and report cards." />
+      <PageHeader title={t("student.nav.exams")} subtitle={t("student.exams.subtitle")} />
 
       <DataTable
         columns={[
-          { header: "Exam", cell: (row) => row.name },
-          { header: "Term", cell: (row) => row.term || "—" },
-          { header: "Start", cell: (row) => formatDate(row.start_date) },
-          { header: "End", cell: (row) => formatDate(row.end_date) },
+          { header: t("student.exams.exam"), cell: (row) => row.name },
+          { header: t("student.exams.term"), cell: (row) => row.term || "—" },
+          { header: t("student.exams.start"), cell: (row) => fmtDate(row.start_date) },
+          { header: t("student.exams.end"), cell: (row) => fmtDate(row.end_date) },
           {
-            header: "Status",
-            cell: (row) => (row.end_date < today ? <Badge tone="gray">Completed</Badge> : <Badge tone="yellow">Upcoming</Badge>),
+            header: t("fees.status"),
+            cell: (row) => (row.end_date < today ? <Badge tone="gray">{t("student.exams.completed")}</Badge> : <Badge tone="yellow">{t("student.exams.upcoming")}</Badge>),
           },
           {
             header: "",
@@ -143,7 +143,7 @@ export default function StudentExams() {
                 className="text-sm font-medium text-accent-fg hover:text-ink-2"
                 onClick={() => setSelectedExamId(selectedExamId === row.id ? null : row.id)}
               >
-                {selectedExamId === row.id ? "Hide result" : "View result"}
+                {selectedExamId === row.id ? t("student.exams.hideResult") : t("student.exams.viewResult")}
               </button>
             ),
           },
@@ -151,14 +151,14 @@ export default function StudentExams() {
         rows={exams}
         isLoading={examsQuery.isLoading}
         rowKey={(row) => row.id}
-        emptyLabel="No exams scheduled yet."
+        emptyLabel={t("student.exams.empty")}
       />
 
       {selectedExamId && profile && (
         <Card className="mt-4">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-ink">
-              Result · {exams.find((e) => e.id === selectedExamId)?.name}
+              {t("student.exams.result")} · {exams.find((e) => e.id === selectedExamId)?.name}
             </h2>
             <ReportCardButton
               examId={selectedExamId}

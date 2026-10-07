@@ -1,14 +1,16 @@
 import { Outlet } from "react-router-dom";
 import { Spinner } from "../../components/ui";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { SelectedChildProvider, useSelectedChild } from "./SelectedChildContext";
 
 function ChildSwitcher() {
+  const { t } = useLanguage();
   const { children: kids, isLoading, selectedChildId, setSelectedChildId } = useSelectedChild();
 
   if (isLoading) {
     return (
       <div className="mb-6 flex items-center gap-2 text-sm text-accent-fg">
-        <Spinner /> Loading your children…
+        <Spinner /> {t("parent.shell.loadingChildren")}
       </div>
     );
   }
@@ -16,7 +18,7 @@ function ChildSwitcher() {
   if (kids.length === 0) {
     return (
       <div className="mb-6 rounded-lg border border-dashed border-line p-4 text-sm text-accent-fg">
-        No children are linked to your account yet. Contact your school office if this looks wrong.
+        {t("parent.shell.noChildren")}
       </div>
     );
   }
@@ -25,7 +27,7 @@ function ChildSwitcher() {
     return (
       <div className="mb-6">
         <p className="text-sm font-medium text-ink">{kids[0].full_name}</p>
-        <p className="text-xs text-accent-fg">Admission No. {kids[0].admission_no}</p>
+        <p className="text-xs text-accent-fg">{t("parent.admissionNo", { no: kids[0].admission_no })}</p>
       </div>
     );
   }
@@ -45,7 +47,7 @@ function ChildSwitcher() {
             }`}
           >
             {kid.full_name}
-            <span className={`ml-1.5 text-xs font-medium ${active ? "text-white/80" : "text-ink-3"}`}>
+            <span className={`ms-1.5 text-xs font-medium ${active ? "text-white/80" : "text-ink-3"}`}>
               ({kid.admission_no})
             </span>
           </button>

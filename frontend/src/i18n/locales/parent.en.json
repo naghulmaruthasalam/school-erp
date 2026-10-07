@@ -1,0 +1,149 @@
+{
+  "parent": {
+    "admissionNo": "Admission No. {no}",
+    "nav": { "exams": "Exams" },
+    "shell": {
+      "loadingChildren": "Loading your children…",
+      "noChildren": "No children are linked to your account yet. Contact your school office if this looks wrong."
+    },
+    "dashboard": {
+      "title": "My Children",
+      "subtitle": "Attendance, homework, exams and fees for your children.",
+      "overview": "Admission No. {no} — overview of attendance, homework, exams and fees.",
+      "attendance": "Attendance",
+      "lastDays": "Last {n} days",
+      "pendingHomework": "Pending Homework",
+      "notSubmitted": "Not yet submitted",
+      "upcomingExam": "Upcoming Exam",
+      "noneScheduled": "None scheduled",
+      "pendingFees": "Pending Fees",
+      "outstanding": "Outstanding amount",
+      "loadError": "Some data could not be loaded. Please refresh the page.",
+      "attendanceDesc": "Full history and date-range breakdown.",
+      "viewAttendance": "View attendance",
+      "homework": "Homework",
+      "homeworkDesc": "Pending and past assignments.",
+      "viewHomework": "View homework",
+      "exams": "Exams",
+      "examsDesc": "Results and report cards.",
+      "viewExams": "View exams",
+      "fees": "Fees",
+      "feesDesc": "Invoices, payment status and online payment.",
+      "viewFees": "View fees"
+    },
+    "profile": {
+      "subtitle": "Your account information and linked children.",
+      "role": "Parent / Guardian",
+      "roleLabel": "Role",
+      "active": "Active",
+      "accountInfo": "Account Information",
+      "fullName": "Full Name",
+      "linkedChildren": "Linked Children",
+      "linkedChildrenNote": "Your linked children can be selected from the dropdown at the top of the dashboard. Contact the school admin if you need to link additional children to your account."
+    },
+    "settings": {
+      "subtitle": "Manage your account preferences and security.",
+      "appearance": "Appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "changed": "Password changed successfully!",
+      "updating": "Updating...",
+      "update": "Update Password",
+      "changeFailed": "Failed to change password. Please check your current password.",
+      "mismatch": "New passwords do not match.",
+      "tooShort": "Password must be at least 6 characters."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "School announcements and notices for parents",
+      "loadError": "Could not load notifications.",
+      "new": "New",
+      "by": "By {name}",
+      "empty": "No notifications.",
+      "types": {
+        "ANNOUNCEMENT": "Announcement",
+        "NOTICE": "Notice",
+        "ALERT": "Alert",
+        "REMINDER": "Reminder",
+        "EVENT": "Event"
+      },
+      "priorities": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      }
+    },
+    "fees": {
+      "selectChild": "Select a child above to view fees.",
+      "payFailed": "Could not start the payment. Online payments may not be configured for this school yet — please pay at the school office.",
+      "subtitle": "Invoices for {name}. Total outstanding: {total}.",
+      "loadError": "Could not load invoices.",
+      "paymentSuccess": "Payment successful — thank you!",
+      "paymentFailed": "Payment was not completed. Please try again.",
+      "dueDate": "Due Date",
+      "totalAmount": "Total Amount",
+      "paid": "Paid",
+      "outstanding": "Outstanding",
+      "status": "Status",
+      "redirecting": "Redirecting…",
+      "payNow": "Pay Now",
+      "empty": "No invoices found for this child."
+    },
+    "exams": {
+      "resultUnavailable": "Result is not available for this exam yet.",
+      "subject": "Subject",
+      "maxMarks": "Max Marks",
+      "obtained": "Obtained",
+      "grade": "Grade",
+      "total": "Total",
+      "selectChild": "Select a child above to view exams.",
+      "downloadFailed": "Could not download the report card. It may not be ready yet.",
+      "subtitle": "Exams and results for {name}.",
+      "loadError": "Could not load exams.",
+      "empty": "No exams scheduled yet.",
+      "dateRange": "{from} to {to}",
+      "hideResult": "Hide Result",
+      "preparing": "Preparing…",
+      "downloadReportCard": "Download Report Card"
+    },
+    "attendance": {
+      "selectChild": "Select a child above to view attendance.",
+      "subtitle": "Attendance history for {name}.",
+      "from": "From",
+      "to": "To",
+      "summaryError": "Could not load the attendance summary.",
+      "percent": "Attendance %",
+      "totalDays": "Total Days",
+      "historyError": "Could not load the attendance history.",
+      "date": "Date",
+      "status": "Status",
+      "remarks": "Remarks",
+      "empty": "No attendance records in this date range."
+    },
+    "homework": {
+      "selectChild": "Select a child above to view homework.",
+      "subtitle": "Homework assignments for {name}.",
+      "pendingCount": "Pending ({n})",
+      "pendingError": "Could not load pending homework.",
+      "noPending": "No pending homework. All caught up.",
+      "subjectDue": "{subject} — due {date}",
+      "all": "All Homework",
+      "titleCol": "Title",
+      "assigned": "Assigned",
+      "due": "Due",
+      "empty": "No homework has been assigned yet.",
+      "historyError": "Could not load homework history."
+    },
+    "syllabus": {
+      "title": "Course Syllabus",
+      "subtitle": "View your child's curriculum and study materials",
+      "loadError": "Could not load syllabus. Please try again later.",
+      "empty": "No syllabus available for your child's classes yet."
+    }
+  }
+}

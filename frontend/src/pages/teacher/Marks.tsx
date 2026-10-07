@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { Button, Card, ErrorText, PageHeader, Spinner, Badge } from "../../components/ui";
 import { fetchClassRoster, listExamSubjects, listExams, listMarks, submitMarks } from "./api";
 import { useClasses, useSubjects } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { FileText, Award, Save, CheckCircle, Users, GraduationCap } from "lucide-react";
 
 export default function TeacherMarks() {
+  const { t, te } = useLanguage();
   const { data: classes } = useClasses();
   const { data: subjects } = useSubjects();
   const queryClient = useQueryClient();
@@ -59,7 +61,7 @@ export default function TeacherMarks() {
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setSaveError(message ?? "Failed to save marks.");
+      setSaveError(message ?? t("teacher.marks.saveFailed"));
     },
   });
 
@@ -75,7 +77,7 @@ export default function TeacherMarks() {
         remarks: remarks[student.id] || null,
       }));
     if (payload.length === 0) {
-      setSaveError("Enter at least one mark before saving.");
+      setSaveError(t("teacher.marks.enterOne"));
       return;
     }
     saveMutation.mutate({ examSubjectId, marks: payload });
@@ -85,24 +87,24 @@ export default function TeacherMarks() {
 
   return (
     <div className="animate-page-enter">
-      <PageHeader title="Marks Entry" subtitle="Enter exam marks for your class" />
+      <PageHeader title={t("teacher.marks.pageTitle")} subtitle={t("teacher.marks.pageSubtitle")} />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 text-white">
           <FileText className="w-6 h-6 mb-2 opacity-80" />
           <p className="text-2xl font-bold">{examsQuery.data?.items?.length || 0}</p>
-          <p className="text-sm text-white/80">Total Exams</p>
+          <p className="text-sm text-white/80">{t("teacher.marks.totalExams")}</p>
         </div>
         <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
           <Users className="w-6 h-6 mb-2 opacity-80" />
           <p className="text-2xl font-bold">{roster.length}</p>
-          <p className="text-sm text-white/80">Students</p>
+          <p className="text-sm text-white/80">{t("teacher.marks.students")}</p>
         </div>
         <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
           <Award className="w-6 h-6 mb-2 opacity-80" />
           <p className="text-2xl font-bold">{enteredCount}</p>
-          <p className="text-sm text-white/80">Marks Entered</p>
+          <p className="text-sm text-white/80">{t("teacher.marks.marksEntered")}</p>
         </div>
       </div>
 
@@ -111,17 +113,17 @@ export default function TeacherMarks() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
-          Select Exam & Class
+          {t("teacher.marks.selectExamClass")}
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Exam</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacher.marks.exam")}</label>
             <select
               value={examId}
               onChange={(e) => { setExamId(e.target.value); setExamSubjectId(""); }}
               className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30"
             >
-              <option value="">Select an exam</option>
+              <option value="">{t("teacher.marks.selectExam")}</option>
               {examsQuery.data?.items.map((exam) => (
                 <option key={exam.id} value={exam.id}>
                   {exam.name}{exam.term ? ` (${exam.term})` : ""}
@@ -130,17 +132,17 @@ export default function TeacherMarks() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink dark:text-white mb-2">Class / Subject</label>
+            <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacher.marks.classSubject")}</label>
             <select
               value={examSubjectId}
               onChange={(e) => setExamSubjectId(e.target.value)}
               disabled={!examId}
               className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
             >
-              <option value="">Select a class/subject</option>
+              <option value="">{t("teacher.marks.selectClassSubject")}</option>
               {examSubjectsQuery.data?.map((es) => (
                 <option key={es.id} value={es.id}>
-                  {classes?.find((c) => c.id === es.class_id)?.name ?? es.class_id} — {subjects?.find((s) => s.id === es.subject_id)?.name ?? es.subject_id} (max {es.max_marks})
+                  {te("class", classes?.find((c) => c.id === es.class_id)?.name) || es.class_id} — {te("subject", subjects?.find((s) => s.id === es.subject_id)?.name) || es.subject_id} ({t("teacher.marks.max", { n: es.max_marks })})
                 </option>
               ))}
             </select>
@@ -151,23 +153,23 @@ export default function TeacherMarks() {
       {!examSubject ? (
         <Card className="text-center py-12">
           <FileText className="w-12 h-12 mx-auto text-ink-3 mb-4" />
-          <p className="text-ink-3">Select an exam and class/subject to enter marks.</p>
+          <p className="text-ink-3">{t("teacher.marks.selectToEnter")}</p>
         </Card>
       ) : rosterQuery.isLoading || existingMarksQuery.isLoading ? (
         <Card className="py-12 flex justify-center"><Spinner size="lg" /></Card>
       ) : roster.length === 0 ? (
         <Card className="text-center py-12">
           <Users className="w-12 h-12 mx-auto text-ink-3 mb-4" />
-          <p className="text-ink-3">No active students found for this class.</p>
+          <p className="text-ink-3">{t("teacher.marks.noStudents")}</p>
         </Card>
       ) : (
         <Card gradient>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-ink dark:text-white flex items-center gap-2">
               <Award className="w-5 h-5 text-accent-fg" />
-              Enter Marks (Max: {examSubject.max_marks})
+              {t("teacher.marks.enterMarksMax", { n: examSubject.max_marks })}
             </h3>
-            <Badge tone="blue">{enteredCount}/{roster.length} entered</Badge>
+            <Badge tone="blue">{t("teacher.marks.entered", { done: enteredCount, total: roster.length })}</Badge>
           </div>
           <div className="space-y-3">
             {roster.map((student, idx) => (
@@ -192,7 +194,7 @@ export default function TeacherMarks() {
                     className="w-40 rounded-xl border border-line bg-surface px-3 py-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30"
                     value={remarks[student.id] ?? ""}
                     onChange={(e) => setRemarks((prev) => ({ ...prev, [student.id]: e.target.value }))}
-                    placeholder="Remarks"
+                    placeholder={t("teacher.marks.remarks")}
                   />
                 </div>
               </div>
@@ -202,11 +204,11 @@ export default function TeacherMarks() {
           <div className="mt-6 pt-4 border-t border-line flex items-center gap-3">
             <Button onClick={handleSave} disabled={saveMutation.isPending} glow>
               {saveMutation.isPending ? <Spinner size="sm" /> : <Save className="w-4 h-4" />}
-              {saveMutation.isPending ? "Saving..." : "Save Marks"}
+              {saveMutation.isPending ? t("teacher.marks.saving") : t("teacher.marks.save")}
             </Button>
             {saveMutation.isSuccess && !saveMutation.isPending && (
               <span className="flex items-center gap-1 text-sm text-emerald-600">
-                <CheckCircle className="w-4 h-4" /> Saved successfully
+                <CheckCircle className="w-4 h-4" /> {t("teacher.marks.saved")}
               </span>
             )}
             <ErrorText>{saveError}</ErrorText>

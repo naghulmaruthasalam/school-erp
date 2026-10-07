@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Teacher {
   id: string;
@@ -16,6 +17,7 @@ interface Teacher {
 }
 
 export default function StaffOverview() {
+  const { t, te } = useLanguage();
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: async () => {
@@ -32,7 +34,7 @@ export default function StaffOverview() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Staff Overview" subtitle="View all teaching and non-teaching staff" />
+      <PageHeader title={t("principal.staff.title")} subtitle={t("principal.staff.subtitle")} />
 
       {teachersQuery.isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
@@ -47,13 +49,13 @@ export default function StaffOverview() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-ink dark:text-white">{teacher.full_name}</h3>
-                    <Badge tone={statusColors[teacher.status] || "gray"}>{teacher.status}</Badge>
+                    <Badge tone={statusColors[teacher.status] || "gray"}>{te("status", teacher.status)}</Badge>
                   </div>
-                  <p className="text-sm text-accent-fg dark:text-accent-fg">{teacher.designation || "Teacher"}</p>
-                  <p className="text-xs text-ink-3 mt-1">{teacher.department || "General"}</p>
+                  <p className="text-sm text-accent-fg dark:text-accent-fg">{teacher.designation || t("principal.staff.teacher")}</p>
+                  <p className="text-xs text-ink-3 mt-1">{teacher.department || t("principal.staff.general")}</p>
                   <div className="mt-2 text-xs text-ink-2">
-                    <p>{teacher.email}</p>
-                    <p>{teacher.phone}</p>
+                    <p dir="ltr" className="text-start">{teacher.email}</p>
+                    <p dir="ltr" className="text-start">{teacher.phone}</p>
                   </div>
                 </div>
               </div>
@@ -61,7 +63,7 @@ export default function StaffOverview() {
           ))}
           {teachersQuery.data?.items.length === 0 && (
             <Card className="col-span-full">
-              <p className="text-center text-ink-3 py-8">No staff members found.</p>
+              <p className="text-center text-ink-3 py-8">{t("principal.staff.empty")}</p>
             </Card>
           )}
         </div>

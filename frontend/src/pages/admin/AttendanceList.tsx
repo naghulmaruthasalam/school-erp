@@ -4,6 +4,7 @@ import { Card, PageHeader, Spinner, Badge, StatTile } from "../../components/ui"
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
 import { fetchClasses, fetchSections, listStudents } from "./api";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface AttendanceRecord {
   id: string;
@@ -14,6 +15,7 @@ interface AttendanceRecord {
 }
 
 export default function AttendanceList() {
+  const { t, te } = useLanguage();
   const queryClient = useQueryClient();
   const [selectedSection, setSelectedSection] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
@@ -57,7 +59,7 @@ export default function AttendanceList() {
     const section = sectionsQuery.data?.find((s) => s.id === id);
     if (!section) return id;
     const cls = classesQuery.data?.find((c) => c.id === section.class_id);
-    return `${cls?.name || ""} - ${section.name}`;
+    return `${te("class", cls?.name)} - ${te("section", section.name)}`;
   };
 
   const getAttendanceStatus = (studentId: string) => {
@@ -78,18 +80,18 @@ export default function AttendanceList() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Attendance Management" subtitle="Mark and view student attendance" />
+      <PageHeader title={t("admin.attendance.title")} subtitle={t("admin.attendance.subtitle")} />
 
       <Card className="mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Section</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.section")}</label>
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
               className="rounded-lg border border-line px-3 py-2 focus:border-violet-500 focus:ring-violet-500"
             >
-              <option value="">-- Select --</option>
+              <option value="">{t("admin.attendance.select")}</option>
               {sectionsQuery.data?.map((section) => (
                 <option key={section.id} value={section.id}>
                   {getSectionName(section.id)}
@@ -98,7 +100,7 @@ export default function AttendanceList() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink-2 mb-1">Date</label>
+            <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.date")}</label>
             <input
               type="date"
               value={selectedDate}
@@ -112,12 +114,12 @@ export default function AttendanceList() {
       {selectedSection && (
         <>
           <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatTile label="Total Students" value={totalStudents} />
-            <StatTile label="Present" value={presentCount} />
-            <StatTile label="Absent" value={absentCount} />
+            <StatTile label={t("admin.attendance.totalStudents")} value={totalStudents} />
+            <StatTile label={t("admin.attendance.present")} value={presentCount} />
+            <StatTile label={t("admin.attendance.absent")} value={absentCount} />
             <StatTile
-              label="Attendance %"
-              value={totalStudents > 0 ? `${((presentCount / totalStudents) * 100).toFixed(0)}%` : "N/A"}
+              label={t("admin.attendance.attendancePct")}
+              value={totalStudents > 0 ? `${((presentCount / totalStudents) * 100).toFixed(0)}%` : t("admin.attendance.na")}
             />
           </div>
 
@@ -135,11 +137,12 @@ export default function AttendanceList() {
                         <p className="text-sm text-accent-fg">{student.admission_no}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {status && <Badge className={statusColors[status]}>{status}</Badge>}
+                        {status && <Badge className={statusColors[status]}>{te("status", status)}</Badge>}
                         <div className="flex gap-1">
                           {["PRESENT", "ABSENT", "LATE"].map((s) => (
                             <button
                               key={s}
+                              title={te("status", s)}
                               onClick={() => markMutation.mutate({ student_id: student.id, date: selectedDate, status: s })}
                               disabled={markMutation.isPending}
                               className={`px-2 py-1 text-xs rounded ${
@@ -148,7 +151,7 @@ export default function AttendanceList() {
                                   : "bg-surface-3 text-ink-2 hover:bg-violet-100"
                               }`}
                             >
-                              {s.charAt(0)}
+                              {te("status", s).charAt(0)}
                             </button>
                           ))}
                         </div>
@@ -157,7 +160,7 @@ export default function AttendanceList() {
                   );
                 })}
                 {studentsQuery.data?.items.length === 0 && (
-                  <p className="text-center text-accent-fg py-4">No students in this section.</p>
+                  <p className="text-center text-accent-fg py-4">{t("admin.attendance.noStudents")}</p>
                 )}
               </div>
             </Card>
@@ -167,7 +170,7 @@ export default function AttendanceList() {
 
       {!selectedSection && (
         <Card>
-          <p className="text-center text-accent-fg py-8">Select a section to view/mark attendance.</p>
+          <p className="text-center text-accent-fg py-8">{t("admin.attendance.selectSection")}</p>
         </Card>
       )}
     </div>

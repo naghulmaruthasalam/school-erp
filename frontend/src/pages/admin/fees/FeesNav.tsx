@@ -1,16 +1,18 @@
 import { NavLink } from "react-router-dom";
+import { useLanguage } from "../../../i18n/LanguageContext";
 
 const LINKS = [
-  { to: "/admin/fees", label: "Overview", end: true },
-  { to: "/admin/fees/manage", label: "Assign & Invoice", end: true },
-  { to: "/admin/fees/structures", label: "Structures", end: true },
-  { to: "/admin/fees/categories", label: "Categories", end: true },
+  { to: "/admin/fees", labelKey: "admin.nav.overview", end: true },
+  { to: "/admin/fees/manage", labelKey: "admin.nav.assignInvoice", end: true },
+  { to: "/admin/fees/structures", labelKey: "admin.nav.structures", end: true },
+  { to: "/admin/fees/categories", labelKey: "admin.nav.categories", end: true },
 ];
 
 /** Sub-navigation shared by every fee page so the fee setup/billing screens are reachable from the sidebar's "Fee Overview". */
 export default function FeesNav() {
+  const { t } = useLanguage();
   return (
-    <nav className="mb-6 flex flex-wrap gap-2" aria-label="Fee sections">
+    <nav className="mb-6 flex flex-wrap gap-2" aria-label={t("admin.nav.feeSections")}>
       {LINKS.map((l) => (
         <NavLink
           key={l.to}
@@ -22,7 +24,7 @@ export default function FeesNav() {
             }`
           }
         >
-          {l.label}
+          {t(l.labelKey)}
         </NavLink>
       ))}
     </nav>

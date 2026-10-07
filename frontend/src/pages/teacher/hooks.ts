@@ -40,9 +40,11 @@ export function sectionLabel(
   sectionId: string,
   sections: { id: string; name: string; class_id: string }[] | undefined,
   classes: { id: string; name: string }[] | undefined,
+  te?: (kind: "class" | "section", value: string) => string,
 ): string {
   const section = sections?.find((s) => s.id === sectionId);
   if (!section) return sectionId;
   const cls = classes?.find((c) => c.id === section.class_id);
-  return cls ? `${cls.name} - ${section.name}` : section.name;
+  const sectionName = te ? te("section", section.name) : section.name;
+  return cls ? `${te ? te("class", cls.name) : cls.name} - ${sectionName}` : sectionName;
 }

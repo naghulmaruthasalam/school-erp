@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Select } from "../components/ui";
 import type { CopilotContextOptions, StudyContextSel } from "./api";
+import { useCopilotText } from "./i18n";
 
 /** Class / subject / chapter pickers (and the child picker for parents), limited by the server to what the
  * signed-in user is allowed to use. A single class (a student, or a parent with one child) is picked for them. */
@@ -19,6 +20,7 @@ export default function ContextPicker({
   requireChapter?: boolean;
   showChapter?: boolean;
 }) {
+  const { t, te } = useCopilotText();
   const { classes, children } = options;
   const hasChildren = children.length > 0;
 
@@ -45,9 +47,9 @@ export default function ContextPicker({
             const child = children.find((c) => c.id === e.target.value);
             onChange(child ? { studentId: child.id, classId: child.class_id } : {});
           }}
-          aria-label="Child"
+          aria-label={t("copilot.picker.child")}
         >
-          <option value="">Choose a child…</option>
+          <option value="">{t("copilot.picker.chooseChild")}</option>
           {children.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -60,12 +62,12 @@ export default function ContextPicker({
           className="col-span-2 !min-h-9 !py-1.5 text-[13px]"
           value={value.classId ?? ""}
           onChange={(e) => onChange({ classId: e.target.value || undefined })}
-          aria-label="Class"
+          aria-label={t("copilot.picker.class")}
         >
-          <option value="">Choose a class…</option>
+          <option value="">{t("copilot.picker.chooseClass")}</option>
           {classes.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {te("class", c.name)}
             </option>
           ))}
         </Select>
@@ -75,12 +77,12 @@ export default function ContextPicker({
         value={value.subjectId ?? ""}
         disabled={!klass}
         onChange={(e) => onChange({ ...value, subjectId: e.target.value || undefined, chapter: undefined })}
-        aria-label="Subject"
+        aria-label={t("copilot.picker.subject")}
       >
-        <option value="">{requireSubject ? "Choose a subject…" : "Any subject"}</option>
+        <option value="">{requireSubject ? t("copilot.picker.chooseSubject") : t("copilot.picker.anySubject")}</option>
         {klass?.subjects.map((s) => (
           <option key={s.id} value={s.id}>
-            {s.name}
+            {te("subject", s.name)}
           </option>
         ))}
       </Select>
@@ -90,9 +92,9 @@ export default function ContextPicker({
           value={value.chapter ?? ""}
           disabled={!subject}
           onChange={(e) => onChange({ ...value, chapter: e.target.value || undefined })}
-          aria-label="Chapter"
+          aria-label={t("copilot.picker.chapter")}
         >
-          <option value="">{requireChapter ? "Choose a chapter…" : "Whole subject"}</option>
+          <option value="">{requireChapter ? t("copilot.picker.chooseChapter") : t("copilot.picker.wholeSubject")}</option>
           {subject?.chapters.map((c) => (
             <option key={c} value={c}>
               {c}

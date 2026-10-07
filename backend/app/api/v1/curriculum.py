@@ -6,9 +6,10 @@ from pydantic import BaseModel
 
 from app.core.deps import CurrentUser, require_tenant_user
 from app.core.enums import DocumentModule, Role
+from app.core.lang import Lang, get_lang
 from app.models.curriculum import CurriculumUnit, CurriculumResource
 from app.schemas.common import PageParams, PageResponse
-from app.services import upload_service
+from app.services import curriculum_service, upload_service
 
 router = APIRouter(prefix="/curriculum", tags=["curriculum"])
 
@@ -20,13 +21,8 @@ async def list_grades(
     current: CurrentUser = Depends(require_tenant_user),
 ) -> dict[str, Any]:
     """Get list of available grades."""
-    pipeline = [
-        {"$group": {"_id": "$grade"}},
-        {"$sort": {"_id": 1}},
-    ]
-    result = await CurriculumUnit.aggregate(pipeline).to_list()
-    grades = sorted([r["_id"] for r in result if r["_id"]])
-    return {"grades": grades}
+    units = await curriculum_service.load_units(current.school_id)
+    return {"grades": sorted({u.grade for u in units if u.grade})}
 
 
 @router.get("/subjects")
@@ -34,19 +30,9 @@ async def list_subjects(
     grade: int | None = Query(None),
     current: CurrentUser = Depends(require_tenant_user),
 ) -> dict[str, Any]:
-    """Get list of available subjects, optionally filtered by grade."""
-    match_stage = {}
-    if grade:
-        match_stage["grade"] = grade
-
-    pipeline = [
-        {"$match": match_stage} if match_stage else {"$match": {}},
-        {"$group": {"_id": "$subject"}},
-        {"$sort": {"_id": 1}},
-    ]
-    result = await CurriculumUnit.aggregate(pipeline).to_list()
-    subjects = sorted([r["_id"] for r in result if r["_id"]])
-    return {"subjects": subjects}
+    """Get list of available subjects (one entry per subject, however the textbook files name it), optionally for a grade."""
+    units = await curriculum_service.load_units(current.school_id, grade)
+    return {"subjects": sorted(curriculum_service.subject_display(units).values())}
 
 
 @router.get("/chapters")
@@ -54,25 +40,15 @@ async def list_chapters(
     grade: int,
     subject: str,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> dict[str, Any]:
-    """Get list of chapters/units for a grade and subject (deduplicated)."""
-    units = await CurriculumUnit.find(
-        CurriculumUnit.grade == grade,
-        CurriculumUnit.subject == subject,
-    ).sort(CurriculumUnit.unit_number).to_list()
-
-    seen = set()
-    chapters = []
-    for u in units:
-        if u.unit_number not in seen:
-            seen.add(u.unit_number)
-            chapters.append({
-                "unit_number": u.unit_number,
-                "title_en": u.unit_title_en,
-                "title_ar": u.unit_title_ar,
-                "total_pages": u.total_pages,
-            })
-    return {"chapters": chapters, "total": len(chapters)}
+    """Chapters/units of a grade and subject: one entry per unit, titled and sourced in the caller's language."""
+    units = await curriculum_service.load_units(current.school_id, grade, subject)
+    chapters = [
+        {**curriculum_service.describe(group, lang)}
+        for group in curriculum_service.group_by_unit(units).values()
+    ]
+    return {"chapters": chapters, "total": len(chapters), "language": lang}
 
 
 @router.get("/content")
@@ -81,29 +57,24 @@ async def get_content(
     subject: str,
     unit_number: int | None = Query(None),
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> dict[str, Any]:
-    """Get curriculum content for teacher copilot features."""
-
-    filters = [
-        CurriculumUnit.grade == grade,
-        CurriculumUnit.subject == subject,
-    ]
-    if unit_number:
-        filters.append(CurriculumUnit.unit_number == unit_number)
-
-    units = await CurriculumUnit.find(*filters).sort(CurriculumUnit.unit_number).to_list()
-
-    if not units:
+    """Curriculum content for a grade + subject (+ unit), in the caller's language when that edition exists."""
+    units = await curriculum_service.load_units(current.school_id, grade, subject)
+    groups = curriculum_service.group_by_unit(units)
+    if unit_number is not None:
+        groups = {k: g for k, g in groups.items() if k[2] == unit_number}
+    if not groups:
         return {"content": None, "message": "No content found"}
 
-    if unit_number:
-        unit = units[0]
+    if unit_number is not None:
+        group = next(iter(groups.values()))
+        unit, served = curriculum_service.pick(group, lang)
         return {
+            **curriculum_service.describe(group, lang),
             "grade": unit.grade,
             "subject": unit.subject,
-            "unit_number": unit.unit_number,
-            "title_en": unit.unit_title_en,
-            "title_ar": unit.unit_title_ar,
+            "requested_language": lang,
             "full_text": unit.full_text,
             "pages": [{"page_number": p.page_number, "text": p.text} for p in unit.pages],
             "metadata": unit.metadata.model_dump() if unit.metadata else None,
@@ -112,15 +83,8 @@ async def get_content(
     return {
         "grade": grade,
         "subject": subject,
-        "units": [
-            {
-                "unit_number": u.unit_number,
-                "title_en": u.unit_title_en,
-                "title_ar": u.unit_title_ar,
-                "total_pages": u.total_pages,
-            }
-            for u in units
-        ],
+        "language": lang,
+        "units": [curriculum_service.describe(g, lang) for g in groups.values()],
     }
 
 
@@ -132,38 +96,28 @@ async def search_content(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> dict[str, Any]:
-    """Search curriculum content by text."""
-
-    filters = []
-    if grade:
-        filters.append(CurriculumUnit.grade == grade)
-    if subject:
-        filters.append(CurriculumUnit.subject == subject)
-
-    units = await CurriculumUnit.find(
-        *filters,
-        {"$or": [
-            {"full_text": {"$regex": q, "$options": "i"}},
-            {"unit_title_en": {"$regex": q, "$options": "i"}},
-            {"unit_title_ar": {"$regex": q, "$options": "i"}},
-        ]},
-    ).skip((page - 1) * page_size).limit(page_size).to_list()
-
+    """Search textbook text; hits in the caller's language come first."""
+    needle = q.strip().lower()
+    units = await curriculum_service.load_units(current.school_id, grade, subject)
+    hits = [
+        u for u in units
+        if needle in (u.full_text or "").lower() or needle in (u.unit_title_en or "").lower() or needle in (u.unit_title_ar or "").lower()
+    ]
+    hits.sort(key=lambda u: (curriculum_service.unit_language(u) != lang, u.grade, u.subject, u.unit_number))
+    window = hits[(page - 1) * page_size: page * page_size]
     results = [
         {
-            "id": str(u.id),
-            "grade": u.grade,
-            "subject": u.subject,
-            "unit_number": u.unit_number,
-            "title_en": u.unit_title_en,
-            "title_ar": u.unit_title_ar,
+            "id": str(u.id), "grade": u.grade, "subject": u.subject, "unit_number": u.unit_number,
+            "title": curriculum_service.title_in({curriculum_service.unit_language(u): u}, lang),
+            "title_en": u.unit_title_en, "title_ar": curriculum_service.titles({"x": u})[1],
+            "language": curriculum_service.unit_language(u),
             "snippet": u.full_text[:300] + "..." if len(u.full_text) > 300 else u.full_text,
         }
-        for u in units
+        for u in window
     ]
-
-    return {"results": results, "page": page, "page_size": page_size}
+    return {"results": results, "page": page, "page_size": page_size, "total": len(hits)}
 
 
 class CreateUnitRequest(BaseModel):
@@ -173,6 +127,7 @@ class CreateUnitRequest(BaseModel):
     unit_title_en: str
     unit_title_ar: str | None = None
     full_text: str = ""
+    language: str = "en"  # the language the text is in; the same unit can be added once per language
 
 
 @router.post("/units")
@@ -188,6 +143,7 @@ async def create_unit(
         CurriculumUnit.grade == req.grade,
         CurriculumUnit.subject == req.subject,
         CurriculumUnit.unit_number == req.unit_number,
+        CurriculumUnit.language == req.language,
     )
     if existing:
         raise HTTPException(status_code=409, detail="Unit already exists")
@@ -200,6 +156,7 @@ async def create_unit(
         unit_title_en=req.unit_title_en,
         unit_title_ar=req.unit_title_ar,
         full_text=req.full_text,
+        language=req.language,
     )
     await unit.insert()
     return {"id": str(unit.id), "message": "Unit created"}
@@ -266,17 +223,14 @@ async def get_resources(
     current: CurrentUser = Depends(require_tenant_user),
 ) -> dict[str, Any]:
     """Get all resources for a curriculum unit."""
-    unit = await CurriculumUnit.find_one(
-        CurriculumUnit.grade == grade,
-        CurriculumUnit.subject == subject,
-        CurriculumUnit.unit_number == unit_number,
-    )
-
-    if not unit:
+    # a unit exists once per language edition; videos and files belong to the unit, not to one edition
+    units = [u for u in await curriculum_service.load_units(current.school_id, grade, subject) if u.unit_number == unit_number]
+    if not units:
         return {"resources": []}
+    unit = units[0]
 
     resources = []
-    for r in unit.resources:
+    for r in (r for u in units for r in u.resources):
         res_data = r.model_dump()
         if r.document_id:
             try:
@@ -291,5 +245,6 @@ async def get_resources(
         "subject": subject,
         "unit_number": unit_number,
         "title": unit.unit_title_en,
+        "title_ar": curriculum_service.titles({"x": unit})[1],
         "resources": resources,
     }

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { api } from "../../api/client";
 import { Badge, Button, Card, ErrorText, PageHeader, Spinner } from "../../components/ui";
 import { DataTable, Pagination, type Column } from "../../components/DataTable";
@@ -9,8 +10,19 @@ import { openCopilot } from "../../copilot/events";
 import type { Homework, PendingHomework } from "./types";
 import { BookOpen, Calendar, Clock, Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Star, Award, X, Sparkles, ThumbsUp, Target } from "lucide-react";
 
+interface QuestionFeedback {
+  question_number: number;
+  student_answer?: string;
+  is_correct: boolean;
+  score: number;
+  max_score: number;
+  feedback: string;
+  suggestions?: string[];
+}
+
 interface AIFeedback {
-  status: string;
+  status: "ready" | "pending" | "unreadable" | "not_configured" | "not_submitted";
+  message?: string;
   total_score?: number;
   max_score?: number;
   percentage?: number;
@@ -18,32 +30,38 @@ interface AIFeedback {
   overall_feedback?: string;
   strengths?: string[];
   areas_to_improve?: string[];
+  questions?: QuestionFeedback[];
+  files_checked?: string[];
 }
 
+const gradeColors: Record<string, string> = {
+  A: "from-emerald-500 to-teal-500",
+  B: "from-blue-500 to-cyan-500",
+  C: "from-amber-500 to-yellow-500",
+  D: "from-orange-500 to-red-400",
+  F: "from-red-500 to-rose-600",
+};
+
+/** The AI's marking of what the student handed in. It is requested in the app's language (the api client sends it),
+ *  so switching to Arabic shows feedback written in Arabic; while the server is still reading the work we poll. */
 function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose: () => void }) {
+  const { t, language, fmtNumber } = useLanguage();
   const { data: submissions } = useQuery({
     queryKey: ["homework-submissions", homeworkId],
     queryFn: () => fetchHomeworkSubmissions(homeworkId),
   });
-
   const submission = submissions?.[0];
 
-  const { data: feedback, isLoading } = useQuery<AIFeedback>({
-    queryKey: ["homework-feedback", submission?.id],
+  const { data: feedback, isLoading, refetch, isFetching } = useQuery<AIFeedback>({
+    queryKey: ["homework-feedback", submission?.id, language],
     queryFn: async () => {
       const { data } = await api.get(`/homework/submissions/${submission?.id}/feedback`);
       return data;
     },
     enabled: !!submission?.id,
+    // the first request marks the work (a few seconds); keep asking while the AI service is busy
+    refetchInterval: (q) => (q.state.data?.status === "pending" ? 4000 : false),
   });
-
-  const gradeColors: Record<string, string> = {
-    A: "from-emerald-500 to-teal-500",
-    B: "from-blue-500 to-cyan-500",
-    C: "from-amber-500 to-yellow-500",
-    D: "from-orange-500 to-red-400",
-    F: "from-red-500 to-rose-600",
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -53,11 +71,11 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
             <div className="flex items-center gap-3">
               <Sparkles className="w-8 h-8" />
               <div>
-                <h2 className="text-xl font-bold">AI Feedback</h2>
-                <p className="text-white/80 text-sm">Your homework evaluation</p>
+                <h2 className="text-xl font-bold">{t("studentHomework.feedback.title")}</h2>
+                <p className="text-white/80 text-sm">{t("studentHomework.feedback.subtitle")}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-white/20 transition-colors">
+            <button onClick={onClose} aria-label={t("common.cancel")} className="p-2 rounded-full hover:bg-white/20 transition-colors">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -67,41 +85,78 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
           {isLoading || !feedback ? (
             <div className="flex flex-col items-center py-12">
               <Spinner size="lg" />
-              <p className="mt-4 text-ink-3">Analyzing your submission...</p>
+              <p className="mt-4 text-ink-3">{t("studentHomework.feedback.analysing")}</p>
             </div>
           ) : feedback.status === "pending" ? (
             <div className="text-center py-12">
               <Sparkles className="w-16 h-16 mx-auto text-violet-500 mb-4" />
-              <p className="text-lg font-bold text-ink dark:text-white">Feedback is being processed</p>
-              <p className="text-ink-3">Check back in a few minutes.</p>
+              <p className="text-lg font-bold text-ink dark:text-white">{t("studentHomework.feedback.processing")}</p>
+              <p className="text-ink-3">{t("studentHomework.feedback.processingHint")}</p>
+            </div>
+          ) : feedback.status !== "ready" ? (
+            <div className="text-center py-10">
+              <AlertCircle className="w-14 h-14 mx-auto text-amber-500 mb-4" />
+              <p className="text-base font-semibold text-ink dark:text-white">{t(`studentHomework.feedback.status.${feedback.status}`)}</p>
+              <p className="mt-1 text-sm text-ink-3">{t(`studentHomework.feedback.statusHint.${feedback.status}`)}</p>
+              {feedback.status === "unreadable" && (
+                <Button className="mt-4" variant="secondary" onClick={() => void refetch()} disabled={isFetching}>
+                  {t("studentHomework.feedback.checkAgain")}
+                </Button>
+              )}
             </div>
           ) : (
             <>
-              {/* Score Card */}
               <div className="flex items-center gap-6 mb-6">
                 <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${gradeColors[feedback.grade || "C"]} flex items-center justify-center shadow-lg`}>
                   <span className="text-4xl font-bold text-white">{feedback.grade}</span>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-ink dark:text-white">{feedback.percentage}%</p>
-                  <p className="text-ink-3">{feedback.total_score} / {feedback.max_score} points</p>
+                  <p className="text-3xl font-bold text-ink dark:text-white">{fmtNumber(feedback.percentage ?? 0)}%</p>
+                  <p className="text-ink-3">{t("studentHomework.feedback.points", { score: fmtNumber(feedback.total_score ?? 0), max: fmtNumber(feedback.max_score ?? 0) })}</p>
                 </div>
               </div>
 
-              {/* Overall Feedback */}
+              {feedback.files_checked && feedback.files_checked.length > 0 && (
+                <p className="mb-3 text-xs text-ink-3">
+                  {t("studentHomework.feedback.checked")} <span dir="ltr">{feedback.files_checked.join(", ")}</span>
+                </p>
+              )}
+
               <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-xl p-4 mb-6">
-                <p className="text-ink dark:text-white">{feedback.overall_feedback}</p>
+                <p className="text-ink dark:text-white" dir="auto">{feedback.overall_feedback}</p>
               </div>
 
-              {/* Strengths */}
+              {feedback.questions && feedback.questions.length > 0 && (
+                <div className="mb-6 space-y-3">
+                  <h3 className="font-bold text-ink dark:text-white">{t("studentHomework.feedback.byQuestion")}</h3>
+                  {feedback.questions.map((q) => (
+                    <div key={q.question_number} className="rounded-xl border border-line p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-ink">{t("studentHomework.feedback.question", { n: q.question_number })}</span>
+                        <Badge tone={q.is_correct ? "green" : q.score > 0 ? "amber" : "red"}>
+                          {fmtNumber(q.score)} / {fmtNumber(q.max_score)}
+                        </Badge>
+                      </div>
+                      {q.student_answer && <p className="mt-1 text-xs text-ink-3" dir="auto">“{q.student_answer}”</p>}
+                      <p className="mt-2 text-sm text-ink-2" dir="auto">{q.feedback}</p>
+                      {q.suggestions && q.suggestions.length > 0 && (
+                        <ul className="mt-2 list-disc ps-5 text-xs text-ink-3" dir="auto">
+                          {q.suggestions.map((sg, i) => <li key={i}>{sg}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {feedback.strengths && feedback.strengths.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-bold text-ink dark:text-white flex items-center gap-2 mb-3">
-                    <ThumbsUp className="w-5 h-5 text-emerald-500" /> What you did well
+                    <ThumbsUp className="w-5 h-5 text-emerald-500" /> {t("studentHomework.feedback.didWell")}
                   </h3>
                   <ul className="space-y-2">
                     {feedback.strengths.map((s, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-ink-2">
+                      <li key={i} className="flex items-start gap-2 text-sm text-ink-2" dir="auto">
                         <Star className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                         {s}
                       </li>
@@ -110,15 +165,14 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
                 </div>
               )}
 
-              {/* Areas to Improve */}
               {feedback.areas_to_improve && feedback.areas_to_improve.length > 0 && (
                 <div>
                   <h3 className="font-bold text-ink dark:text-white flex items-center gap-2 mb-3">
-                    <Target className="w-5 h-5 text-blue-500" /> Areas to improve
+                    <Target className="w-5 h-5 text-blue-500" /> {t("studentHomework.feedback.improve")}
                   </h3>
                   <ul className="space-y-2">
                     {feedback.areas_to_improve.map((a, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-ink-2">
+                      <li key={i} className="flex items-start gap-2 text-sm text-ink-2" dir="auto">
                         <Award className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                         {a}
                       </li>
@@ -134,13 +188,15 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
   );
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+function useFormatDate() {
+  const { fmtDate } = useLanguage();
+  return (iso: string) => fmtDate(iso);
 }
 
 const PAGE_SIZE = 10;
 
-function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; studentId: string }) {
+function MarkSubmittedButton({ homeworkId, studentId, onSubmitted }: { homeworkId: string; studentId: string; onSubmitted: () => void }) {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -150,7 +206,7 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
     mutationFn: async () => {
       const submissions = await fetchHomeworkSubmissions(homeworkId);
       const mine = submissions.find((s) => s.student_id === studentId);
-      if (!mine) throw new Error("No submission record found for this homework yet.");
+      if (!mine) throw new Error(t("studentHomework.submit.noRecord"));
       let attachmentIds = mine.attachment_document_ids ?? [];
       if (file) {
         const form = new FormData();
@@ -166,13 +222,16 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
       setFile(null);
       queryClient.invalidateQueries({ queryKey: ["student", "homework-pending"] });
       queryClient.invalidateQueries({ queryKey: ["student", "homework-all"] });
+      queryClient.invalidateQueries({ queryKey: ["homework-submissions", homeworkId] });
+      queryClient.invalidateQueries({ queryKey: ["homework-feedback"] });
+      onSubmitted(); // the AI starts marking the moment the work is handed in: show it
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Failed to submit homework."),
+    onError: (err) => setError(err instanceof Error ? err.message : t("studentHomework.submit.failed")),
   });
 
   return (
     <div className="flex flex-col gap-3">
-      <input ref={fileRef} type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      <input ref={fileRef} type="file" accept=".pdf,.docx,.txt,image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
 
       <button
         type="button"
@@ -188,9 +247,9 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
             <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center">
               <FileText size={20} className="text-white" />
             </div>
-            <div className="text-left flex-1">
-              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[200px]">{file.name}</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-500">Click to change file</p>
+            <div className="text-start flex-1">
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[200px]" dir="ltr">{file.name}</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-500">{t("studentHomework.submit.change")}</p>
             </div>
             <CheckCircle size={20} className="text-emerald-500" />
           </>
@@ -199,9 +258,9 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
             <div className="w-10 h-10 rounded-lg bg-surface-3 flex items-center justify-center">
               <Upload size={20} className="text-ink-3" />
             </div>
-            <div className="text-left flex-1">
-              <p className="text-sm font-medium text-ink dark:text-white">Upload your work</p>
-              <p className="text-xs text-ink-3">PDF, DOC, or image files</p>
+            <div className="text-start flex-1">
+              <p className="text-sm font-medium text-ink dark:text-white">{t("studentHomework.submit.upload")}</p>
+              <p className="text-xs text-ink-3">{t("studentHomework.submit.types")}</p>
             </div>
           </>
         )}
@@ -213,7 +272,7 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
         className={`w-full ${!file ? "opacity-50 cursor-not-allowed" : ""}`}
         glow={!!file}
       >
-        {mutation.isPending ? "Submitting..." : file ? "Submit Homework" : "Upload file to submit"}
+        {mutation.isPending ? t("studentHomework.submit.submitting") : file ? t("studentHomework.submit.submit") : t("studentHomework.submit.pick")}
       </Button>
 
       {error && <ErrorText className="text-center">{error}</ErrorText>}
@@ -221,7 +280,9 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
   );
 }
 
-function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: PendingHomework; subjectName: string; studentId: string; classId?: string }) {
+function PendingHomeworkCard({ hw, subjectName, studentId, classId, onSubmitted }: { hw: PendingHomework; subjectName: string; studentId: string; classId?: string; onSubmitted: () => void }) {
+  const { t, te } = useLanguage();
+  const formatDate = useFormatDate();
   const [expanded, setExpanded] = useState(false);
   const overdue = hw.due_date < new Date().toISOString().slice(0, 10);
   const dueToday = hw.due_date === new Date().toISOString().slice(0, 10);
@@ -244,10 +305,10 @@ function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: Pend
             <div className="flex-1">
               <h3 className="font-bold text-lg text-ink dark:text-white">{hw.title}</h3>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <Badge tone="violet">{subjectName}</Badge>
+                <Badge tone="violet">{te("subject", subjectName)}</Badge>
                 {hw.chapter && <Badge tone="blue">{hw.chapter}</Badge>}
-                {overdue && <Badge tone="red">Overdue</Badge>}
-                {dueToday && !overdue && <Badge tone="amber">Due Today</Badge>}
+                {overdue && <Badge tone="red">{t("studentHomework.overdue")}</Badge>}
+                {dueToday && !overdue && <Badge tone="amber">{t("studentHomework.dueToday")}</Badge>}
               </div>
             </div>
           </div>
@@ -255,11 +316,11 @@ function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: Pend
           <div className="flex flex-wrap gap-4 text-sm mb-3">
             <div className="flex items-center gap-2 text-ink-3">
               <Calendar size={16} />
-              <span>Assigned: {formatDate(hw.assigned_date)}</span>
+              <span>{t("studentHomework.assigned")}: {formatDate(hw.assigned_date)}</span>
             </div>
             <div className={`flex items-center gap-2 ${overdue ? "text-red-600 font-medium" : dueToday ? "text-amber-600 font-medium" : "text-ink-3"}`}>
               <Clock size={16} />
-              <span>Due: {formatDate(hw.due_date)}</span>
+              <span>{t("studentHomework.due")}: {formatDate(hw.due_date)}</span>
             </div>
           </div>
 
@@ -270,7 +331,7 @@ function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: Pend
                 className="flex items-center gap-2 text-sm text-accent-fg hover:text-accent transition-colors"
               >
                 {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                {expanded ? "Hide instructions" : "View instructions"}
+                {expanded ? t("studentHomework.hideInstructions") : t("studentHomework.viewInstructions")}
               </button>
               {expanded && (
                 <div className="mt-3 p-4 rounded-xl bg-surface-3 dark:bg-surface-2 text-sm text-ink-2 leading-relaxed max-h-60 overflow-y-auto">
@@ -286,12 +347,12 @@ function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: Pend
         </div>
 
         {/* Right: Upload & Submit */}
-        <div className="lg:w-72 lg:border-l lg:border-line lg:pl-4">
-          <MarkSubmittedButton homeworkId={hw.id} studentId={studentId} />
+        <div className="lg:w-72 lg:border-s lg:border-line lg:ps-4">
+          <MarkSubmittedButton homeworkId={hw.id} studentId={studentId} onSubmitted={onSubmitted} />
           {classId && (
             <button type="button" className="mt-3 text-xs font-medium text-accent-fg hover:underline"
-              onClick={() => openCopilot({ classId, subjectId: hw.subject_id, chapter: hw.chapter ?? undefined, message: `I need help getting started with my homework "${hw.title}". Give me a hint, not the answer.` })}>
-              Get a hint from the Copilot
+              onClick={() => openCopilot({ classId, subjectId: hw.subject_id, chapter: hw.chapter ?? undefined, message: t("studentHomework.hintPrompt", { title: hw.title }) })}>
+              {t("studentHomework.hint")}
             </button>
           )}
         </div>
@@ -301,6 +362,8 @@ function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: Pend
 }
 
 export default function StudentHomework() {
+  const { t, te } = useLanguage();
+  const formatDate = useFormatDate();
   const { data: profile } = useMyProfile();
   const { data: subjects } = useSubjects();
   const subjects_ = subjectMap(subjects);
@@ -323,22 +386,22 @@ export default function StudentHomework() {
   const submittedCount = (allQuery.data?.items ?? []).filter(hw => !pendingIds.has(hw.id)).length;
 
   const columns: Column<Homework>[] = [
-    { header: "Title", cell: (row) => <span className="font-medium text-ink dark:text-white">{row.title}</span> },
-    { header: "Subject", cell: (row) => <Badge tone="violet">{subjects_[row.subject_id]?.name ?? "—"}</Badge> },
-    { header: "Assigned", cell: (row) => formatDate(row.assigned_date) },
-    { header: "Due", cell: (row) => formatDate(row.due_date) },
+    { header: t("studentHomework.col.title"), cell: (row) => <span className="font-medium text-ink dark:text-white">{row.title}</span> },
+    { header: t("studentHomework.col.subject"), cell: (row) => <Badge tone="violet">{subjects_[row.subject_id]?.name ? te("subject", subjects_[row.subject_id].name) : "—"}</Badge> },
+    { header: t("studentHomework.col.assigned"), cell: (row) => formatDate(row.assigned_date) },
+    { header: t("studentHomework.col.due"), cell: (row) => formatDate(row.due_date) },
     {
-      header: "Status",
-      cell: (row) => (pendingIds.has(row.id) ? <Badge tone="amber">Pending</Badge> : <Badge tone="green">Submitted</Badge>),
+      header: t("studentHomework.col.status"),
+      cell: (row) => (pendingIds.has(row.id) ? <Badge tone="amber">{t("studentHomework.pending")}</Badge> : <Badge tone="green">{t("studentHomework.submitted")}</Badge>),
     },
     {
-      header: "Feedback",
+      header: t("studentHomework.col.feedback"),
       cell: (row) => !pendingIds.has(row.id) ? (
         <button
           onClick={() => setFeedbackHomeworkId(row.id)}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs font-medium hover:shadow-lg transition-all"
         >
-          <Sparkles className="w-3 h-3" /> AI Feedback
+          <Sparkles className="w-3 h-3" /> {t("studentHomework.feedback.button")}
         </button>
       ) : <span className="text-ink-3 text-sm">—</span>,
     },
@@ -346,27 +409,27 @@ export default function StudentHomework() {
 
   return (
     <div className="animate-page-enter">
-      <PageHeader title="Homework" subtitle="View assignments and submit your work" />
+      <PageHeader title={t("studentHomework.title")} subtitle={t("studentHomework.subtitle")} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-6 -mt-6 blur-xl" />
+          <div className="absolute top-0 end-0 w-20 h-20 bg-white/10 rounded-full -me-6 -mt-6 blur-xl" />
           <AlertCircle className="w-7 h-7 mb-2 drop-shadow" />
           <p className="text-3xl font-bold">{pendingCount}</p>
-          <p className="text-sm text-white/80">Pending</p>
+          <p className="text-sm text-white/80">{t("studentHomework.pending")}</p>
         </div>
         <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-6 -mt-6 blur-xl" />
+          <div className="absolute top-0 end-0 w-20 h-20 bg-white/10 rounded-full -me-6 -mt-6 blur-xl" />
           <CheckCircle className="w-7 h-7 mb-2 drop-shadow" />
           <p className="text-3xl font-bold">{submittedCount}</p>
-          <p className="text-sm text-white/80">Submitted</p>
+          <p className="text-sm text-white/80">{t("studentHomework.submitted")}</p>
         </div>
         <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg col-span-2 md:col-span-1">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-6 -mt-6 blur-xl" />
+          <div className="absolute top-0 end-0 w-20 h-20 bg-white/10 rounded-full -me-6 -mt-6 blur-xl" />
           <BookOpen className="w-7 h-7 mb-2 drop-shadow" />
           <p className="text-3xl font-bold">{allQuery.data?.total ?? 0}</p>
-          <p className="text-sm text-white/80">Total Assignments</p>
+          <p className="text-sm text-white/80">{t("studentHomework.total")}</p>
         </div>
       </div>
 
@@ -376,7 +439,7 @@ export default function StudentHomework() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
             <Clock size={16} className="text-white" />
           </div>
-          <h2 className="font-bold text-lg text-ink dark:text-white">Pending Assignments</h2>
+          <h2 className="font-bold text-lg text-ink dark:text-white">{t("studentHomework.pendingTitle")}</h2>
           {pendingCount > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium">
               {pendingCount}
@@ -391,8 +454,8 @@ export default function StudentHomework() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-emerald-500" />
             </div>
-            <p className="text-lg font-bold text-ink dark:text-white mb-1">All caught up!</p>
-            <p className="text-sm text-ink-3">No pending homework. Great job!</p>
+            <p className="text-lg font-bold text-ink dark:text-white mb-1">{t("studentHomework.caughtUp")}</p>
+            <p className="text-sm text-ink-3">{t("studentHomework.noPending")}</p>
           </Card>
         ) : (
           <div className="space-y-4">
@@ -404,6 +467,7 @@ export default function StudentHomework() {
                   key={hw.id}
                   hw={hw}
                   subjectName={subjects_[hw.subject_id]?.name ?? "—"}
+                  onSubmitted={() => setFeedbackHomeworkId(hw.id)}
                   studentId={hw.student_id}
                   classId={profile?.class_id}
                 />
@@ -418,7 +482,7 @@ export default function StudentHomework() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
             <BookOpen size={16} className="text-white" />
           </div>
-          <h2 className="font-bold text-lg text-ink dark:text-white">All Homework</h2>
+          <h2 className="font-bold text-lg text-ink dark:text-white">{t("studentHomework.allTitle")}</h2>
         </div>
         <Card gradient>
           <DataTable
@@ -426,7 +490,7 @@ export default function StudentHomework() {
             rows={allQuery.data?.items ?? []}
             isLoading={allQuery.isLoading}
             rowKey={(row) => row.id}
-            emptyLabel="No homework assigned yet."
+            emptyLabel={t("studentHomework.empty")}
           />
           {allQuery.data && allQuery.data.total > PAGE_SIZE && (
             <div className="mt-4 pt-4 border-t border-line">

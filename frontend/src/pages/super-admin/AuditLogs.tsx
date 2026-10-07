@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button, Card, Input, Select, Spinner } from "../../components/ui";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { fetchAuditLogs, exportDataToCsv } from "./api";
 
 function getActionColor(action: string): string {
@@ -24,6 +25,7 @@ function getActionIcon(action: string): string {
 }
 
 export default function AuditLogs() {
+  const { t, fmtDate } = useLanguage();
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(100);
 
@@ -47,9 +49,9 @@ export default function AuditLogs() {
     <div className="animate-fade-in-up">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink dark:text-white">Audit Logs</h1>
+          <h1 className="text-2xl font-semibold text-ink dark:text-white">{t("superAdmin.audit.title")}</h1>
           <p className="mt-1 text-sm text-ink-2">
-            Track all platform activities and system events
+            {t("superAdmin.audit.subtitle")}
           </p>
         </div>
         <Button
@@ -67,7 +69,7 @@ export default function AuditLogs() {
           )}
           disabled={!auditQuery.data?.length}
         >
-          Export Logs
+          {t("superAdmin.audit.exportLogs")}
         </Button>
       </div>
 
@@ -76,17 +78,17 @@ export default function AuditLogs() {
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[250px]">
             <Input
-              placeholder="Search by action, actor, school, or entity..."
+              placeholder={t("superAdmin.audit.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="w-40">
             <Select value={String(limit)} onChange={(e) => setLimit(Number(e.target.value))}>
-              <option value="50">Last 50</option>
-              <option value="100">Last 100</option>
-              <option value="250">Last 250</option>
-              <option value="500">Last 500</option>
+              <option value="50">{t("superAdmin.audit.lastN", { n: 50 })}</option>
+              <option value="100">{t("superAdmin.audit.lastN", { n: 100 })}</option>
+              <option value="250">{t("superAdmin.audit.lastN", { n: 250 })}</option>
+              <option value="500">{t("superAdmin.audit.lastN", { n: 500 })}</option>
             </Select>
           </div>
         </div>
@@ -96,25 +98,25 @@ export default function AuditLogs() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div className="p-4 bg-surface rounded-xl border border-line">
           <p className="text-2xl font-bold text-accent-fg dark:text-accent-fg">{auditQuery.data?.length ?? 0}</p>
-          <p className="text-xs text-ink-3">Total Events</p>
+          <p className="text-xs text-ink-3">{t("superAdmin.audit.totalEvents")}</p>
         </div>
         <div className="p-4 bg-surface rounded-xl border border-line">
           <p className="text-2xl font-bold text-emerald-600">
             {(auditQuery.data ?? []).filter(l => l.action.includes("created")).length}
           </p>
-          <p className="text-xs text-ink-3">Create Events</p>
+          <p className="text-xs text-ink-3">{t("superAdmin.audit.createEvents")}</p>
         </div>
         <div className="p-4 bg-surface rounded-xl border border-line">
           <p className="text-2xl font-bold text-amber-500">
             {(auditQuery.data ?? []).filter(l => l.action.includes("updated")).length}
           </p>
-          <p className="text-xs text-ink-3">Update Events</p>
+          <p className="text-xs text-ink-3">{t("superAdmin.audit.updateEvents")}</p>
         </div>
         <div className="p-4 bg-surface rounded-xl border border-line">
           <p className="text-2xl font-bold text-red-600">
             {(auditQuery.data ?? []).filter(l => l.action.includes("deleted") || l.action.includes("deactivated")).length}
           </p>
-          <p className="text-xs text-ink-3">Delete/Deactivate</p>
+          <p className="text-xs text-ink-3">{t("superAdmin.audit.deleteEvents")}</p>
         </div>
       </div>
 
@@ -137,12 +139,12 @@ export default function AuditLogs() {
                     <div>
                       <p className="font-medium text-ink dark:text-white">{log.action}</p>
                       <p className="text-sm text-ink-3 mt-0.5">
-                        by <span className="font-medium text-ink-2">{log.actor_name}</span>
-                        {log.actor_email && <span className="text-ink-3"> ({log.actor_email})</span>}
+                        {t("superAdmin.audit.by")} <span className="font-medium text-ink-2">{log.actor_name}</span>
+                        {log.actor_email && <span className="text-ink-3" dir="ltr"> ({log.actor_email})</span>}
                       </p>
                     </div>
                     <span className="text-xs text-ink-3 whitespace-nowrap">
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : "—"}
+                      {log.created_at ? fmtDate(log.created_at, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
                     </span>
                   </div>
                   <div className="flex items-center gap-4 mt-2">
@@ -164,8 +166,8 @@ export default function AuditLogs() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-3 flex items-center justify-center text-3xl">
               📋
             </div>
-            <p className="text-ink-3">No audit logs available yet.</p>
-            <p className="text-xs text-ink-3 mt-1">Logs will appear here as platform activities occur.</p>
+            <p className="text-ink-3">{t("superAdmin.audit.empty")}</p>
+            <p className="text-xs text-ink-3 mt-1">{t("superAdmin.audit.emptyHint")}</p>
           </div>
         )}
       </Card>

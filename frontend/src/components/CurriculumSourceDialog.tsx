@@ -7,6 +7,7 @@ import {
 } from "../pages/admin/syllabusApi";
 import { ImportSummary, errMessage } from "./SyllabusImportDialog";
 import { Badge, Button, ErrorText, Input, Label, Modal, Select } from "./ui";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const TARGETS = ["class", "subject", "chapter", "topics", "description", "content", "order"];
 
@@ -34,6 +35,7 @@ const fmtValueMap = (m?: Record<string, Record<string, string>>) =>
 
 /** Connect the school to the link that holds its curriculum (JSON, CSV or ZIP), test it, and sync it into the syllabus. */
 export default function CurriculumSourceDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t, fmtDate, fmtNumber } = useLanguage();
   const qc = useQueryClient();
   const saved = useQuery({ queryKey: ["syllabus", "source"], queryFn: getCurriculumSource, enabled: open });
   const [url, setUrl] = useState("");
@@ -88,68 +90,67 @@ export default function CurriculumSourceDialog({ open, onClose }: { open: boolea
   const s = saved.data;
 
   return (
-    <Modal open={open} onClose={onClose} title="Curriculum source" size="xl">
+    <Modal open={open} onClose={onClose} title={t("shell.curriculumSource.title")} size="xl">
       <div className="max-h-[75vh] space-y-4 overflow-y-auto p-1">
         <p className="text-sm text-ink-2">
-          Paste the link to your curriculum file (JSON, CSV or a ZIP of them, for example a pre-signed S3 link). It is read into the
-          syllabus, and the Copilot and the Class → Subject → Chapter browser use it straight away.
+          {t("shell.curriculumSource.intro")}
         </p>
         <div>
-          <Label htmlFor="cs-url">Link</Label>
-          <Input id="cs-url" value={url} onChange={(e) => { setUrl(e.target.value); setReport(null); }} placeholder="https://your-bucket.s3.amazonaws.com/syllabus.json?X-Amz-…" />
+          <Label htmlFor="cs-url">{t("shell.curriculumSource.link")}</Label>
+          <Input id="cs-url" dir="ltr" value={url} onChange={(e) => { setUrl(e.target.value); setReport(null); }} placeholder="https://your-bucket.s3.amazonaws.com/syllabus.json?X-Amz-…" />
         </div>
         <div>
-          <Label htmlFor="cs-key">API key <span className="font-normal text-ink-3">(only if the link needs one)</span></Label>
+          <Label htmlFor="cs-key">{t("shell.curriculumSource.apiKey")} <span className="font-normal text-ink-3">({t("shell.curriculumSource.apiKeyOnlyIf")})</span></Label>
           <Input id="cs-key" type="password" autoComplete="off" value={apiKey}
             onChange={(e) => { setApiKey(e.target.value); setKeyTouched(true); setReport(null); }}
-            placeholder={s?.has_api_key && !keyTouched ? "Saved. Leave blank to keep it, or type a new one" : "Not needed for pre-signed links"} />
+            placeholder={s?.has_api_key && !keyTouched ? t("shell.curriculumSource.keySaved") : t("shell.curriculumSource.keyNotNeeded")} />
           {s?.has_api_key && (
             <button type="button" className="mt-1 text-xs text-accent-fg hover:underline" onClick={() => { setApiKey(""); setKeyTouched(true); }}>
-              Remove the saved key
+              {t("shell.curriculumSource.removeKey")}
             </button>
           )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex items-start gap-2 text-sm text-ink">
             <input type="checkbox" className="mt-1" checked={createMissing} onChange={(e) => { setCreateMissing(e.target.checked); setReport(null); }} />
-            <span>Create classes and subjects that don't exist yet</span>
+            <span>{t("shell.syllabusImport.createMissing")}</span>
           </label>
           <label className="flex items-start gap-2 text-sm text-ink">
             <input type="checkbox" className="mt-1" checked={replace} onChange={(e) => { setReplace(e.target.checked); setReport(null); }} />
-            <span>Replace existing chapters (otherwise matched by name and updated)</span>
+            <span>{t("shell.curriculumSource.replace")}</span>
           </label>
         </div>
         <div>
-          <Label htmlFor="cs-auto">Keep it up to date</Label>
+          <Label htmlFor="cs-auto">{t("shell.curriculumSource.keepUpdated")}</Label>
           <Select id="cs-auto" value={auto} onChange={(e) => setAuto(Number(e.target.value))}>
-            <option value={0}>Only when I press Sync</option>
-            <option value={60}>Every hour</option>
-            <option value={1440}>Every day</option>
+            <option value={0}>{t("shell.curriculumSource.manual")}</option>
+            <option value={60}>{t("shell.curriculumSource.hourly")}</option>
+            <option value={1440}>{t("shell.curriculumSource.daily")}</option>
           </Select>
         </div>
 
         <button type="button" className="text-sm font-medium text-accent-fg hover:underline" onClick={() => setAdvanced(!advanced)}>
-          {advanced ? "Hide" : "Show"} field mapping (if the file uses other field names or only ids)
+          {advanced ? t("shell.curriculumSource.hideMapping") : t("shell.curriculumSource.showMapping")}
         </button>
         {advanced && (
           <div className="space-y-3 rounded-2xl bg-surface-3 p-3">
             <div>
-              <Label htmlFor="cs-fm">Field names, one per line: <code>file_field = {TARGETS.join(" | ")}</code></Label>
-              <textarea id="cs-fm" rows={3} className="lg-field w-full font-mono text-xs" value={fieldMap} onChange={(e) => { setFieldMap(e.target.value); setReport(null); }}
+              <Label htmlFor="cs-fm">{t("shell.curriculumSource.fieldNames")} <code dir="ltr">file_field = {TARGETS.join(" | ")}</code></Label>
+              <textarea id="cs-fm" rows={3} dir="ltr" className="lg-field w-full font-mono text-xs" value={fieldMap} onChange={(e) => { setFieldMap(e.target.value); setReport(null); }}
                 placeholder={"unit_title_en = chapter\nunit_number = order\nfull_text = content"} />
-              <p className="mt-0.5 text-xs text-ink-3">Common names (class, grade, subject, chapter, unit_title_en, unit_number, full_text…) are recognised without this.</p>
+              <p className="mt-0.5 text-xs text-ink-3">{t("shell.curriculumSource.fieldHint")}</p>
             </div>
             <div>
-              <Label htmlFor="cs-vm">Names for ids, one per line: <code>class: id = Class 8</code> or <code>subject: id = Science</code></Label>
-              <textarea id="cs-vm" rows={3} className="lg-field w-full font-mono text-xs" value={valueMap} onChange={(e) => { setValueMap(e.target.value); setReport(null); }} />
+              <Label htmlFor="cs-vm">{t("shell.curriculumSource.idNames")} <code dir="ltr">class: id = Class 8</code> {t("shell.curriculumSource.or")} <code dir="ltr">subject: id = Science</code></Label>
+              <textarea id="cs-vm" rows={3} dir="ltr" className="lg-field w-full font-mono text-xs" value={valueMap} onChange={(e) => { setValueMap(e.target.value); setReport(null); }} />
             </div>
           </div>
         )}
 
         {s?.configured && s.last_status && (
           <p className="text-xs text-ink-3">
-            Last sync: <Badge tone={s.last_status === "error" ? "red" : s.last_status === "ok" ? "green" : "gray"}>{s.last_status}</Badge>{" "}
-            {s.last_message} {s.last_synced_at ? `· ${new Date(s.last_synced_at).toLocaleString()}` : ""}
+            {t("shell.curriculumSource.lastSync")}: <Badge tone={s.last_status === "error" ? "red" : s.last_status === "ok" ? "green" : "gray"}>{s.last_status === "error" ? t("shell.curriculumSource.statusError") : s.last_status === "ok" ? t("shell.curriculumSource.statusOk") : s.last_status}</Badge>{" "}
+            {s.last_message} {s.last_synced_at ? `· ${fmtDate(s.last_synced_at, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}` : ""}
           </p>
         )}
         {error && <ErrorText>{errMessage(error)}</ErrorText>}
@@ -158,22 +159,22 @@ export default function CurriculumSourceDialog({ open, onClose }: { open: boolea
             {report.unchanged ? <p className="text-sm text-ink-2">{report.message}</p> : <ImportSummary report={report} />}
             {!report.unchanged && (
               <p className="text-xs text-ink-3">
-                Read {report.records_read ?? 0} records from {(report.source_files ?? []).length} file(s)
-                {(report.skipped_files ?? []).length > 0 && ` · skipped: ${(report.skipped_files ?? []).join("; ")}`}
+                {t("shell.curriculumSource.readSummary", { records: fmtNumber(report.records_read ?? 0), files: fmtNumber((report.source_files ?? []).length) })}
+                {(report.skipped_files ?? []).length > 0 && ` · ${t("shell.curriculumSource.skippedFiles", { files: (report.skipped_files ?? []).join("; ") })}`}
               </p>
             )}
           </div>
         )}
 
         <div className="flex flex-wrap justify-between gap-2">
-          {s?.configured ? <Button type="button" variant="danger" size="sm" disabled={busy} onClick={() => remove.mutate()}>Disconnect</Button> : <span />}
+          {s?.configured ? <Button type="button" variant="danger" size="sm" disabled={busy} onClick={() => remove.mutate()}>{t("shell.curriculumSource.disconnect")}</Button> : <span />}
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="secondary" disabled={!url.trim() || busy} onClick={() => test.mutate()}>
-              {test.isPending ? "Checking…" : "Test link"}
+              {test.isPending ? t("shell.curriculumSource.checking") : t("shell.curriculumSource.testLink")}
             </Button>
-            <Button type="button" variant="secondary" disabled={!url.trim() || busy} onClick={() => save.mutate(false)}>Save</Button>
+            <Button type="button" variant="secondary" disabled={!url.trim() || busy} onClick={() => save.mutate(false)}>{t("common.save")}</Button>
             <Button type="button" glow disabled={!url.trim() || busy} onClick={() => save.mutate(true)}>
-              <CloudDownload size={16} /> {save.isPending ? "Working…" : "Save and sync now"}
+              <CloudDownload size={16} /> {save.isPending ? t("shell.syllabusImport.working") : t("shell.curriculumSource.saveSync")}
             </Button>
           </div>
         </div>

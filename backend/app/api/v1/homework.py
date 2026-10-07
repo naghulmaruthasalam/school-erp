@@ -1,11 +1,12 @@
 from datetime import date
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.core.deps import CurrentUser, require_tenant_user
 from app.core.enums import Role
+from app.core.lang import Lang, get_lang
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.homework import (
     HomeworkCreateRequest,
@@ -15,7 +16,8 @@ from app.schemas.homework import (
     HomeworkUpdateRequest,
     PendingHomeworkOut,
 )
-from app.services import homework_service
+from app.models.homework import HomeworkSubmission
+from app.services import homework_feedback, homework_service
 from app.services.ai import validate_text_homework, validate_image_homework, get_quick_feedback, GeminiError, GeminiNotConfigured
 
 router = APIRouter(prefix="/homework", tags=["homework"])
@@ -85,9 +87,14 @@ async def list_submissions(
 async def update_submission(
     submission_id: str,
     payload: HomeworkSubmissionUpdateRequest,
+    background: BackgroundTasks,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> HomeworkSubmissionOut:
-    return await homework_service.update_submission(current, submission_id, payload)
+    out = await homework_service.update_submission(current, submission_id, payload)
+    if current.role == Role.STUDENT:  # mark the work as soon as it is handed in, so the feedback is ready when they look
+        background.add_task(homework_feedback.feedback_in_background, current.school_id, submission_id, lang)
+    return out
 
 
 # ==================== AI Validation Endpoints ====================
@@ -108,36 +115,14 @@ class QuickFeedbackRequest(BaseModel):
 async def ai_validate_submission(
     submission_id: str,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> dict[str, Any]:
-    """Get AI evaluation and feedback for a homework submission."""
+    """Teachers: (re)mark a submission from the files the student handed in."""
     if current.role not in {Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL}:
         raise HTTPException(status_code=403, detail="Only teachers can validate submissions")
-
-    try:
-        # Get submission and homework details
-        submission = await homework_service.get_submission(current, submission_id)
-        homework = await homework_service.get_homework(current, submission.homework_id)
-
-        # Get student answers from submission
-        student_answers = submission.content.split("\n---\n") if submission.content else []
-
-        # Build questions list from homework
-        questions = [{"question": homework.description, "marks": 10}]
-
-        result = await validate_text_homework(
-            homework_id=submission.homework_id,
-            student_id=submission.student_id,
-            homework_title=homework.title,
-            homework_description=homework.description,
-            questions=questions,
-            student_answers=student_answers if student_answers else [submission.content or ""],
-        )
-
-        return result.model_dump(mode="json")
-    except GeminiNotConfigured as e:
-        raise HTTPException(status_code=503, detail=str(e))
-    except GeminiError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    await homework_service.get_submission(current, submission_id)  # tenant check / 404
+    submission = await HomeworkSubmission.get(submission_id)
+    return await homework_feedback.feedback_for(submission, lang, force=True, validated_by=str(current.user.id))
 
 
 @router.post("/submissions/{submission_id}/ai-validate-images")
@@ -196,66 +181,19 @@ async def api_quick_feedback(
 async def get_submission_feedback(
     submission_id: str,
     current: CurrentUser = Depends(require_tenant_user),
+    lang: Lang = Depends(get_lang),
 ) -> dict[str, Any]:
-    """Get AI feedback for a student's own homework submission."""
-    from app.models.homework_validation import HomeworkValidation
+    """AI feedback on a submission, in the caller's language. Students see only their own; parents their children's.
 
-    submission = await homework_service.get_submission(current, submission_id)
-
-    # Students can only view their own feedback
-    if current.role == Role.STUDENT and submission.student_id != current.user.student_id:
+    status: ready | unreadable | not_configured | pending (poll again) | not_submitted."""
+    await homework_service.get_submission(current, submission_id)  # tenant check / 404
+    submission = await HomeworkSubmission.get(submission_id)
+    if current.role == Role.STUDENT and submission.student_id != str(current.user.student_id):
         raise HTTPException(status_code=403, detail="Not your submission")
-
-    # Check if validation exists
-    validation = await HomeworkValidation.find_one({"submission_id": submission_id})
-
-    if not validation:
-        # Auto-validate if not already done
-        try:
-            homework = await homework_service.get_homework(current, submission.homework_id)
-            questions = [{"question": homework.description or homework.title, "marks": 10}]
-            # Use remarks or indicate file submission
-            answer_text = submission.remarks or ("File submitted" if submission.attachment_document_ids else "No answer provided")
-            student_answers = [answer_text]
-
-            result = await validate_text_homework(
-                homework_id=submission.homework_id,
-                student_id=submission.student_id,
-                homework_title=homework.title,
-                homework_description=homework.description or "",
-                questions=questions,
-                student_answers=student_answers,
-            )
-
-            # Store validation result
-            validation = HomeworkValidation(
-                school_id=current.school_id,
-                homework_id=submission.homework_id,
-                student_id=submission.student_id,
-                submission_id=submission_id,
-                total_score=result.total_score,
-                max_score=result.max_score,
-                percentage=result.percentage,
-                grade=result.grade,
-                overall_feedback=result.overall_feedback,
-                strengths=result.strengths,
-                areas_to_improve=result.areas_to_improve,
-                questions=[q.model_dump() for q in result.questions],
-            )
-            await validation.insert()
-
-        except (GeminiNotConfigured, GeminiError) as e:
-            return {"status": "pending", "message": "AI feedback is being processed"}
-
-    return {
-        "status": "ready",
-        "total_score": validation.total_score,
-        "max_score": validation.max_score,
-        "percentage": validation.percentage,
-        "grade": validation.grade,
-        "overall_feedback": validation.overall_feedback,
-        "strengths": validation.strengths,
-        "areas_to_improve": validation.areas_to_improve,
-        "questions": validation.questions,
-        "validated_at": validation.validated_at.isoformat() if validation.validated_at else None,
-    }
+    if current.role == Role.PARENT:
+        children = await homework_service._guardian_student_ids(current)  # noqa: SLF001
+        if submission.student_id not in children:
+            raise HTTPException(status_code=403, detail="Not your child's submission")
+    if not submission.attachment_document_ids and not (submission.remarks or "").strip():
+        return {"status": "not_submitted", "message": "Nothing has been handed in yet."}
+    return await homework_feedback.feedback_for(submission, lang)

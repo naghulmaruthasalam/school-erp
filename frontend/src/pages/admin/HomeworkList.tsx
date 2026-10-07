@@ -4,6 +4,7 @@ import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import { fetchClasses, fetchSections, fetchSubjects, listTeachers } from "./api";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Homework {
   id: string;
@@ -18,6 +19,7 @@ interface Homework {
 }
 
 export default function HomeworkList() {
+  const { t, te, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [selectedSection, setSelectedSection] = useState("");
@@ -65,26 +67,26 @@ export default function HomeworkList() {
     const section = sectionsQuery.data?.find((s) => s.id === id);
     if (!section) return id;
     const cls = classesQuery.data?.find((c) => c.id === section.class_id);
-    return `${cls?.name || ""} - ${section.name}`;
+    return `${te("class", cls?.name)} - ${te("section", section.name)}`;
   };
 
-  const getSubjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name || id;
+  const getSubjectName = (id: string) => te("subject", subjectsQuery.data?.find((s) => s.id === id)?.name) || id;
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Homework Management" subtitle="Assign and track homework">
-        <Button onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "Assign Homework"}</Button>
+      <PageHeader title={t("admin.homework.title")} subtitle={t("admin.homework.subtitle")}>
+        <Button onClick={() => setShowForm(!showForm)}>{showForm ? t("admin.common.cancel") : t("admin.homework.assign")}</Button>
       </PageHeader>
 
       <Card className="mb-6">
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-ink-2">Filter by Section:</label>
+          <label className="text-sm font-medium text-ink-2">{t("admin.homework.filterBySection")}</label>
           <select
             value={selectedSection}
             onChange={(e) => setSelectedSection(e.target.value)}
             className="rounded-lg border border-line px-3 py-2 focus:border-violet-500"
           >
-            <option value="">All Sections</option>
+            <option value="">{t("admin.common.allSections")}</option>
             {sectionsQuery.data?.map((s) => (
               <option key={s.id} value={s.id}>{getSectionName(s.id)}</option>
             ))}
@@ -97,7 +99,7 @@ export default function HomeworkList() {
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-ink-2 mb-1">Title</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.title")}</label>
                 <input
                   type="text"
                   value={form.title}
@@ -107,7 +109,7 @@ export default function HomeworkList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Due Date</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.homework.dueDate")}</label>
                 <input
                   type="date"
                   value={form.due_date}
@@ -117,48 +119,48 @@ export default function HomeworkList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Section</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.section")}</label>
                 <select
                   value={form.section_id}
                   onChange={(e) => setForm({ ...form, section_id: e.target.value })}
                   className="w-full rounded-lg border border-line px-3 py-2"
                   required
                 >
-                  <option value="">-- Select --</option>
+                  <option value="">{t("admin.common.selectDash")}</option>
                   {sectionsQuery.data?.map((s) => (
                     <option key={s.id} value={s.id}>{getSectionName(s.id)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Subject</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.subject")}</label>
                 <select
                   value={form.subject_id}
                   onChange={(e) => setForm({ ...form, subject_id: e.target.value })}
                   className="w-full rounded-lg border border-line px-3 py-2"
                   required
                 >
-                  <option value="">-- Select --</option>
+                  <option value="">{t("admin.common.selectDash")}</option>
                   {subjectsQuery.data?.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
+                    <option key={s.id} value={s.id}>{te("subject", s.name)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-2 mb-1">Teacher (optional)</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.homework.teacherOptional")}</label>
                 <select
                   value={form.teacher_id}
                   onChange={(e) => setForm({ ...form, teacher_id: e.target.value })}
                   className="w-full rounded-lg border border-line px-3 py-2"
                 >
-                  <option value="">Auto (subject teacher)</option>
-                  {teachersQuery.data?.items.map((t) => (
-                    <option key={t.id} value={t.id}>{t.full_name}</option>
+                  <option value="">{t("admin.homework.autoTeacher")}</option>
+                  {teachersQuery.data?.items.map((tc) => (
+                    <option key={tc.id} value={tc.id}>{tc.full_name}</option>
                   ))}
                 </select>
               </div>
               <div className="col-span-2 md:col-span-3">
-                <label className="block text-sm font-medium text-ink-2 mb-1">Description</label>
+                <label className="block text-sm font-medium text-ink-2 mb-1">{t("admin.common.description")}</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -170,11 +172,11 @@ export default function HomeworkList() {
             </div>
             {createMutation.isError && (
               <p className="text-sm text-red-600">
-                {(createMutation.error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to assign homework."}
+                {(createMutation.error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.homework.assignFailed")}
               </p>
             )}
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Assigning..." : "Assign Homework"}
+              {createMutation.isPending ? t("admin.homework.assigning") : t("admin.homework.assign")}
             </Button>
           </form>
         </Card>
@@ -190,7 +192,7 @@ export default function HomeworkList() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-ink">{hw.title}</h3>
-                    <Badge tone={hw.status === "ACTIVE" ? "green" : hw.status === "COMPLETED" ? "violet" : "gray"}>{hw.status}</Badge>
+                    <Badge tone={hw.status === "ACTIVE" ? "green" : hw.status === "COMPLETED" ? "violet" : "gray"}>{te("status", hw.status)}</Badge>
                   </div>
                   <p className="text-sm text-ink-2 mb-2">{hw.description}</p>
                   <div className="flex items-center gap-4 text-xs text-accent-fg">
@@ -198,15 +200,15 @@ export default function HomeworkList() {
                     <span>{getSubjectName(hw.subject_id)}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-ink">Due: {new Date(hw.due_date).toLocaleDateString()}</p>
-                  <p className="text-xs text-accent-fg">Created: {new Date(hw.created_at).toLocaleDateString()}</p>
+                <div className="text-end">
+                  <p className="text-sm font-medium text-ink">{t("admin.homework.due", { date: fmtDate(hw.due_date) })}</p>
+                  <p className="text-xs text-accent-fg">{t("admin.homework.createdOn", { date: fmtDate(hw.created_at) })}</p>
                 </div>
               </div>
             </Card>
           ))}
           {homeworkQuery.data?.items.length === 0 && (
-            <Card><p className="text-center text-accent-fg py-8">No homework assigned.</p></Card>
+            <Card><p className="text-center text-accent-fg py-8">{t("admin.homework.empty")}</p></Card>
           )}
         </div>
       )}

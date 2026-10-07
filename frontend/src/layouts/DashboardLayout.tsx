@@ -20,22 +20,23 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+// Translation keys (resolved with t() at render time).
 const ROLE_LABEL: Record<Role, string> = {
-  SUPER_ADMIN: "Platform Admin",
-  SCHOOL_ADMIN: "Admin",
-  PRINCIPAL: "Principal",
-  TEACHER: "Teacher",
-  PARENT: "Parent",
-  STUDENT: "Student",
+  SUPER_ADMIN: "shell.layout.role.SUPER_ADMIN",
+  SCHOOL_ADMIN: "shell.layout.role.SCHOOL_ADMIN",
+  PRINCIPAL: "shell.layout.role.PRINCIPAL",
+  TEACHER: "shell.layout.role.TEACHER",
+  PARENT: "shell.layout.role.PARENT",
+  STUDENT: "shell.layout.role.STUDENT",
 };
 
 const ROLE_TAGLINE: Record<Role, string> = {
-  SUPER_ADMIN: "Platform Management",
-  SCHOOL_ADMIN: "School Administration",
-  PRINCIPAL: "School Leadership",
-  TEACHER: "Empowering Minds",
-  PARENT: "Nurturing Growth",
-  STUDENT: "Learning Journey",
+  SUPER_ADMIN: "shell.layout.tagline.SUPER_ADMIN",
+  SCHOOL_ADMIN: "shell.layout.tagline.SCHOOL_ADMIN",
+  PRINCIPAL: "shell.layout.tagline.PRINCIPAL",
+  TEACHER: "shell.layout.tagline.TEACHER",
+  PARENT: "shell.layout.tagline.PARENT",
+  STUDENT: "shell.layout.tagline.STUDENT",
 };
 
 function Avatar({ name, size = 40 }: { name?: string; size?: number }) {
@@ -64,6 +65,12 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
 
   const allItems = navGroups ? navGroups.flatMap((g) => g.items) : navItems || [];
   const closeMobileMenu = () => setMobileMenuOpen(false);
+  // Nav labels are normally translation keys; plain English labels fall back to shell.navLabels.<Label>.
+  const navText = (label: string) => {
+    const k = "shell.navLabels." + label.replace(/[^A-Za-z0-9]+/g, "_");
+    const v = t(k);
+    return v !== k ? v : t(label);
+  };
   const dockItems = allItems.slice(0, 4);
   const rolePath = userRole.toLowerCase().replace("_", "-");
 
@@ -84,7 +91,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
         className={`
           glass-strong fixed bottom-3 top-3 z-50 flex w-[280px] flex-col !rounded-[30px]
           transition-transform duration-500 [transition-timing-function:var(--ease)]
-          ${isRTL ? "right-3" : "left-3"}
+          start-3
           ${mobileMenuOpen ? "translate-x-0" : isRTL ? "translate-x-[120%] md:translate-x-0" : "-translate-x-[120%] md:translate-x-0"}
           md:w-[76px] lg:w-[248px]
         `}
@@ -92,7 +99,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
         <button
           className="glass-icon-btn absolute end-3 top-3 md:hidden"
           onClick={closeMobileMenu}
-          aria-label="Close menu"
+          aria-label={t("shell.layout.closeMenu")}
         >
           <X size={18} />
         </button>
@@ -101,11 +108,11 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
         <div className="px-4 pb-3 pt-5 md:px-3 lg:px-4">
           <div className="flex items-center gap-3 md:justify-center lg:justify-start">
             <div className="glass relative grid h-11 w-11 shrink-0 place-items-center !rounded-[15px]">
-              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Capital Private School" className="h-7 w-7 object-contain" />
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt={t("shell.brand.name")} className="h-7 w-7 object-contain" />
             </div>
             <div className="min-w-0 md:hidden lg:block">
-              <p className="text-[14px] font-semibold leading-[1.15] tracking-tight text-ink">Capital Private School</p>
-              <p className="truncate text-[11px] text-ink-3">{ROLE_TAGLINE[userRole]}</p>
+              <p className="text-[14px] font-semibold leading-[1.15] tracking-tight text-ink">{t("shell.brand.name")}</p>
+              <p className="truncate text-[11px] text-ink-3">{t(ROLE_TAGLINE[userRole])}</p>
             </div>
           </div>
         </div>
@@ -121,7 +128,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                   to={item.to}
                   end={item.end}
                   onClick={closeMobileMenu}
-                  title={t(item.label)}
+                  title={navText(item.label)}
                   className={({ isActive }) =>
                     `group relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-[13.5px] font-medium transition-all duration-300 [transition-timing-function:var(--ease)] md:justify-center lg:justify-start ${
                       isActive
@@ -138,7 +145,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                           className={`shrink-0 transition-colors duration-300 ${isActive ? "text-accent" : "text-ink-3 group-hover:text-ink-2"}`}
                         />
                       )}
-                      <span className="truncate md:hidden lg:inline">{t(item.label)}</span>
+                      <span className="truncate md:hidden lg:inline">{navText(item.label)}</span>
                     </>
                   )}
                 </NavLink>
@@ -164,21 +171,21 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                 logout();
                 navigate("/login", { replace: true });
               }}
-              title="Sign out"
-              aria-label="Sign out"
+              title={t("common.signOut")}
+              aria-label={t("common.signOut")}
             >
-              <LogOut size={17} />
+              <LogOut size={17} className="rtl:-scale-x-100" />
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main column */}
-      <div className={`flex min-h-screen min-w-0 flex-1 flex-col ${isRTL ? "md:mr-[100px] lg:mr-[272px]" : "md:ml-[100px] lg:ml-[272px]"}`}>
+      <div className={`flex min-h-screen min-w-0 flex-1 flex-col md:ms-[100px] lg:ms-[272px]`}>
         {/* Floating glass top bar */}
         <header className="sticky top-3 z-30 mx-3 mt-3 md:me-4 md:ms-0">
           <div className="glass-strong flex h-[60px] items-center justify-between gap-3 !rounded-full ps-3 pe-3 md:ps-5">
-            <button className="glass-icon-btn md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
+            <button className="glass-icon-btn md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label={t("shell.layout.openMenu")}>
               <Menu size={19} />
             </button>
 
@@ -186,7 +193,8 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
               <Search size={16} className="shrink-0 text-ink-3" />
               <input
                 type="text"
-                placeholder={t("header.searchPlaceholder")}
+                placeholder={t("shell.layout.searchPlaceholder")}
+                aria-label={t("common.search")}
                 className="w-full !border-0 !bg-transparent text-sm text-ink outline-none !shadow-none placeholder:text-ink-3"
               />
             </label>
@@ -209,7 +217,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                   <Avatar name={user?.full_name} size={36} />
                   <div className="hidden text-start md:block">
                     <p className="max-w-[140px] truncate text-[13px] font-semibold leading-tight text-ink">{user?.full_name}</p>
-                    <p className="text-[11px] leading-tight text-ink-3">{user ? ROLE_LABEL[user.role] : ""}</p>
+                    <p className="text-[11px] leading-tight text-ink-3">{user ? t(ROLE_LABEL[user.role]) : ""}</p>
                   </div>
                   <ChevronDown size={15} className={`hidden text-ink-3 transition-transform duration-300 md:block ${userDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
@@ -219,13 +227,13 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                     <div className="fixed inset-0 z-40" onClick={() => setUserDropdownOpen(false)} />
                     <div
                       role="menu"
-                      className="glass-strong absolute end-0 top-full z-50 mt-3 w-64 origin-top-right overflow-hidden !rounded-[26px] p-2 animate-pop-in"
+                      className="glass-strong absolute end-0 top-full z-50 mt-3 w-64 origin-top-right rtl:origin-top-left overflow-hidden !rounded-[26px] p-2 animate-pop-in"
                     >
                       <div className="mb-1 flex items-center gap-3 rounded-[20px] bg-accent-soft p-3">
                         <Avatar name={user?.full_name} size={44} />
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-ink">{user?.full_name}</p>
-                          <p className="text-xs text-ink-3">{user ? ROLE_LABEL[user.role] : ""}</p>
+                          <p className="text-xs text-ink-3">{user ? t(ROLE_LABEL[user.role]) : ""}</p>
                         </div>
                       </div>
 
@@ -240,7 +248,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                         <span className="menu-row-icon"><User size={16} /></span>
                         <span>
                           <span className="block text-sm font-medium text-ink">{t("header.myProfile")}</span>
-                          <span className="block text-xs text-ink-3">View & edit profile</span>
+                          <span className="block text-xs text-ink-3">{t("shell.layout.viewEditProfile")}</span>
                         </span>
                       </button>
                       <button
@@ -254,7 +262,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                         <span className="menu-row-icon"><Settings size={16} /></span>
                         <span>
                           <span className="block text-sm font-medium text-ink">{t("header.settings")}</span>
-                          <span className="block text-xs text-ink-3">Preferences & config</span>
+                          <span className="block text-xs text-ink-3">{t("shell.layout.preferences")}</span>
                         </span>
                       </button>
                       <div className="my-1 h-px bg-line" />
@@ -267,10 +275,10 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
                         }}
                         className="menu-row hover:!bg-red-500/10"
                       >
-                        <span className="menu-row-icon !bg-red-500/12 !text-red-500"><LogOut size={16} /></span>
+                        <span className="menu-row-icon !bg-red-500/12 !text-red-500"><LogOut size={16} className="rtl:-scale-x-100" /></span>
                         <span>
                           <span className="block text-sm font-medium text-red-500">{t("header.signOut")}</span>
-                          <span className="block text-xs text-ink-3">Logout from account</span>
+                          <span className="block text-xs text-ink-3">{t("shell.layout.logoutFromAccount")}</span>
                         </span>
                       </button>
                     </div>
@@ -309,7 +317,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
       </div>
 
       {/* Phone dock (iOS tab-bar style) */}
-      <nav className="glass-strong fixed inset-x-3 bottom-3 z-30 flex items-center justify-around !rounded-[28px] px-2 py-2 md:hidden" aria-label="Primary">
+      <nav className="glass-strong fixed inset-x-3 bottom-3 z-30 flex items-center justify-around !rounded-[28px] px-2 py-2 md:hidden" aria-label={t("shell.layout.primaryNav")}>
         {dockItems.map((item) => {
           const Icon = item.icon;
           const active = isActivePath(item);
@@ -323,7 +331,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
               }`}
             >
               {Icon && <Icon size={21} />}
-              <span className="max-w-[64px] truncate">{t(item.label)}</span>
+              <span className="max-w-[64px] truncate">{navText(item.label)}</span>
             </NavLink>
           );
         })}
@@ -332,7 +340,7 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
           className="flex min-w-[60px] flex-col items-center gap-0.5 rounded-2xl px-2 py-1.5 text-[10.5px] font-medium text-ink-3"
         >
           <Ellipsis size={21} />
-          <span>More</span>
+          <span>{t("shell.layout.more")}</span>
         </button>
       </nav>
 
@@ -342,10 +350,11 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
 }
 
 export function ComingSoon({ title }: { title: string }): ReactNode {
+  const { t } = useLanguage();
   return (
     <div className="glass flex h-64 items-center justify-center text-sm text-ink-3">
-      <Sparkles className="mr-2 h-5 w-5 text-accent" />
-      {title} — coming soon
+      <Sparkles className="me-2 h-5 w-5 text-accent" />
+      {title} — {t("shell.layout.comingSoon")}
     </div>
   );
 }

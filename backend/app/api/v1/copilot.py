@@ -12,6 +12,7 @@ from app.copilot.off_topic import LANGUAGES
 from app.copilot.profiles import Profile, get_profile
 from app.core.config import get_settings
 from app.core.deps import CurrentUser, get_current_user, require_tenant_user
+from app.core.lang import Lang, get_lang, normalize_lang
 from app.core.exceptions import AppError, NotFoundError, PermissionDeniedError, ValidationAppError
 from app.models.copilot import CopilotSession
 from app.schemas.copilot import (
@@ -80,9 +81,9 @@ async def my_profile(current: CurrentUser = Depends(get_current_user)) -> dict:
 
 
 @router.get("/context")
-async def my_context(current: CurrentUser = Depends(copilot_user)) -> dict:
-    """Classes -> subjects -> chapters this user can study or teach (and a parent's children)."""
-    return await grounding.context_options(current)
+async def my_context(current: CurrentUser = Depends(copilot_user), lang: Lang = Depends(get_lang)) -> dict:
+    """Classes -> subjects -> chapters this user can study or teach (and a parent's children), chapter names in their language."""
+    return await grounding.context_options(current, lang)
 
 
 # ------------------------------------------------------------------ sessions
@@ -103,7 +104,7 @@ async def start_session(payload: StartSessionRequest, current: CurrentUser = Dep
         if class_id is None:
             raise ValidationAppError("Choose a class first")
         study_ctx = await grounding.build_study_context(
-            current, class_id, payload.subject_id, payload.chapter, payload.student_id
+            current, class_id, payload.subject_id, payload.chapter, payload.student_id, lang=normalize_lang(payload.language)
         )
         context = {
             "class_id": study_ctx.class_id,
@@ -178,7 +179,8 @@ async def run_tool(key: str, payload: ToolRequest, current: CurrentUser = Depend
         if not c.class_id:
             raise ValidationAppError("Choose a class first")
         study_ctx = await grounding.build_study_context(
-            current, c.class_id, c.subject_id, c.chapter, c.student_id, require_subject=feature.require_subject
+            current, c.class_id, c.subject_id, c.chapter, c.student_id, require_subject=feature.require_subject,
+            lang=normalize_lang(payload.language),
         )
         if feature.require_chapter and not study_ctx.chapter:
             raise ValidationAppError("Choose a chapter first")

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuthStore } from "../auth/store";
 import type { PageResponse } from "../types/common";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface Notification {
   id: string;
@@ -21,6 +22,7 @@ interface UnreadCount {
 }
 
 export default function NotificationBell() {
+  const { t, fmtDate, fmtNumber } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -92,7 +94,7 @@ export default function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="glass-icon-btn relative"
-        aria-label="Notifications"
+        aria-label={t("notifications.title")}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -110,27 +112,27 @@ export default function NotificationBell() {
         </svg>
         {(countQuery.data?.unread ?? 0) > 0 && (
           <span className="absolute -end-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-pink-500 px-1 text-[10px] font-bold text-white shadow-[0_2px_8px_rgba(255,69,58,0.5)]">
-            {countQuery.data!.unread > 9 ? "9+" : countQuery.data!.unread}
+            {countQuery.data!.unread > 9 ? "9+" : fmtNumber(countQuery.data!.unread)}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="glass-strong absolute end-0 top-full z-50 mt-3 w-[min(20rem,calc(100vw-2rem))] overflow-hidden !rounded-[24px] animate-pop-in origin-top-right">
+        <div className="glass-strong absolute end-0 top-full z-50 mt-3 w-[min(20rem,calc(100vw-2rem))] overflow-hidden !rounded-[24px] animate-pop-in origin-top-right rtl:origin-top-left">
           <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
-            <h3 className="font-semibold text-ink">Notifications</h3>
+            <h3 className="font-semibold text-ink">{t("notifications.title")}</h3>
             {(countQuery.data?.unread ?? 0) > 0 && (
               <span className="lg-chip">
-                {countQuery.data?.unread} new
+                {t("shell.notificationBell.newCount", { n: fmtNumber(countQuery.data?.unread ?? 0) })}
               </span>
             )}
           </div>
 
           <div className="max-h-80 overflow-y-auto">
             {notificationsQuery.isLoading ? (
-              <div className="p-4 text-center text-ink-3">Loading...</div>
+              <div className="p-4 text-center text-ink-3">{t("common.loading")}</div>
             ) : notificationsQuery.data?.items.length === 0 ? (
-              <div className="p-8 text-center text-ink-3">No notifications</div>
+              <div className="p-8 text-center text-ink-3">{t("notifications.noNotifications")}</div>
             ) : (
               notificationsQuery.data?.items.map((n) => (
                 <div
@@ -150,7 +152,7 @@ export default function NotificationBell() {
                       </p>
                       <p className="text-xs text-ink-3 truncate">{n.content}</p>
                       <p className="text-[11px] text-ink-3 mt-1">
-                        {new Date(n.created_at).toLocaleDateString()}
+                        {fmtDate(n.created_at)}
                       </p>
                     </div>
                   </div>
@@ -167,7 +169,7 @@ export default function NotificationBell() {
               }}
               className="w-full text-center text-sm text-accent-fg hover:opacity-80 font-semibold"
             >
-              View all notifications
+              {t("shell.notificationBell.viewAll")}
             </button>
           </div>
         </div>

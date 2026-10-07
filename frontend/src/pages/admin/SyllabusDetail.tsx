@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Button, Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "./api";
 import { getSyllabus } from "./syllabusApi";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function SyllabusDetail() {
+  const { t, te, fmtDate } = useLanguage();
   const { id } = useParams<{ id: string }>();
 
   const syllabusQuery = useQuery({
@@ -18,8 +20,8 @@ export default function SyllabusDetail() {
   const subjectsQuery = useQuery({ queryKey: ["subjects"], queryFn: fetchSubjects });
   const yearsQuery = useQuery({ queryKey: ["academicYears"], queryFn: fetchAcademicYears });
 
-  const getClassName = (cid: string) => classesQuery.data?.find((c) => c.id === cid)?.name || cid;
-  const getSubjectName = (sid: string) => subjectsQuery.data?.find((s) => s.id === sid)?.name || sid;
+  const getClassName = (cid: string) => te("class", classesQuery.data?.find((c) => c.id === cid)?.name) || cid;
+  const getSubjectName = (sid: string) => te("subject", subjectsQuery.data?.find((s) => s.id === sid)?.name) || sid;
   const getYearName = (yid: string) => yearsQuery.data?.find((y) => y.id === yid)?.name || yid;
 
   if (syllabusQuery.isLoading) {
@@ -29,8 +31,8 @@ export default function SyllabusDetail() {
   if (!syllabusQuery.data) {
     return (
       <div className="animate-fade-in-up">
-        <PageHeader title="Syllabus Not Found" />
-        <Card><p className="text-center text-accent-fg py-8">The requested syllabus could not be found.</p></Card>
+        <PageHeader title={t("admin.syllabus.notFoundTitle")} />
+        <Card><p className="text-center text-accent-fg py-8">{t("admin.syllabus.notFound")}</p></Card>
       </div>
     );
   }
@@ -39,44 +41,44 @@ export default function SyllabusDetail() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title={syl.title} subtitle="Syllabus Details">
+      <PageHeader title={syl.title} subtitle={t("admin.syllabus.details")}>
         <Link to={`/admin/syllabus/${id}/edit`}>
-          <Button>Edit Syllabus</Button>
+          <Button>{t("admin.syllabus.edit")}</Button>
         </Link>
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Overview</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("admin.common.overview")}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
-                <p className="text-xs text-accent-fg uppercase">Academic Year</p>
+                <p className="text-xs text-accent-fg uppercase">{t("admin.common.academicYear")}</p>
                 <p className="font-medium text-ink">{getYearName(syl.academic_year_id)}</p>
               </div>
               <div>
-                <p className="text-xs text-accent-fg uppercase">Class</p>
+                <p className="text-xs text-accent-fg uppercase">{t("admin.common.class")}</p>
                 <p className="font-medium text-ink">{getClassName(syl.class_id)}</p>
               </div>
               <div>
-                <p className="text-xs text-accent-fg uppercase">Subject</p>
+                <p className="text-xs text-accent-fg uppercase">{t("admin.common.subject")}</p>
                 <p className="font-medium text-ink">{getSubjectName(syl.subject_id)}</p>
               </div>
               <div>
-                <p className="text-xs text-accent-fg uppercase">Status</p>
-                <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{syl.status}</Badge>
+                <p className="text-xs text-accent-fg uppercase">{t("admin.common.status")}</p>
+                <Badge tone={syl.status === "PUBLISHED" ? "green" : "gray"}>{te("status", syl.status)}</Badge>
               </div>
             </div>
             {syl.description && (
               <div>
-                <p className="text-xs text-accent-fg uppercase mb-1">Description</p>
+                <p className="text-xs text-accent-fg uppercase mb-1">{t("admin.common.description")}</p>
                 <p className="text-ink-2">{syl.description}</p>
               </div>
             )}
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Chapters ({syl.chapters?.length || 0})</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("admin.syllabus.chaptersTitle", { n: syl.chapters?.length || 0 })}</h2>
             {syl.chapters && syl.chapters.length > 0 ? (
               <div className="space-y-3">
                 {syl.chapters.sort((a, b) => a.order - b.order).map((ch, idx) => (
@@ -96,14 +98,14 @@ export default function SyllabusDetail() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-accent-fg py-4">No chapters defined.</p>
+              <p className="text-center text-accent-fg py-4">{t("admin.syllabus.noChapters")}</p>
             )}
           </Card>
         </div>
 
         <div className="space-y-6">
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Documents</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("admin.common.documents")}</h2>
             {syl.documents && syl.documents.length > 0 ? (
               <ul className="space-y-2">
                 {syl.documents.map((doc) => (
@@ -125,20 +127,20 @@ export default function SyllabusDetail() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-accent-fg">No documents uploaded.</p>
+              <p className="text-sm text-accent-fg">{t("admin.syllabus.noDocuments")}</p>
             )}
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-ink mb-4">Metadata</h2>
+            <h2 className="text-lg font-semibold text-ink mb-4">{t("admin.syllabus.metadata")}</h2>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-accent-fg">Created</span>
-                <span className="text-ink">{new Date(syl.created_at).toLocaleDateString()}</span>
+                <span className="text-accent-fg">{t("admin.common.created")}</span>
+                <span className="text-ink">{fmtDate(syl.created_at)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-accent-fg">Updated</span>
-                <span className="text-ink">{new Date(syl.updated_at).toLocaleDateString()}</span>
+                <span className="text-accent-fg">{t("admin.common.updated")}</span>
+                <span className="text-ink">{fmtDate(syl.updated_at)}</span>
               </div>
             </div>
           </Card>

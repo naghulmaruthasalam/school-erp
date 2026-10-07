@@ -39,60 +39,60 @@ import Reports from "./Reports";
 
 export const adminNavGroups: NavGroup[] = [
   {
-    title: "Overview",
+    title: "admin.nav.overview",
     items: [
-      { label: "Dashboard", to: "/admin", end: true, icon: DashboardIcon },
+      { label: "admin.nav.dashboard", to: "/admin", end: true, icon: DashboardIcon },
     ],
   },
   {
-    title: "People",
+    title: "admin.nav.people",
     items: [
-      { label: "Students", to: "/admin/students", icon: StudentsIcon },
-      { label: "Teachers", to: "/admin/teachers", icon: TeachersIcon },
-      { label: "Admissions", to: "/admin/admissions", icon: AdmissionsIcon },
+      { label: "admin.nav.students", to: "/admin/students", icon: StudentsIcon },
+      { label: "admin.nav.teachers", to: "/admin/teachers", icon: TeachersIcon },
+      { label: "admin.nav.admissions", to: "/admin/admissions", icon: AdmissionsIcon },
     ],
   },
   {
-    title: "Academics",
+    title: "admin.nav.academics",
     items: [
-      { label: "Timetable", to: "/admin/timetable", icon: TimetableIcon },
-      { label: "Attendance", to: "/admin/attendance", icon: AttendanceIcon },
-      { label: "Homework", to: "/admin/homework", icon: HomeworkIcon },
-      { label: "Syllabus", to: "/admin/syllabus", icon: SyllabusIcon },
-      { label: "Exams", to: "/admin/exams", icon: ExamsIcon },
-      { label: "Report Cards", to: "/admin/report-cards", icon: ReportIcon },
-      { label: "Reports & Analytics", to: "/admin/reports", icon: ReportIcon },
-      { label: "Academic Setup", to: "/admin/academic-setup", icon: AcademicIcon },
+      { label: "admin.nav.timetable", to: "/admin/timetable", icon: TimetableIcon },
+      { label: "admin.nav.attendance", to: "/admin/attendance", icon: AttendanceIcon },
+      { label: "admin.nav.homework", to: "/admin/homework", icon: HomeworkIcon },
+      { label: "admin.nav.syllabus", to: "/admin/syllabus", icon: SyllabusIcon },
+      { label: "admin.nav.exams", to: "/admin/exams", icon: ExamsIcon },
+      { label: "admin.nav.reportCards", to: "/admin/report-cards", icon: ReportIcon },
+      { label: "admin.nav.reportsAnalytics", to: "/admin/reports", icon: ReportIcon },
+      { label: "admin.nav.academicSetup", to: "/admin/academic-setup", icon: AcademicIcon },
     ],
   },
   {
-    title: "Finance",
+    title: "admin.nav.finance",
     items: [
-      { label: "Fee Overview", to: "/admin/fees", end: true, icon: FeesIcon },
+      { label: "admin.nav.feeOverview", to: "/admin/fees", end: true, icon: FeesIcon },
     ],
   },
   {
-    title: "Resources",
+    title: "admin.nav.resources",
     items: [
-      { label: "Library", to: "/admin/library", icon: LibraryIcon },
-      { label: "Transport", to: "/admin/transport", icon: TransportIcon },
-      { label: "Documents", to: "/admin/documents", icon: DocumentsIcon },
+      { label: "admin.nav.library", to: "/admin/library", icon: LibraryIcon },
+      { label: "admin.nav.transport", to: "/admin/transport", icon: TransportIcon },
+      { label: "admin.nav.documents", to: "/admin/documents", icon: DocumentsIcon },
     ],
   },
   {
-    title: "Management",
+    title: "admin.nav.management",
     items: [
-      { label: "Leave Requests", to: "/admin/leave", icon: LeaveIcon },
-      { label: "Notifications", to: "/admin/notifications", icon: NotificationsIcon },
-      { label: "Calendar", to: "/admin/calendar", icon: CalendarIcon },
+      { label: "admin.nav.leaveRequests", to: "/admin/leave", icon: LeaveIcon },
+      { label: "admin.nav.notifications", to: "/admin/notifications", icon: NotificationsIcon },
+      { label: "admin.nav.calendar", to: "/admin/calendar", icon: CalendarIcon },
     ],
   },
   {
-    title: "Settings",
+    title: "admin.nav.settings",
     items: [
-      { label: "My Profile", to: "/admin/profile", icon: ProfileIcon },
-      { label: "Settings", to: "/admin/settings", icon: SettingsIcon },
-      { label: "About", to: "/admin/about", icon: AboutIcon },
+      { label: "admin.nav.myProfile", to: "/admin/profile", icon: ProfileIcon },
+      { label: "admin.nav.settings", to: "/admin/settings", icon: SettingsIcon },
+      { label: "admin.nav.about", to: "/admin/about", icon: AboutIcon },
     ],
   },
 ];

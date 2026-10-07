@@ -6,16 +6,18 @@ import { Badge, Button, Card, ErrorText, Input, Label, PageHeader, Spinner } fro
 import { api } from "../../api/client";
 import { getStudent, updateStudent, updateStudentStatus } from "./api";
 import { useAcademicYears, useClasses, useSections } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { StudentStatus, StudentUpdateRequest } from "./types";
 
 const STATUS_OPTIONS: StudentStatus[] = ["ACTIVE", "INACTIVE", "TRANSFERRED", "GRADUATED", "ALUMNI"];
 
 function CredentialsModal({ credentials, onClose }: { credentials: { username?: string; email?: string; password: string }; onClose: () => void }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const loginId = credentials.username || credentials.email || "";
 
   const copyToClipboard = () => {
-    const text = `Login Credentials\nLogin ID: ${loginId}\nPassword: ${credentials.password}`;
+    const text = t("admin.credentials.clipboard", { id: loginId, password: credentials.password });
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -24,26 +26,26 @@ function CredentialsModal({ credentials, onClose }: { credentials: { username?: 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <h2 className="text-xl font-bold text-ink mb-2">Student Login Credentials</h2>
-        <p className="text-sm text-accent-fg mb-4">Share these credentials with the student. They will be asked to change password on first login.</p>
+        <h2 className="text-xl font-bold text-ink mb-2">{t("admin.credentials.title")}</h2>
+        <p className="text-sm text-accent-fg mb-4">{t("admin.credentials.hint")}</p>
 
         <div className="bg-violet-50 rounded-lg p-4 mb-4 font-mono text-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-accent-fg">Login ID:</span>
-            <span className="text-ink font-medium">{loginId}</span>
+            <span className="text-accent-fg">{t("admin.credentials.loginId")}</span>
+            <span className="text-ink font-medium" dir="ltr">{loginId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-accent-fg">Password:</span>
-            <span className="text-ink font-medium">{credentials.password}</span>
+            <span className="text-accent-fg">{t("admin.credentials.password")}</span>
+            <span className="text-ink font-medium" dir="ltr">{credentials.password}</span>
           </div>
         </div>
 
         <div className="flex gap-3">
           <Button onClick={copyToClipboard} variant="secondary" className="flex-1">
-            {copied ? "Copied!" : "Copy Credentials"}
+            {copied ? t("admin.credentials.copied") : t("admin.credentials.copy")}
           </Button>
           <Button onClick={onClose} className="flex-1">
-            Done
+            {t("admin.credentials.done")}
           </Button>
         </div>
       </div>
@@ -64,6 +66,7 @@ function selectClass(className = "") {
 }
 
 export default function StudentDetail() {
+  const { t, te, fmtDate } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -139,7 +142,7 @@ export default function StudentDetail() {
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to update student.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.studentDetail.updateFailed");
       setError(message);
     },
   });
@@ -148,13 +151,13 @@ export default function StudentDetail() {
     mutationFn: () => updateStudentStatus(id!, { status: statusChoice as StudentStatus, note: statusNote || null }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "students"] });
-      setStatusMessage("Status updated.");
+      setStatusMessage(t("admin.studentDetail.statusUpdated"));
       setStatusChoice("");
       setStatusNote("");
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to update status.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.studentDetail.statusFailed");
       setStatusMessage(message);
     },
   });
@@ -169,7 +172,7 @@ export default function StudentDetail() {
     },
     onError: (err: unknown) => {
       const message =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Failed to reset password.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? t("admin.studentDetail.resetFailed");
       alert(message);
     },
   });
@@ -205,13 +208,13 @@ export default function StudentDetail() {
       )}
       <PageHeader
         title={student.full_name}
-        subtitle={`Admission No ${student.admission_no}`}
+        subtitle={t("admin.studentDetail.admissionNoSubtitle", { no: student.admission_no })}
         actions={
           <div className="flex gap-3">
             <Link to="/admin/students">
-              <Button variant="secondary">Back to list</Button>
+              <Button variant="secondary">{t("admin.common.backToList")}</Button>
             </Link>
-            {!editing && <Button onClick={() => setEditing(true)}>Edit</Button>}
+            {!editing && <Button onClick={() => setEditing(true)}>{t("admin.common.edit")}</Button>}
           </div>
         }
       />
@@ -247,7 +250,7 @@ export default function StudentDetail() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute -bottom-1 -right-1 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full border-2 border-white/50 flex items-center justify-center transition-colors cursor-pointer"
-                title="Change photo"
+                title={t("admin.teacherDetail.changePhoto")}
               >
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -258,8 +261,8 @@ export default function StudentDetail() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-1">{student.full_name}</h2>
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-white/20 rounded-full text-sm text-white">ID: {student.admission_no}</span>
-                <Badge tone={STATUS_TONE[student.status]}>{student.status}</Badge>
+                <span className="px-3 py-1 bg-white/20 rounded-full text-sm text-white">{t("admin.teacherDetail.idLabel", { id: student.admission_no })}</span>
+                <Badge tone={STATUS_TONE[student.status]}>{te("status", student.status)}</Badge>
               </div>
             </div>
           </div>
@@ -272,39 +275,39 @@ export default function StudentDetail() {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>First Name</Label>
+                  <Label>{t("admin.common.firstName")}</Label>
                   <Input value={form.first_name ?? ""} onChange={(e) => update("first_name", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Last Name</Label>
+                  <Label>{t("admin.common.lastName")}</Label>
                   <Input value={form.last_name ?? ""} onChange={(e) => update("last_name", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Date of Birth</Label>
+                  <Label>{t("admin.common.dob")}</Label>
                   <Input type="date" value={form.dob ?? ""} onChange={(e) => update("dob", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Gender</Label>
+                  <Label>{t("admin.common.gender")}</Label>
                   <select className={selectClass()} value={form.gender ?? ""} onChange={(e) => update("gender", e.target.value)}>
-                    <option value="">Select</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
-                    <option value="O">Other</option>
+                    <option value="">{t("admin.common.select")}</option>
+                    <option value="M">{t("admin.common.male")}</option>
+                    <option value="F">{t("admin.common.female")}</option>
+                    <option value="O">{t("admin.common.other")}</option>
                   </select>
                 </div>
                 <div>
-                  <Label>Blood Group</Label>
+                  <Label>{t("admin.studentForm.bloodGroup")}</Label>
                   <Input value={form.blood_group ?? ""} onChange={(e) => update("blood_group", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Roll Number</Label>
+                  <Label>{t("admin.studentDetail.rollNumber")}</Label>
                   <Input value={form.roll_number ?? ""} onChange={(e) => update("roll_number", e.target.value)} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <Label>Academic Year</Label>
+                  <Label>{t("admin.common.academicYear")}</Label>
                   <select
                     className={selectClass()}
                     value={form.academic_year_id ?? ""}
@@ -322,7 +325,7 @@ export default function StudentDetail() {
                   </select>
                 </div>
                 <div>
-                  <Label>Class</Label>
+                  <Label>{t("admin.common.class")}</Label>
                   <select
                     className={selectClass()}
                     value={form.class_id ?? ""}
@@ -333,17 +336,17 @@ export default function StudentDetail() {
                   >
                     {(classes ?? []).map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name}
+                        {te("class", c.name)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <Label>Section</Label>
+                  <Label>{t("admin.common.section")}</Label>
                   <select className={selectClass()} value={form.section_id ?? ""} onChange={(e) => update("section_id", e.target.value)}>
                     {(sections ?? []).map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.name}
+                        {te("section", s.name)}
                       </option>
                     ))}
                   </select>
@@ -352,15 +355,15 @@ export default function StudentDetail() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Phone</Label>
+                  <Label>{t("admin.common.phone")}</Label>
                   <Input value={form.phone ?? ""} onChange={(e) => update("phone", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Email</Label>
+                  <Label>{t("common.email")}</Label>
                   <Input type="email" value={form.email ?? ""} onChange={(e) => update("email", e.target.value)} />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label>Address</Label>
+                  <Label>{t("admin.common.address")}</Label>
                   <Input value={form.address ?? ""} onChange={(e) => update("address", e.target.value)} />
                 </div>
               </div>
@@ -376,68 +379,68 @@ export default function StudentDetail() {
                     setError(null);
                   }}
                 >
-                  Cancel
+                  {t("admin.common.cancel")}
                 </Button>
                 <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? "Saving..." : "Save changes"}
+                  {updateMutation.isPending ? t("admin.common.saving") : t("admin.common.saveChangesLower")}
                 </Button>
               </div>
             </form>
           ) : (
             <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-              <Field label="First Name" value={student.first_name} />
-              <Field label="Last Name" value={student.last_name} />
-              <Field label="Date of Birth" value={student.dob ?? "—"} />
-              <Field label="Gender" value={student.gender ?? "—"} />
-              <Field label="Blood Group" value={student.blood_group ?? "—"} />
-              <Field label="Roll Number" value={student.roll_number ?? "—"} />
-              <Field label="Admission Date" value={student.admission_date ?? "—"} />
-              <Field label="Phone" value={student.phone ?? "—"} />
-              <Field label="Email" value={student.email ?? "—"} />
-              <Field label="Address" value={student.address ?? "—"} />
+              <Field label={t("admin.common.firstName")} value={student.first_name} />
+              <Field label={t("admin.common.lastName")} value={student.last_name} />
+              <Field label={t("admin.common.dob")} value={student.dob ? fmtDate(student.dob) : "—"} />
+              <Field label={t("admin.common.gender")} value={student.gender ? te("gender", student.gender) : "—"} />
+              <Field label={t("admin.studentForm.bloodGroup")} value={student.blood_group ?? "—"} ltr />
+              <Field label={t("admin.studentDetail.rollNumber")} value={student.roll_number ?? "—"} />
+              <Field label={t("admin.studentForm.admissionDate")} value={student.admission_date ? fmtDate(student.admission_date) : "—"} />
+              <Field label={t("admin.common.phone")} value={student.phone ?? "—"} ltr />
+              <Field label={t("common.email")} value={student.email ?? "—"} ltr />
+              <Field label={t("admin.common.address")} value={student.address ?? "—"} />
             </dl>
           )}
         </Card>
 
         <div className="space-y-6">
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-ink">Login Credentials</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink">{t("admin.studentDetail.loginCredentials")}</h2>
             <p className="text-xs text-accent-fg mb-3">
-              {student.email ? "Generate or reset login credentials for this student." : "Add email to enable login credentials."}
+              {student.email ? t("admin.studentDetail.generateHint") : t("admin.studentDetail.addEmailHint")}
             </p>
             <Button
               onClick={() => resetPasswordMutation.mutate()}
               disabled={!student.email || resetPasswordMutation.isPending}
               className="w-full"
             >
-              {resetPasswordMutation.isPending ? "Generating..." : "Get / Reset Credentials"}
+              {resetPasswordMutation.isPending ? t("admin.studentDetail.generating") : t("admin.studentDetail.getReset")}
             </Button>
           </Card>
 
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-ink">Change Status</h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink">{t("admin.studentDetail.changeStatus")}</h2>
           <form className="space-y-3" onSubmit={handleStatusSubmit}>
             <div>
-              <Label>New Status</Label>
+              <Label>{t("admin.studentDetail.newStatus")}</Label>
               <select
                 className={selectClass()}
                 value={statusChoice}
                 onChange={(e) => setStatusChoice(e.target.value as StudentStatus | "")}
               >
-                <option value="">Select status</option>
+                <option value="">{t("admin.studentDetail.selectStatus")}</option>
                 {STATUS_OPTIONS.filter((s) => s !== student.status).map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {te("status", s)}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <Label>Note</Label>
-              <Input value={statusNote} onChange={(e) => setStatusNote(e.target.value)} placeholder="Optional note" />
+              <Label>{t("admin.common.note")}</Label>
+              <Input value={statusNote} onChange={(e) => setStatusNote(e.target.value)} placeholder={t("admin.studentDetail.optionalNote")} />
             </div>
             <Button type="submit" className="w-full" disabled={!statusChoice || statusMutation.isPending}>
-              {statusMutation.isPending ? "Updating..." : "Update Status"}
+              {statusMutation.isPending ? t("admin.studentDetail.updating") : t("admin.studentDetail.updateStatus")}
             </Button>
             {statusMessage && <p className="text-sm text-ink-2">{statusMessage}</p>}
           </form>
@@ -448,11 +451,11 @@ export default function StudentDetail() {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, ltr }: { label: string; value: string; ltr?: boolean }) {
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-accent-fg">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{value}</dd>
+      <dd className="mt-0.5 text-sm text-ink" dir={ltr ? "ltr" : undefined}>{value}</dd>
     </div>
   );
 }

@@ -40,6 +40,10 @@ class HomeworkValidation(Document):
 
     questions: list[dict] = Field(default_factory=list)
 
+    language: str = "en"  # the language the feedback is written in; one record per submission and language
+    fingerprint: str | None = None  # what was handed in when this was written (files + note): a change means re-mark
+    files_checked: list[str] = Field(default_factory=list)
+
     validated_at: datetime = Field(default_factory=utcnow)
     validated_by: str | None = None
 

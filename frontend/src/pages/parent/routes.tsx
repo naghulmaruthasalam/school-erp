@@ -17,16 +17,16 @@ import ParentAbout from "./About";
 import ParentSyllabusPage from "./SyllabusPage";
 
 export const parentNavItems: NavItem[] = [
-  { label: "Dashboard", to: "/parent", end: true, icon: DashboardIcon },
-  { label: "My Profile", to: "/parent/profile", icon: ProfileIcon },
-  { label: "Attendance", to: "/parent/attendance", icon: AttendanceIcon },
-  { label: "Homework", to: "/parent/homework", icon: HomeworkIcon },
-  { label: "Syllabus", to: "/parent/syllabus", icon: SyllabusIcon },
-  { label: "Exams", to: "/parent/exams", icon: ExamsIcon },
-  { label: "Fees", to: "/parent/fees", icon: FeesIcon },
-  { label: "Notifications", to: "/parent/notifications", icon: NotificationsIcon },
-  { label: "Settings", to: "/parent/settings", icon: SettingsIcon },
-  { label: "About", to: "/parent/about", icon: AboutIcon },
+  { label: "navigation.dashboard", to: "/parent", end: true, icon: DashboardIcon },
+  { label: "navigation.myProfile", to: "/parent/profile", icon: ProfileIcon },
+  { label: "navigation.attendance", to: "/parent/attendance", icon: AttendanceIcon },
+  { label: "navigation.homework", to: "/parent/homework", icon: HomeworkIcon },
+  { label: "navigation.syllabus", to: "/parent/syllabus", icon: SyllabusIcon },
+  { label: "parent.nav.exams", to: "/parent/exams", icon: ExamsIcon },
+  { label: "navigation.fees", to: "/parent/fees", icon: FeesIcon },
+  { label: "navigation.notifications", to: "/parent/notifications", icon: NotificationsIcon },
+  { label: "navigation.settings", to: "/parent/settings", icon: SettingsIcon },
+  { label: "navigation.about", to: "/parent/about", icon: AboutIcon },
 ];
 
 /**

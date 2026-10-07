@@ -10,6 +10,7 @@ import {
   MessageCircle, BookOpen, Calendar, Clock, GraduationCap, Languages
 } from "lucide-react";
 import { api } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 import { fetchSyllabusTree } from "../admin/syllabusApi";
 import { MarkdownRenderer } from "../../components/MarkdownRenderer";
 
@@ -25,6 +26,7 @@ const emptyForm: HomeworkCreateRequest = {
 interface ChatMessage { role: "user" | "assistant"; content: string; }
 
 export default function TeacherHomework() {
+  const { t, te, language: uiLanguage } = useLanguage();
   const teacherId = useOwnTeacherId();
   const sectionIds = useMySectionIds();
   const { data: sections } = useSections();
@@ -77,9 +79,9 @@ export default function TeacherHomework() {
   });
 
   const { data: curriculumChapters } = useQuery({
-    queryKey: ["curriculum", "chapters", aiGrade, aiSubject],
+    queryKey: ["curriculum", "chapters", aiGrade, aiSubject, uiLanguage],
     queryFn: async () => {
-      const { data } = await api.get<{ chapters: { unit_number: number; title_en: string }[] }>(
+      const { data } = await api.get<{ chapters: { unit_number: number; title: string; title_en: string; language: string }[] }>(
         `/curriculum/chapters?grade=${aiGrade}&subject=${encodeURIComponent(aiSubject)}`
       );
       return data.chapters;
@@ -126,14 +128,14 @@ export default function TeacherHomework() {
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setFormError(message ?? "Failed to create homework.");
+      setFormError(message ?? t("teacherHomework.failedCreate"));
     },
   });
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.section_id || !form.subject_id || !form.title || !form.assigned_date || !form.due_date) {
-      setFormError("Section, subject, title, assigned date and due date are required.");
+      setFormError(t("teacherHomework.required"));
       return;
     }
     createMutation.mutate({ ...form, description: form.description || null, chapter: form.chapter?.trim() || null });
@@ -153,7 +155,7 @@ export default function TeacherHomework() {
     setIsGenerating(true);
     try {
       const { data: contentData } = await api.get(
-        `/curriculum/content?grade=${aiGrade}&subject=${encodeURIComponent(aiSubject)}&unit_number=${aiChapter}`
+        `/curriculum/content?grade=${aiGrade}&subject=${encodeURIComponent(aiSubject)}&unit_number=${aiChapter}&lang=${aiLanguage === "arabic" ? "ar" : "en"}`
       );
       const chapterTitle = curriculumChapters?.find(c => c.unit_number === aiChapter)?.title_en || `Chapter ${aiChapter}`;
 
@@ -168,7 +170,7 @@ export default function TeacherHomework() {
       setGeneratedContent(response.data.content);
     } catch (error) {
       console.error("Failed to generate homework:", error);
-      setFormError("Failed to generate homework. Please try again.");
+      setFormError(t("teacherHomework.failedGenerate"));
     } finally { setIsGenerating(false); }
   }
 
@@ -196,21 +198,21 @@ export default function TeacherHomework() {
       const response = await api.post("/ai/teacher", { message: userMessage });
       setChatMessages((prev) => [...prev, { role: "assistant", content: response.data.response }]);
     } catch {
-      setChatMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
+      setChatMessages((prev) => [...prev, { role: "assistant", content: t("teacherHomework.chatError") }]);
     } finally { setIsChatting(false); }
   }
 
   const stats = [
-    { icon: BookOpen, label: "Total Assigned", value: myHomework.length, color: "from-violet-500 to-purple-500" },
-    { icon: Clock, label: "Due Today", value: myHomework.filter(h => h.due_date === todayIso()).length, color: "from-amber-500 to-orange-500" },
-    { icon: GraduationCap, label: "Sections", value: sectionIds.length, color: "from-blue-500 to-cyan-500" },
+    { icon: BookOpen, label: t("teacherHomework.totalAssigned"), value: myHomework.length, color: "from-violet-500 to-purple-500" },
+    { icon: Clock, label: t("teacherHomework.dueToday"), value: myHomework.filter(h => h.due_date === todayIso()).length, color: "from-amber-500 to-orange-500" },
+    { icon: GraduationCap, label: t("teacherHomework.sections"), value: sectionIds.length, color: "from-blue-500 to-cyan-500" },
   ];
 
   return (
     <div className="animate-page-enter">
-      <PageHeader title="Homework" subtitle="Assign homework and review submissions">
+      <PageHeader title={t("teacherHomework.title")} subtitle={t("teacherHomework.subtitle")}>
         <Button onClick={() => setShowCopilot(!showCopilot)} glow className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4" /> AI Copilot
+          <Sparkles className="w-4 h-4" /> {t("teacherHomework.aiCopilot")}
         </Button>
       </PageHeader>
 
@@ -232,50 +234,50 @@ export default function TeacherHomework() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
                 <Wand2 className="w-4 h-4 text-white" />
               </div>
-              Assign New Homework
+              {t("teacherHomework.assignNew")}
             </h2>
             <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Section</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.section")}</label>
                 <select value={form.section_id} onChange={(e) => setForm((f) => ({ ...f, section_id: e.target.value }))}
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30">
-                  <option value="">Select a section</option>
+                  <option value="">{t("teacherHomework.selectSection")}</option>
                   {sectionIds.map((id) => <option key={id} value={id}>{sectionLabel(id, sections, classes)}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Subject</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.subject")}</label>
                 <select value={form.subject_id} onChange={(e) => setForm((f) => ({ ...f, subject_id: e.target.value }))}
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/30">
-                  <option value="">Select a subject</option>
-                  {subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <option value="">{t("teacherHomework.selectSubject")}</option>
+                  {subjects?.map((s) => <option key={s.id} value={s.id}>{te("subject", s.name)}</option>)}
                 </select>
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Chapter <span className="font-normal text-ink-3">(optional)</span></label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.chapter")} <span className="font-normal text-ink-3">({t("teacherHomework.optional")})</span></label>
                 <input type="text" list="hw-chapters" value={form.chapter ?? ""} onChange={(e) => setForm((f) => ({ ...f, chapter: e.target.value }))}
-                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="Pick from the syllabus or type one" />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder={t("teacherHomework.chapterHint")} />
                 <datalist id="hw-chapters">{chapterOptions.map((c) => <option key={c} value={c} />)}</datalist>
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Title</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.titleLabel")}</label>
                 <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="e.g. Algebra worksheet" />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Description / Instructions</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.description")}</label>
                 <textarea rows={5} value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm min-h-[120px]"
-                  placeholder="Enter homework instructions or use AI Copilot to generate..." />
+                  placeholder={t("teacherHomework.descHint")} />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Attachments</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.attachments")}</label>
                 <div className="flex items-center gap-3">
                   <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png" />
                   <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
-                    <FileUp className="w-4 h-4" /> Upload Files
+                    <FileUp className="w-4 h-4" /> {t("teacherHomework.upload")}
                   </Button>
-                  <span className="text-xs text-ink-3">PDF, DOC, PPT, Excel, Images</span>
+                  <span className="text-xs text-ink-3">{t("teacherHomework.fileTypes")}</span>
                 </div>
                 {attachments.length > 0 && (
                   <div className="mt-3 space-y-2">
@@ -296,14 +298,14 @@ export default function TeacherHomework() {
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Due Date</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.dueDate")}</label>
                 <input type="date" value={form.due_date} onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>
               <div className="sm:col-span-2 flex items-center gap-3">
                 <Button type="submit" disabled={createMutation.isPending} glow>
                   {createMutation.isPending ? <Spinner size="sm" /> : <Send className="w-4 h-4" />}
-                  {createMutation.isPending ? "Assigning..." : "Assign to Students"}
+                  {createMutation.isPending ? t("teacherHomework.assigning") : t("teacherHomework.assign")}
                 </Button>
                 <ErrorText>{formError}</ErrorText>
               </div>
@@ -312,14 +314,14 @@ export default function TeacherHomework() {
 
           {/* Homework List */}
           <h2 className="mb-4 font-bold text-ink dark:text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-accent-fg" /> Assigned Homework
+            <Calendar className="w-5 h-5 text-accent-fg" /> {t("teacherHomework.assigned")}
           </h2>
           {homeworkQuery.isLoading ? (
             <Card className="py-12 flex justify-center"><Spinner size="lg" /></Card>
           ) : myHomework.length === 0 ? (
             <Card className="text-center py-12">
               <BookOpen className="w-12 h-12 mx-auto text-ink-3 mb-4" />
-              <p className="text-ink-3">No homework assigned yet.</p>
+              <p className="text-ink-3">{t("teacherHomework.none")}</p>
             </Card>
           ) : (
             <div className="space-y-3">
@@ -335,12 +337,12 @@ export default function TeacherHomework() {
                           {hw.title}
                         </Link>
                         <p className="text-sm text-ink-3">
-                          {sectionLabel(hw.section_id, sections, classes)} • {subjects?.find((s) => s.id === hw.subject_id)?.name}
+                          {sectionLabel(hw.section_id, sections, classes, te)} • {te("subject", subjects?.find((s) => s.id === hw.subject_id)?.name)}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge tone={hw.due_date === todayIso() ? "amber" : "gray"}>Due: {hw.due_date}</Badge>
+                      <Badge tone={hw.due_date === todayIso() ? "amber" : "gray"}>{t("teacherHomework.due")}: {hw.due_date}</Badge>
                     </div>
                   </div>
                 </Card>
@@ -358,7 +360,7 @@ export default function TeacherHomework() {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
-                  AI Homework Generator
+                  {t("teacherHomework.generator")}
                 </h3>
                 <button onClick={() => setShowCopilot(false)} className="text-ink-3 hover:text-accent-fg">
                   <X className="w-5 h-5" />
@@ -367,70 +369,70 @@ export default function TeacherHomework() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Grade</label>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.grade")}</label>
                   <select value={aiGrade ?? ""} onChange={(e) => { setAiGrade(e.target.value ? Number(e.target.value) : null); setAiSubject(""); setAiChapter(null); }}
                     className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm">
-                    <option value="">Select Grade</option>
-                    {curriculumGrades?.map((g) => <option key={g} value={g}>Class {g}</option>)}
+                    <option value="">{t("teacherHomework.selectGrade")}</option>
+                    {curriculumGrades?.map((g) => <option key={g} value={g}>{te("class", `Class ${g}`)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Subject</label>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.subject")}</label>
                   <select value={aiSubject} onChange={(e) => { setAiSubject(e.target.value); setAiChapter(null); }}
                     className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" disabled={!aiGrade}>
-                    <option value="">Select Subject</option>
-                    {curriculumSubjects?.map((s) => <option key={s} value={s}>{s}</option>)}
+                    <option value="">{t("teacherHomework.selectSubject")}</option>
+                    {curriculumSubjects?.map((s) => <option key={s} value={s}>{te("subject", s)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Chapter</label>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.chapter")}</label>
                   <select value={aiChapter ?? ""} onChange={(e) => setAiChapter(e.target.value ? Number(e.target.value) : null)}
                     className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" disabled={!aiSubject}>
-                    <option value="">Select Chapter</option>
-                    {curriculumChapters?.map((c) => <option key={c.unit_number} value={c.unit_number}>{c.unit_number}. {c.title_en}</option>)}
+                    <option value="">{t("teacherHomework.selectChapter")}</option>
+                    {curriculumChapters?.map((c) => <option key={c.unit_number} value={c.unit_number}>{c.unit_number}. {c.title || c.title_en}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Difficulty Level</label>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.difficulty")}</label>
                   <select value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value)}
                     className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm">
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
+                    <option value="easy">{t("teacherHomework.easy")}</option>
+                    <option value="medium">{t("teacherHomework.medium")}</option>
+                    <option value="hard">{t("teacherHomework.hard")}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink dark:text-white mb-2 flex items-center gap-2">
-                    <Languages className="w-4 h-4" /> Language
+                    <Languages className="w-4 h-4" /> {t("teacherCopilot.outputLanguage")}
                   </label>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setAiLanguage("english")}
                       className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                         aiLanguage === "english" ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white" : "bg-surface-3 text-ink-2 hover:bg-surface-2"
-                      }`}>English</button>
+                      }`}>{t("common.english")}</button>
                     <button type="button" onClick={() => setAiLanguage("arabic")}
                       className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                         aiLanguage === "arabic" ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white" : "bg-surface-3 text-ink-2 hover:bg-surface-2"
-                      }`}>العربية</button>
+                      }`}>{t("common.arabic")}</button>
                   </div>
                 </div>
                 <Button onClick={generateHomework} disabled={isGenerating || !aiGrade || !aiSubject || !aiChapter} className="w-full" glow>
-                  {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Homework</>}
+                  {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("teacherHomework.generating")}</> : <><Sparkles className="w-4 h-4" /> {t("teacherHomework.generate")}</>}
                 </Button>
 
                 {generatedContent && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-ink dark:text-white">Generated Content</label>
+                      <label className="text-sm font-medium text-ink dark:text-white">{t("teacherHomework.generated")}</label>
                       <button onClick={copyToClipboard} className="text-xs text-accent-fg hover:text-accent-fg flex items-center gap-1">
                         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                        {copied ? "Copied" : "Copy"}
+                        {copied ? t("teacherHomework.copied") : t("teacherHomework.copy")}
                       </button>
                     </div>
-                    <div className={`max-h-80 overflow-y-auto p-4 bg-white dark:bg-surface-2 rounded-xl border border-line ${aiLanguage === "arabic" ? "text-right" : ""}`} dir={aiLanguage === "arabic" ? "rtl" : "ltr"}>
+                    <div className={`max-h-80 overflow-y-auto p-4 bg-white dark:bg-surface-2 rounded-xl border border-line ${aiLanguage === "arabic" ? "text-end" : ""}`} dir={aiLanguage === "arabic" ? "rtl" : "ltr"}>
                       <MarkdownRenderer content={generatedContent} />
                     </div>
-                    <Button onClick={useGeneratedContent} variant="secondary" className="w-full mt-3">Use This Content</Button>
+                    <Button onClick={useGeneratedContent} variant="secondary" className="w-full mt-3">{t("teacherHomework.use")}</Button>
                   </div>
                 )}
               </div>
@@ -448,12 +450,12 @@ export default function TeacherHomework() {
                   ))}
                   {isChatting && (
                     <div className="text-xs p-3 rounded-xl bg-surface-3 text-ink-3 mr-4 flex items-center gap-2">
-                      <Loader2 className="w-3 h-3 animate-spin" /> Thinking...
+                      <Loader2 className="w-3 h-3 animate-spin" /> {t("teacherHomework.thinking")}
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask anything..."
+                  <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={t("teacherHomework.ask")}
                     className="flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-xs"
                     onKeyDown={(e) => e.key === "Enter" && sendChatMessage()} />
                   <Button onClick={sendChatMessage} disabled={isChatting} className="px-3"><Send className="w-3 h-3" /></Button>

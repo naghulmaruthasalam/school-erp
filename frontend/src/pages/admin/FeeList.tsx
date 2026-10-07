@@ -6,6 +6,7 @@ import FeesNav from "./fees/FeesNav";
 import { api } from "../../api/client";
 import { fetchPendingFees } from "./api";
 import type { PageResponse } from "../../types/common";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface Invoice {
   id: string;
@@ -28,6 +29,7 @@ interface Payment {
 }
 
 export default function FeeList() {
+  const { t, te, fmtDate, fmtNumber } = useLanguage();
   const [activeTab, setActiveTab] = useState<"invoices" | "payments">("invoices");
   const [statusFilter, setStatusFilter] = useState<string>("");
 
@@ -54,26 +56,26 @@ export default function FeeList() {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="Fee Management" subtitle="Invoices, payments, and collection tracking" />
+      <PageHeader title={t("admin.fees.title")} subtitle={t("admin.fees.subtitle")} />
       <FeesNav />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatTile
-          label="Total Due"
+          label={t("admin.fees.totalDue")}
           value={summaryQuery.isLoading ? <Spinner /> : `₹${((summaryQuery.data?.total_due ?? 0) / 1000).toFixed(0)}K`}
         />
         <StatTile
-          label="Total Collected"
+          label={t("admin.fees.totalCollected")}
           value={summaryQuery.isLoading ? <Spinner /> : `₹${((summaryQuery.data?.total_paid ?? 0) / 1000).toFixed(0)}K`}
         />
         <StatTile
-          label="Pending"
+          label={t("admin.fees.pending")}
           value={summaryQuery.isLoading ? <Spinner /> : `₹${((summaryQuery.data?.total_pending ?? 0) / 1000).toFixed(0)}K`}
         />
         <StatTile
-          label="Overdue Invoices"
+          label={t("admin.fees.overdueInvoices")}
           value={summaryQuery.isLoading ? <Spinner /> : summaryQuery.data?.overdue_count ?? 0}
-          hint="Need follow-up"
+          hint={t("admin.fees.needFollowUp")}
         />
       </div>
 
@@ -83,25 +85,25 @@ export default function FeeList() {
             onClick={() => setActiveTab("invoices")}
             className={`px-4 py-2 rounded-lg font-medium ${activeTab === "invoices" ? "bg-violet-600 text-white" : "text-accent-fg"}`}
           >
-            Invoices
+            {t("admin.fees.invoices")}
           </button>
           <button
             onClick={() => setActiveTab("payments")}
             className={`px-4 py-2 rounded-lg font-medium ${activeTab === "payments" ? "bg-violet-600 text-white" : "text-accent-fg"}`}
           >
-            Payments
+            {t("admin.fees.payments")}
           </button>
           {activeTab === "invoices" && (
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="ml-auto rounded-lg border border-line px-3 py-2 text-sm focus:border-violet-500"
+              className="ms-auto rounded-lg border border-line px-3 py-2 text-sm focus:border-violet-500"
             >
-              <option value="">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="PARTIALLY_PAID">Partially paid</option>
-              <option value="PAID">Paid</option>
-              <option value="OVERDUE">Overdue</option>
+              <option value="">{t("admin.fees.allStatus")}</option>
+              <option value="PENDING">{t("admin.fees.pending")}</option>
+              <option value="PARTIALLY_PAID">{t("admin.fees.partiallyPaid")}</option>
+              <option value="PAID">{t("admin.fees.paid")}</option>
+              <option value="OVERDUE">{t("admin.fees.overdue")}</option>
             </select>
           )}
         </div>
@@ -118,24 +120,24 @@ export default function FeeList() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-sm text-accent-fg">{inv.invoice_number}</span>
-                      <Badge tone={inv.status === "PAID" ? "green" : inv.status === "OVERDUE" ? "red" : inv.status === "CANCELLED" ? "gray" : "yellow"}>{inv.status}</Badge>
+                      <Badge tone={inv.status === "PAID" ? "green" : inv.status === "OVERDUE" ? "red" : inv.status === "CANCELLED" ? "gray" : "yellow"}>{te("status", inv.status)}</Badge>
                     </div>
                     <p className="font-medium text-ink">{inv.student_name}</p>
-                    <p className="text-xs text-accent-fg">Due: {new Date(inv.due_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-accent-fg">{t("admin.fees.dueOn", { date: fmtDate(inv.due_date) })}</p>
                   </div>
-                  <div className="text-right">
-                    <Link to={`/admin/fees/invoices/${inv.id}`} className="text-xs font-medium text-accent-fg hover:underline">View / record payment</Link>
-                    <p className="text-lg font-semibold text-ink">₹{inv.total_amount.toLocaleString()}</p>
-                    <p className="text-sm text-green-600">Paid: ₹{inv.paid_amount.toLocaleString()}</p>
+                  <div className="text-end">
+                    <Link to={`/admin/fees/invoices/${inv.id}`} className="text-xs font-medium text-accent-fg hover:underline">{t("admin.fees.viewRecord")}</Link>
+                    <p className="text-lg font-semibold text-ink">₹{fmtNumber(inv.total_amount)}</p>
+                    <p className="text-sm text-green-600">{t("admin.fees.paidAmount", { amount: `₹${fmtNumber(inv.paid_amount)}` })}</p>
                     {inv.total_amount - inv.paid_amount > 0 && (
-                      <p className="text-sm text-red-600">Due: ₹{(inv.total_amount - inv.paid_amount).toLocaleString()}</p>
+                      <p className="text-sm text-red-600">{t("admin.fees.dueAmount", { amount: `₹${fmtNumber(inv.total_amount - inv.paid_amount)}` })}</p>
                     )}
                   </div>
                 </div>
               </Card>
             ))}
             {invoicesQuery.data?.items.length === 0 && (
-              <Card><p className="text-center text-accent-fg py-8">No invoices found.</p></Card>
+              <Card><p className="text-center text-accent-fg py-8">{t("admin.fees.noInvoices")}</p></Card>
             )}
           </div>
         )
@@ -150,16 +152,16 @@ export default function FeeList() {
               <Card key={p.id}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-ink">₹{p.amount.toLocaleString()}</p>
+                    <p className="font-medium text-ink">₹{fmtNumber(p.amount)}</p>
                     <p className="text-sm text-accent-fg">{p.payment_method}</p>
-                    {p.transaction_id && <p className="text-xs text-accent-fg">Txn: {p.transaction_id}</p>}
+                    {p.transaction_id && <p className="text-xs text-accent-fg">{t("admin.fees.txn", { id: p.transaction_id })}</p>}
                   </div>
-                  <p className="text-sm text-accent-fg">{new Date(p.payment_date).toLocaleDateString()}</p>
+                  <p className="text-sm text-accent-fg">{fmtDate(p.payment_date)}</p>
                 </div>
               </Card>
             ))}
             {paymentsQuery.data?.items.length === 0 && (
-              <Card><p className="text-center text-accent-fg py-8">No payments found.</p></Card>
+              <Card><p className="text-center text-accent-fg py-8">{t("admin.fees.noPayments")}</p></Card>
             )}
           </div>
         )

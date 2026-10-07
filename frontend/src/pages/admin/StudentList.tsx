@@ -5,6 +5,7 @@ import { Badge, Button, Input, Label, PageHeader } from "../../components/ui";
 import { DataTable, Pagination, type Column } from "../../components/DataTable";
 import { listStudents } from "./api";
 import { useClasses, useSections } from "./hooks";
+import { useLanguage } from "../../i18n/LanguageContext";
 import type { Student, StudentStatus } from "./types";
 
 const STATUS_OPTIONS: StudentStatus[] = ["ACTIVE", "INACTIVE", "TRANSFERRED", "GRADUATED", "ALUMNI"];
@@ -20,6 +21,7 @@ const STATUS_TONE: Record<StudentStatus, "gray" | "green" | "red" | "yellow"> = 
 const PAGE_SIZE = 20;
 
 export default function StudentList() {
+  const { t, te } = useLanguage();
   const [page, setPage] = useState(1);
   const [name, setName] = useState("");
   const [classId, setClassId] = useState("");
@@ -55,37 +57,37 @@ export default function StudentList() {
   });
 
   const columns: Column<Student>[] = [
-    { header: "Admission No", cell: (s) => s.admission_no },
+    { header: t("admin.common.admissionNo"), cell: (s) => s.admission_no },
     {
-      header: "Name",
+      header: t("admin.common.name"),
       cell: (s) => (
         <Link to={`/admin/students/${s.id}`} className="font-medium text-accent-fg hover:underline">
           {s.full_name}
         </Link>
       ),
     },
-    { header: "Class / Section", cell: (s) => `${classNameById.get(s.class_id) ?? "—"} - ${sectionNameById.get(s.section_id) ?? "—"}` },
-    { header: "Roll No", cell: (s) => s.roll_number ?? "—" },
-    { header: "Status", cell: (s) => <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge> },
+    { header: t("admin.common.classSection"), cell: (s) => `${te("class", classNameById.get(s.class_id)) || "—"} - ${te("section", sectionNameById.get(s.section_id)) || "—"}` },
+    { header: t("admin.common.rollNo"), cell: (s) => s.roll_number ?? "—" },
+    { header: t("admin.common.status"), cell: (s) => <Badge tone={STATUS_TONE[s.status]}>{te("status", s.status)}</Badge> },
   ];
 
   return (
     <div>
       <PageHeader
-        title="Students"
-        subtitle="Manage student records, enrollment status and class assignments."
+        title={t("admin.students.title")}
+        subtitle={t("admin.students.subtitle")}
         actions={
           <Link to="/admin/students/new">
-            <Button>New Student</Button>
+            <Button>{t("admin.students.newStudent")}</Button>
           </Link>
         }
       />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div>
-          <Label>Name</Label>
+          <Label>{t("admin.common.name")}</Label>
           <Input
-            placeholder="Search by name"
+            placeholder={t("admin.common.searchByName")}
             value={name}
             onChange={(e) => {
               setPage(1);
@@ -94,7 +96,7 @@ export default function StudentList() {
           />
         </div>
         <div>
-          <Label>Class</Label>
+          <Label>{t("admin.common.class")}</Label>
           <select
             className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={classId}
@@ -104,16 +106,16 @@ export default function StudentList() {
               setSectionId("");
             }}
           >
-            <option value="">All classes</option>
+            <option value="">{t("admin.common.allClasses")}</option>
             {(classes ?? []).map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {te("class", c.name)}
               </option>
             ))}
           </select>
         </div>
         <div>
-          <Label>Section</Label>
+          <Label>{t("admin.common.section")}</Label>
           <select
             className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={sectionId}
@@ -123,16 +125,16 @@ export default function StudentList() {
             }}
             disabled={!classId}
           >
-            <option value="">All sections</option>
+            <option value="">{t("admin.common.allSections")}</option>
             {(sections ?? []).map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}
+                {te("section", s.name)}
               </option>
             ))}
           </select>
         </div>
         <div>
-          <Label>Status</Label>
+          <Label>{t("admin.common.status")}</Label>
           <select
             className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink dark:text-slate-100 focus:border-violet-500 dark:focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
             value={status}
@@ -141,17 +143,17 @@ export default function StudentList() {
               setStatus(e.target.value as StudentStatus | "");
             }}
           >
-            <option value="">All statuses</option>
+            <option value="">{t("admin.common.allStatuses")}</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {te("status", s)}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      <DataTable columns={columns} rows={data?.items ?? []} isLoading={isLoading} rowKey={(s) => s.id} emptyLabel="No students found." />
+      <DataTable columns={columns} rows={data?.items ?? []} isLoading={isLoading} rowKey={(s) => s.id} emptyLabel={t("admin.students.empty")} />
       <Pagination page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPageChange={setPage} />
     </div>
   );
