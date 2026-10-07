@@ -30,11 +30,51 @@ const AR: Record<string, { name: string; topics: string[]; content: string }> = 
 };
 const ar = () => currentLanguage() === "ar";
 
-const ctx = () => CAPTURE.TEACHER.context.classes as { id: string; name: string; subjects: { id: string; name: string; chapters: string[] }[] }[];
+// Class 6 Social Studies, as in the textbook library: each chapter in both languages; chapter 1 has a video lesson per language.
+const SS6 = {
+  "Maps: Symbols & Geographic Names": {
+    ar: "الخريطة: الرموز والأسماء الجغرافية",
+    topics: ["Map symbols", "The map key", "Governorates of Oman"],
+    topicsAr: ["رموز الخريطة", "مفتاح الخريطة", "محافظات سلطنة عُمان"],
+    en: "A **map** is a drawing of the Earth's surface on paper. Mapmakers use **symbols** to show roads, mountains, wadis and cities, and a **key** (legend) explains what each symbol means.\n\nThe Sultanate of Oman has eleven governorates: Musandam, Muscat, Al Batinah North, Al Batinah South, Al Buraimi, Ad Dakhiliyah, Ad Dhahirah, Al Wusta, Dhofar, Ash Sharqiyah North and Ash Sharqiyah South.",
+    notesAr: "**الخريطة** رسمٌ لسطح الأرض على الورق. يستخدم صانعو الخرائط **رموزاً** لتمثيل الطرق والجبال والأودية والمدن، ويشرح **مفتاح الخريطة** معنى كل رمز.\n\nتتكوّن سلطنة عُمان من إحدى عشرة محافظة: مسندم ومسقط وشمال الباطنة وجنوب الباطنة والبريمي والداخلية والظاهرة والوسطى وظفار وشمال الشرقية وجنوب الشرقية.",
+    video: true,
+  },
+  "Oman in the Rashidun Caliphate Era": {
+    ar: "عُمان في عصر الخلافة الراشدة",
+    topics: ["Oman and Madinah", "The spread of Islam in Oman"],
+    topicsAr: ["عُمان والمدينة المنورة", "انتشار الإسلام في عُمان"],
+    en: "In the time of the Rashidun Caliphs the people of Oman remained closely connected to Madinah. Omani tribes took part in the Islamic conquests and in trade by land and sea.",
+    notesAr: "في عصر الخلفاء الراشدين ظلّت عُمان على صلة وثيقة بالمدينة المنورة، وشارك العُمانيون في الفتوحات الإسلامية وفي التجارة البرية والبحرية.",
+  },
+  "Omani Economy": {
+    ar: "الاقتصاد العماني",
+    topics: ["Oil and gas", "Fishing", "Agriculture"],
+    topicsAr: ["النفط والغاز", "الصيد", "الزراعة"],
+    en: "Oman's economy relies on oil and gas, and is diversifying into fishing, agriculture, mining, logistics and tourism.",
+    notesAr: "يعتمد الاقتصاد العماني على النفط والغاز، ويتنوع نحو الصيد والزراعة والتعدين والخدمات اللوجستية والسياحة.",
+  },
+} as Record<string, { ar: string; topics: string[]; topicsAr: string[]; en: string; notesAr: string; video?: boolean }>;
+const EXTRA_CLASS = { id: "demo-c6", name: "Class 6", subjects: [{ id: "demo-ss6", name: "Social Studies", chapters: Object.keys(SS6) }] };
+let VIDEOS: Record<string, string> = {};
+void import("./demoVideos").then((m) => { VIDEOS = m.default; });
+
+const ctx = () => [...(CAPTURE.TEACHER.context.classes as { id: string; name: string; subjects: { id: string; name: string; chapters: string[] }[] }[]), EXTRA_CLASS];
 const sylId = (subjectId: string) => `demo-syl-${subjectId}`;
 
 function chapters(subject: { id: string; chapters: string[] }) {
   return subject.chapters.map((name, i) => {
+    const ss = SS6[name];
+    if (ss) {
+      const isAr = ar();
+      const lang = isAr ? "ar" : "en";
+      return {
+        id: `${sylId(subject.id)}-${i}`, key: name, syllabus_id: sylId(subject.id), name: isAr ? ss.ar : name, order: i + 1, description: null,
+        topics: isAr ? ss.topicsAr : ss.topics, content: isAr ? ss.notesAr : ss.en, content_language: lang, languages: ["en", "ar"],
+        video_url: ss.video ? VIDEOS[lang] ?? null : null, video_language: ss.video ? lang : null, video_languages: ss.video ? ["en", "ar"] : [],
+        has_video: !!ss.video, duration_minutes: ss.video ? (isAr ? 8 : 7) : null,
+      };
+    }
     const a = ar() ? AR[name] : undefined;
     const base = NOTES[name];
     return {
@@ -52,7 +92,7 @@ export function demoTree() {
       id: c.id, name: c.name,
       subjects: c.subjects.map((s) => ({
         id: s.id, name: s.name, syllabus_id: sylId(s.id), title: `${s.name} - ${c.name}`, status: "PUBLISHED",
-        chapters: chapters(s).map((ch) => ({ id: ch.id, key: ch.key, content_language: ch.content_language, languages: ch.languages, name: ch.name, description: ch.description, order: ch.order, topics: ch.topics, has_content: !!ch.content })),
+        chapters: chapters(s).map((ch) => ({ id: ch.id, key: ch.key, has_video: (ch as { has_video?: boolean }).has_video, video_language: (ch as { video_language?: string | null }).video_language, content_language: ch.content_language, languages: ch.languages, name: ch.name, description: ch.description, order: ch.order, topics: ch.topics, has_content: !!ch.content })),
       })),
     })),
   };
