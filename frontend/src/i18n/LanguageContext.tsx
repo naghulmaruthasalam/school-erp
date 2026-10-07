@@ -70,8 +70,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(currentLanguage);
 
   const setLanguage = useCallback((lang: Language) => {
+    writeStored("language", lang);  // first, so the Accept-Language header of the refetches below is already the new one
     setLanguageState(lang);
-    writeStored("language", lang);
+    window.dispatchEvent(new CustomEvent("language:changed", { detail: lang }));
   }, []);
 
   const dir = language === "ar" ? "rtl" : "ltr";

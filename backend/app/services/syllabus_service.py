@@ -139,6 +139,9 @@ async def list_syllabus(
     status: SyllabusStatus | None = None,
     lang: str = "en",
 ) -> PageResponse[SyllabusOut]:
+    from app.services.curriculum_service import ensure_synced
+
+    await ensure_synced(current.school_id)
     filters: dict = {"school_id": current.school_id}
 
     if current.role == Role.STUDENT:
@@ -334,6 +337,9 @@ async def get_tree(current: CurrentUser, lang: str = "en") -> dict:
     from app.copilot.grounding import allowed_class_ids
     from app.models.academic import Class, Subject
 
+    from app.services.curriculum_service import ensure_synced
+
+    await ensure_synced(current.school_id)  # textbook library -> syllabus for any class+subject that has none yet
     class_ids, _ = await allowed_class_ids(current)
     classes = await Class.find(Class.school_id == current.school_id).sort(+Class.order).to_list()
     if class_ids is not None:

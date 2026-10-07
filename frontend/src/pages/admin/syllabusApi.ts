@@ -11,6 +11,8 @@ export interface SyllabusChapter {
   duration_minutes?: number;
   topics?: string[];
   content?: string | null;
+  content_language?: string | null;
+  languages?: string[];
 }
 
 export interface SyllabusDocument {

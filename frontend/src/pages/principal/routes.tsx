@@ -3,7 +3,7 @@ import type { NavItem } from "../../layouts/DashboardLayout";
 import {
   DashboardIcon, ProfileIcon, StudentsIcon, TeachersIcon,
   ExamsIcon, AttendanceIcon, FeesIcon, CalendarIcon,
-  SettingsIcon, AboutIcon, AnalyticsIcon, SyllabusIcon
+  SettingsIcon, AboutIcon, AnalyticsIcon, SyllabusIcon, NotificationsIcon
 } from "../../components/Icons";
 import PrincipalDashboard from "./Dashboard";
 import Profile from "./Profile";
@@ -16,6 +16,7 @@ import SchoolCalendar from "./SchoolCalendar";
 import PrincipalSyllabus from "./Syllabus";
 import Settings from "./Settings";
 import About from "./About";
+import NotificationList from "../admin/NotificationList";
 
 export const principalNavItems: NavItem[] = [
   { label: "navigation.dashboard", to: "/principal", end: true, icon: DashboardIcon },
@@ -26,6 +27,7 @@ export const principalNavItems: NavItem[] = [
   { label: "principal.nav.exams", to: "/principal/exams", icon: ExamsIcon },
   { label: "navigation.attendance", to: "/principal/attendance", icon: AttendanceIcon },
   { label: "principal.nav.feeReports", to: "/principal/fees", icon: FeesIcon },
+  { label: "lead.nav.announcements", to: "/principal/announcements", icon: NotificationsIcon },
   { label: "principal.nav.calendar", to: "/principal/calendar", icon: CalendarIcon },
   { label: "principal.nav.analytics", to: "/principal/analytics", icon: AnalyticsIcon },
   { label: "navigation.settings", to: "/principal/settings", icon: SettingsIcon },
@@ -42,6 +44,7 @@ export const principalChildRoutes = (
     <Route path="exams" element={<ExamManagement />} />
     <Route path="attendance" element={<AttendanceReports />} />
     <Route path="fees" element={<FeeReports />} />
+    <Route path="announcements" element={<NotificationList />} />
     <Route path="calendar" element={<SchoolCalendar />} />
     <Route path="analytics" element={<PrincipalDashboard />} />
     <Route path="settings" element={<Settings />} />

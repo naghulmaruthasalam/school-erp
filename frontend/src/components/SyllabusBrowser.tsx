@@ -10,7 +10,7 @@ import { fetchSyllabusTree, getSyllabus, type TreeChapter, type TreeClass, type 
 import { Badge, Button, Card, Spinner } from "./ui";
 import { useLanguage } from "../i18n/LanguageContext";
 
-export type BrowserRole = "student" | "parent" | "teacher" | "admin";
+export type BrowserRole = "student" | "parent" | "teacher" | "admin" | "principal";
 
 interface ChapterHomework {
   id: string;
@@ -33,9 +33,9 @@ function useChapterHomework(subjectId: string | undefined, chapter: string | und
 
 /** Class -> Subject -> Chapter, read from the syllabus in the database and scoped to what the user may see. */
 export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
-  const { t, te, fmtDate, fmtNumber } = useLanguage();
+  const { t, te, fmtDate, fmtNumber, language } = useLanguage();
   const navigate = useNavigate();
-  const tree = useQuery({ queryKey: ["syllabus", "tree"], queryFn: fetchSyllabusTree });
+  const tree = useQuery({ queryKey: ["syllabus", "tree", language], queryFn: fetchSyllabusTree });
   const classes = useMemo(() => (tree.data ?? []).filter((c) => c.subjects.length > 0), [tree.data]);
 
   const [classId, setClassId] = useState("");
@@ -52,8 +52,13 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
     if (subject && subject.id !== subjectId) setSubjectId(subject.id);
   }, [cls, subject, classId, subjectId]);
 
+  // Opening a subject shows its first chapter straight away, so the content is one click (not two) from the subject.
+  useEffect(() => {
+    if (subject && !chapter && subject.chapters.length > 0) setChapterId(subject.chapters[0].id);
+  }, [subject, chapter]);
+
   const detail = useQuery({
-    queryKey: ["syllabus", "detail", subject?.syllabus_id],
+    queryKey: ["syllabus", "detail", subject?.syllabus_id, language],
     queryFn: () => getSyllabus(subject!.syllabus_id),
     enabled: !!chapter && !!subject,
   });
@@ -151,10 +156,45 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
                 )}
 
                 {detail.isLoading && <Spinner size="sm" />}
-                {full?.content && (
+                {full?.content ? (
                   <div>
                     <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{t("shell.syllabusBrowser.notes")}</p>
-                    <div className="max-h-64 overflow-y-auto rounded-xl bg-surface p-3 text-sm text-ink-2"><Markdown>{full.content}</Markdown></div>
+                    {full.content_language && full.content_language !== language && (
+                      <p className="mb-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                        {t(full.content_language === "ar" ? "lead.browser.onlyArabic" : "lead.browser.onlyEnglish")}
+                      </p>
+                    )}
+                    <div className="max-h-[28rem] overflow-y-auto rounded-xl bg-surface p-3 text-sm leading-relaxed text-ink-2" dir={full.content_language === "ar" ? "rtl" : "ltr"}>
+                      <Markdown>{full.content}</Markdown>
+                    </div>
+                  </div>
+                ) : !detail.isLoading && (
+                  <p className="rounded-xl bg-surface p-3 text-sm text-ink-3">{t("lead.browser.noNotes")}</p>
+                )}
+
+                {full?.video_url && (
+                  <div>
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{t("lead.browser.video")}</p>
+                    <video controls preload="metadata" src={full.video_url} className="w-full max-h-72 rounded-xl bg-black" />
+                  </div>
+                )}
+
+                {(detail.data?.documents ?? []).length > 0 && (
+                  <div>
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{t("lead.browser.materials")}</p>
+                    <ul className="space-y-1">
+                      {detail.data!.documents.map((d) => (
+                        <li key={d.id}>
+                          <button type="button" className="text-sm font-medium text-accent-fg hover:underline" dir="auto"
+                            onClick={async () => {
+                              const { data } = await api.get<{ url: string }>(`/syllabus/documents/${d.id}/url`);
+                              window.open(data.url, "_blank", "noopener");
+                            }}>
+                            {d.filename}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
 

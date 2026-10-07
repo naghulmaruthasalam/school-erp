@@ -1,26 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, Card } from "../../components/ui";
-import { SyllabusViewer } from "../../components/SyllabusViewer";
 import SyllabusBrowser from "../../components/SyllabusBrowser";
-import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
-import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
+import { listSyllabus } from "../admin/syllabusApi";
 import { BookOpen, GraduationCap, FileText, Sparkles } from "lucide-react";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function StudentSyllabus() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const syllabusQuery = useQuery({
-    queryKey: ["student", "syllabus"],
+    queryKey: ["student", "syllabus", language],
     queryFn: () => listSyllabus({ status: "PUBLISHED" }),
   });
-
-  const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => fetchClasses() });
-  const subjectsQuery = useQuery({ queryKey: ["subjects"], queryFn: fetchSubjects });
-  const yearsQuery = useQuery({ queryKey: ["academicYears"], queryFn: fetchAcademicYears });
-
-  const getClassName = (id: string) => classesQuery.data?.find((c) => c.id === id)?.name || id;
-  const getSubjectName = (id: string) => subjectsQuery.data?.find((s) => s.id === id)?.name || id;
-  const getYearName = (id: string) => yearsQuery.data?.find((y) => y.id === id)?.name || id;
 
   const totalSyllabus = syllabusQuery.data?.items?.length || 0;
   const totalChapters = syllabusQuery.data?.items?.reduce((acc: number, s: any) => acc + (s.chapters?.length || 0), 0) || 0;
@@ -66,15 +56,6 @@ export default function StudentSyllabus() {
 
       <SyllabusBrowser role="student" />
 
-      <SyllabusViewer
-        syllabusList={syllabusQuery.data?.items || []}
-        isLoading={syllabusQuery.isLoading}
-        getClassName={getClassName}
-        getSubjectName={getSubjectName}
-        getYearName={getYearName}
-        getDocumentUrl={getSyllabusDocumentUrl}
-        emptyMessage={t("student.syllabus.empty")}
-      />
     </div>
   );
 }

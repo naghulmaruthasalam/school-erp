@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.services.ai.language import with_language
 from app.services.ai.gemini_client import generate, GeminiError
 
 logger = logging.getLogger(__name__)
@@ -327,6 +328,7 @@ async def extract_topics(
     chapter_content: str | None = None,
     subject: str = "",
     grade: str = "",
+    language: str = "english",
 ) -> list[str]:
     """
     Extract teachable topics from a chapter.
@@ -378,7 +380,7 @@ topics and sub-topics.
         )
 
         response = await generate(
-            system_prompt=TOPIC_EXTRACTION_PROMPT,
+            system_prompt=with_language(TOPIC_EXTRACTION_PROMPT, language),
             user_prompt=user_prompt,
             temperature=0.4,
             json_mode=True,
@@ -454,6 +456,7 @@ async def generate_lesson_plan(
     chapter: str,
     topics: list[str],
     teaching_dates: list[dict[str, Any]],
+    language: str = "english",
 ) -> LessonPlanResponse:
     """
     Generate a complete lesson plan with activities scheduled
@@ -666,7 +669,7 @@ IMPORTANT:
         )
 
         response = await generate(
-            system_prompt=SCHEDULING_PROMPT,
+            system_prompt=with_language(SCHEDULING_PROMPT, language),
             user_prompt=user_prompt,
             temperature=0.4,
             json_mode=True,

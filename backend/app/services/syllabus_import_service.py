@@ -15,7 +15,7 @@ import re
 from dataclasses import dataclass, field
 
 from app.core.deps import CurrentUser
-from app.services.academic_keys import class_key, subject_key
+from app.services.academic_keys import class_key, detect_language, subject_key
 from app.core.enums import Role, SyllabusStatus
 from app.core.exceptions import PermissionDeniedError, ValidationAppError
 from app.models.academic import AcademicYear, Class, Subject
@@ -145,7 +145,7 @@ def _flat_row(raw: dict, field_map: dict[str, str] | None = None, value_map: dic
         description=_text(mapped.get("description")) or None,
         content=content,
         order=_to_order(_text(mapped.get("order", ""))),
-        language=_text(mapped.get("language")).lower()[:5],
+        language=detect_language(content, _text(mapped.get("language"))) if content else _text(mapped.get("language")).lower()[:5],
         name_ar=clean_unit_title(_text(mapped.get("name_ar"))) if re.search(r"[\u0600-\u06FF]", _text(mapped.get("name_ar"))) else None,
     )
 

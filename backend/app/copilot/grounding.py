@@ -111,6 +111,9 @@ async def allowed_class_ids(current: CurrentUser, student_id: str | None = None)
 
 async def context_options(current: CurrentUser, lang: str = "en") -> dict:
     """Classes -> subjects -> chapters this user can study/teach, plus a parent's children."""
+    from app.services.curriculum_service import ensure_synced
+
+    await ensure_synced(current.school_id)
     class_ids, _ = await allowed_class_ids(current)
     classes_q = Class.find(Class.school_id == current.school_id)
     classes = await classes_q.sort(+Class.order).to_list()
@@ -229,6 +232,9 @@ async def build_study_context(
     if require_subject and not subject_id:
         raise ValidationAppError("Choose a subject first")
 
+    from app.services.curriculum_service import ensure_synced
+
+    await ensure_synced(current.school_id)
     ctx = StudyContext(class_id=class_id, class_name=school_class.name, student_id=child_id, chapter=chapter or None, lang=lang)
     if not subject_id:
         return ctx

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, Card } from "../../components/ui";
+import SyllabusBrowser from "../../components/SyllabusBrowser";
 import { SyllabusViewer } from "../../components/SyllabusViewer";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
@@ -34,6 +35,8 @@ export default function PrincipalSyllabus() {
         title={t("principal.syllabus.title")}
         subtitle={t("principal.syllabus.subtitle")}
       />
+
+      <SyllabusBrowser role="principal" />
 
       <Card className={`mb-6 `}>
         <div className="flex flex-wrap items-center gap-4">

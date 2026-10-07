@@ -182,3 +182,61 @@ async def test_textbook_library_syncs_into_the_syllabus_for_the_right_class_and_
     assert again["totals"]["syllabi_created"] == 0 and len(syl.chapters) == 1  # re-running updates, never duplicates
     as_teacher()
     assert (await client.post("/api/v1/syllabus/sync-curriculum")).status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_a_student_opening_a_chapter_gets_the_library_text_without_anyone_importing_it(client, library, textbook):
+    """Nothing was imported or synced by hand: the first student to look finds the Class 6 textbook, in their language."""
+    from app.services import curriculum_service
+
+    curriculum_service._last_checked.clear()
+    sid = "000000000000000000000d79"
+    await Student(id=PydanticObjectId(sid), school_id=SCHOOL, admission_no="S7", first_name="Mona", last_name="H",
+                  academic_year_id=library["year"], class_id=library["c6"], section_id="s1").insert()
+    override_current_user(make_current_user(Role.STUDENT, SCHOOL, user_id="000000000000000000000d7a", student_id=sid))
+    tree = (await client.get("/api/v1/syllabus/tree", params={"lang": "ar"})).json()
+    cls = next(c for c in tree["classes"] if c["subjects"])
+    ss = next(s for s in cls["subjects"] if s["name"] == "Social Science")
+    chapter = ss["chapters"][0]
+    assert chapter["name"] == "عمان في عصر الخلافة الراشدة" and chapter["has_content"] and chapter["key"] == "Oman in the Rashidun Caliphate Era"
+    detail = (await client.get(f"/api/v1/syllabus/{ss['syllabus_id']}", params={"lang": "ar"})).json()
+    ch = next(c for c in detail["chapters"] if c["id"] == chapter["id"])
+    assert "الخلفاء" in ch["content"] and ch["content_language"] == "ar"
+    en = (await client.get(f"/api/v1/syllabus/{ss['syllabus_id']}", params={"lang": "en"})).json()["chapters"][0]
+    assert "accepted Islam" in en["content"]
+
+
+@pytest.mark.asyncio
+async def test_a_mislabelled_record_is_served_by_the_language_its_text_is_in(client, school):
+    """Arabic text tagged "en" (and English tagged "ar") must not be served for the wrong language."""
+    from app.models.curriculum import CurriculumUnit
+
+    await CurriculumUnit(school_id=None, grade=6, subject="Social Studies", language="en", unit_number=1, unit_title_en="Maps",
+                         full_text="الخريطة هي رسم لسطح الأرض على الورق. تستخدم الرموز لتمثيل المعالم الجغرافية على الخريطة.").insert()
+    await CurriculumUnit(school_id=None, grade=6, subject="Social Studies", language="ar", unit_number=1, unit_title_en="Maps",
+                         full_text="A map is a drawing of the Earth's surface on paper. Symbols represent geographic features on a map.").insert()
+    as_teacher()
+    q = {"grade": 6, "subject": "Social Studies", "unit_number": 1}
+    en = (await client.get("/api/v1/curriculum/content", params={**q, "lang": "en"})).json()
+    ar = (await client.get("/api/v1/curriculum/content", params={**q, "lang": "ar"})).json()
+    assert en["language"] == "en" and en["full_text"].startswith("A map")
+    assert ar["language"] == "ar" and ar["full_text"].startswith("الخريطة")
+
+
+@pytest.mark.asyncio
+async def test_teacher_copilot_generators_write_in_the_language_asked_for(client, school, monkeypatch):
+    from app.services.ai import lesson_plan_generator, question_paper_generator
+
+    seen = []
+
+    async def fake_generate(system_prompt, user_prompt, **kw):
+        seen.append(system_prompt)
+        return '{"topics": ["a", "b"]}'
+
+    monkeypatch.setattr(lesson_plan_generator, "generate", fake_generate)
+    as_teacher()
+    for language, word in (("arabic", "Arabic"), ("english", "English")):
+        r = await client.post("/api/v1/teacher-copilot/lesson-plan/extract-topics",
+                              json={"chapter_name": "Maps", "chapter_content": "x", "subject": "SS", "grade": "6", "language": language})
+        assert r.status_code == 200, r.text
+        assert f"write every sentence of your answer in {word}" in seen[-1]

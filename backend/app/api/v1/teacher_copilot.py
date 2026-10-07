@@ -101,6 +101,7 @@ class ExtractTopicsRequest(BaseModel):
     chapter_content: str | None = None
     subject: str = ""
     grade: str = ""
+    language: str = "english"
 
 
 class GenerateLessonPlanRequest(BaseModel):
@@ -110,6 +111,7 @@ class GenerateLessonPlanRequest(BaseModel):
     chapter: str
     topics: list[str]
     teaching_dates: list[dict]
+    language: str = "english"
 
 
 @router.post("/lesson-plan/extract-topics")
@@ -125,6 +127,7 @@ async def api_extract_topics(
             chapter_content=req.chapter_content,
             subject=req.subject,
             grade=req.grade,
+            language=req.language,
         )
         return {"topics": topics}
     except GeminiNotConfigured as e:
@@ -148,6 +151,7 @@ async def api_generate_lesson_plan(
             chapter=req.chapter,
             topics=req.topics,
             teaching_dates=req.teaching_dates,
+            language=req.language,
         )
         return result.model_dump(mode="json")
     except GeminiNotConfigured as e:
@@ -167,6 +171,7 @@ class GenerateQuestionPaperRequest(BaseModel):
     duration_minutes: int = 180
     question_distribution: dict | None = None
     difficulty_mix: dict | None = None
+    language: str = "english"
 
 
 class GenerateWorksheetRequest(BaseModel):
@@ -175,6 +180,7 @@ class GenerateWorksheetRequest(BaseModel):
     topic: str
     num_questions: int = 10
     difficulty: str = "medium"
+    language: str = "english"
 
 
 @router.post("/question-paper/generate")
@@ -194,6 +200,7 @@ async def api_generate_question_paper(
             duration_minutes=req.duration_minutes,
             question_distribution=req.question_distribution,
             difficulty_mix=req.difficulty_mix,
+            language=req.language,
         )
         return result.model_dump(mode="json")
     except GeminiNotConfigured as e:
@@ -216,6 +223,7 @@ async def api_generate_worksheet(
             topic=req.topic,
             num_questions=req.num_questions,
             difficulty=req.difficulty,
+            language=req.language,
         )
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))

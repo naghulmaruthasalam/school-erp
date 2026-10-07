@@ -9,6 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.services.ai.language import with_language
 from app.services.ai.gemini_client import generate, GeminiError
 
 logger = logging.getLogger(__name__)
@@ -522,6 +523,7 @@ async def generate_question_paper(
     duration_minutes: int = 180,
     question_distribution: dict | None = None,
     difficulty_mix: dict | None = None,
+    language: str = "english",
 ) -> QuestionPaper:
     """Generate a complete question paper with answer key."""
 
@@ -684,7 +686,7 @@ Create a professional examination paper with:
         )
 
         response = await generate(
-            system_prompt=QUESTION_PAPER_PROMPT,
+            system_prompt=with_language(QUESTION_PAPER_PROMPT, language),
             user_prompt=user_prompt,
             temperature=0.6,
             json_mode=True,
@@ -888,6 +890,7 @@ async def generate_worksheet(
     topic: str,
     num_questions: int = 10,
     difficulty: str = "medium",
+    language: str = "english",
 ) -> dict:
     """Generate a practice worksheet for a specific topic."""
 
@@ -935,7 +938,7 @@ Include answers for teacher reference.
         )
 
         response = await generate(
-            system_prompt=WORKSHEET_PROMPT,
+            system_prompt=with_language(WORKSHEET_PROMPT, language),
             user_prompt=user_prompt,
             temperature=0.7,
             json_mode=True,

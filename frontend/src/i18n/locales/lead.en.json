@@ -153,5 +153,17 @@
     "placeholder1": "Generated content will appear here",
     "placeholder2": "Select grade, subject, and chapter, then click Generate",
     "lessonTopics": "Lesson Topics"
+  },
+  "lead": {
+    "nav": {
+      "announcements": "Announcements"
+    },
+    "browser": {
+      "onlyArabic": "This chapter's notes are only available in Arabic for now.",
+      "onlyEnglish": "This chapter's notes are only available in English for now.",
+      "noNotes": "No notes have been added to this chapter yet.",
+      "video": "Video lesson",
+      "materials": "Study materials"
+    }
   }
 }

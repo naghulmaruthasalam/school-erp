@@ -26,6 +26,18 @@ def normalize_text(value: str) -> str:
     return re.sub(r"[^a-z0-9؀-ۿ]+", " ", text).strip()
 
 
+def detect_language(text: str | None, fallback: str | None = None) -> str:
+    """"ar" or "en" from the script the text is written in. Textbook exports label their language by file name, and
+    mislabelled records (Arabic text tagged "en", or the reverse) otherwise serve the wrong edition, so the text wins
+    whenever there is enough of it; the label is only used for empty or very short text."""
+    sample = (text or "")[:6000]
+    arabic = len(re.findall(r"[\u0600-\u06FF]", sample))
+    latin = len(re.findall(r"[A-Za-z]", sample))
+    if arabic + latin >= 30:
+        return "ar" if arabic > latin else "en"
+    return "ar" if str(fallback or "").strip().lower().startswith("ar") else "en"
+
+
 def class_key(name: str) -> str:
     """"Class 6", "Grade 6 - A", "6", "VI", "الصف السادس" -> "6"; other names keep their normalized text."""
     text = normalize_text(name)

@@ -6,14 +6,15 @@ the requested language is chosen, falling back to the other language (and saying
 """
 from app.core.lang import Lang, other_lang
 from app.models.curriculum import CurriculumUnit
-from app.services.academic_keys import subject_key
+from app.services.academic_keys import detect_language, subject_key
 from app.services.syllabus_import_service import clean_unit_title
 
 Group = dict[str, CurriculumUnit]  # language -> record of one unit
 
 
 def unit_language(u: CurriculumUnit) -> str:
-    return "ar" if (u.language or "").lower().startswith("ar") else "en"
+    """The language the unit's text is really in (its label can be wrong), falling back to the label for empty text."""
+    return detect_language(u.full_text, u.language)
 
 
 async def load_units(school_id: str | None, grade: int | None = None, subject: str | None = None) -> list[CurriculumUnit]:
@@ -76,6 +77,7 @@ def subject_display(units: list[CurriculumUnit]) -> dict[str, str]:
 
 async def sync_to_syllabus(
     school_id: str, user_id: str, *, dry_run: bool = True, create_missing: bool = False, mode: str = "merge",
+    only_missing: bool = False,
 ) -> dict:
     """Turn the textbook library into the school's syllabus (class -> subject -> chapter, both languages on each chapter).
 
@@ -86,8 +88,19 @@ async def sync_to_syllabus(
     from app.services.syllabus_import_service import Row, clean_extracted_text, run_import
 
     rows = []
+    covered: set[tuple[str, str]] = set()
+    if only_missing:  # leave class+subject pairs that already have a syllabus (and any edits teachers made) alone
+        from app.models.academic import Class, Subject
+        from app.models.syllabus import Syllabus
+        from app.services.academic_keys import class_key
+
+        classes = {str(c.id): class_key(c.name) for c in await Class.find(Class.school_id == school_id).to_list()}
+        subjects = {str(x.id): subject_key(x.name, x.code) for x in await Subject.find(Subject.school_id == school_id).to_list()}
+        for syl in await Syllabus.find(Syllabus.school_id == school_id).to_list():
+            if syl.chapters and syl.class_id in classes and syl.subject_id in subjects:
+                covered.add((classes[syl.class_id], subjects[syl.subject_id]))
     for unit in await load_units(school_id):
-        if not unit.grade:
+        if not unit.grade or (str(unit.grade), subject_key(unit.subject)) in covered:
             continue
         group = {unit_language(unit): unit}
         en, ar = titles(group)
@@ -100,3 +113,23 @@ async def sync_to_syllabus(
         return {"dry_run": dry_run, "problems": ["The textbook library is empty."], "syllabi": [], "totals": {}}
     return await run_import(school_id, user_id, "curriculum-library", b"", dry_run=dry_run, create_missing=create_missing, mode=mode,
                             rows_override=(rows, []))
+
+
+_last_checked: dict[str, float] = {}
+CHECK_EVERY_SECONDS = 60
+
+
+async def ensure_synced(school_id: str | None) -> None:
+    """Make sure every class+subject the textbook library covers (and the school has) also has a syllabus, so a student or
+    teacher who opens a chapter always finds the library content. Existing syllabi are never touched; missing ones are
+    created, published, from the library. Cheap: at most one check per school per minute. Never raises."""
+    import logging
+    import time
+
+    if not school_id or time.monotonic() - _last_checked.get(school_id, -1e9) < CHECK_EVERY_SECONDS:
+        return
+    _last_checked[school_id] = time.monotonic()
+    try:
+        await sync_to_syllabus(school_id, "library-sync", dry_run=False, create_missing=False, only_missing=True)
+    except Exception:  # noqa: BLE001 - reading must never fail because the library sync did
+        logging.getLogger("curriculum.sync").exception("Library sync failed for %s", school_id)

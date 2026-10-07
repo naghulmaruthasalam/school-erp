@@ -63,7 +63,9 @@ async def ingest_ndjson(file_path: str, school_id: str | None = None):
                     subject = data.get("subject", "")
                     unit_number = data.get("unit_number", 0)
 
-                    language = "ar" if str(data.get("language", "en")).lower().startswith("ar") else "en"
+                    from app.services.academic_keys import detect_language
+
+                    language = detect_language(data.get("full_text"), data.get("language"))  # the text decides, not the file label
                     # A unit exists once per language. Matching on grade/subject/unit alone made the English record
                     # overwrite the Arabic one (or the reverse), leaving a mix of languages in the database.
                     existing = await CurriculumUnit.find_one(

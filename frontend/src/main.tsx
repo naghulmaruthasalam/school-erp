@@ -17,6 +17,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Content from the server (chapters, feedback, curriculum) comes back in the selected language: refetch when it changes.
+window.addEventListener("language:changed", () => void queryClient.invalidateQueries());
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
