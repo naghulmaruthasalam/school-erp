@@ -12,6 +12,8 @@ interface ChapterForm {
   order: number;
   video_url?: string;
   duration_minutes?: number;
+  topicsText?: string;
+  content?: string;
 }
 
 export default function SyllabusForm() {
@@ -58,13 +60,21 @@ export default function SyllabusForm() {
       order: c.order,
       video_url: c.video_url,
       duration_minutes: c.duration_minutes,
+      topicsText: (c.topics ?? []).join("; "),
+      content: c.content ?? "",
     })));
     setDocuments((syl.document_ids || []).map((id: string) => ({ id, filename: `Document ${id.slice(-6)}` })));
   }
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, chapters };
+      const payload = {
+        ...form,
+        chapters: chapters.map(({ topicsText, ...c }) => ({
+          ...c,
+          topics: (topicsText ?? "").split(/[;\n]/).map((t) => t.trim()).filter(Boolean),
+        })),
+      };
       if (isEdit) {
         return updateTeacherSyllabus(id!, payload);
       }
@@ -257,6 +267,24 @@ export default function SyllabusForm() {
                         value={ch.duration_minutes || ""}
                         onChange={(e) => updateChapter(idx, "duration_minutes", parseInt(e.target.value) || 0)}
                         placeholder="e.g., 30"
+                      />
+                    </div>
+                    <div>
+                      <Label>Topics (separate with ;)</Label>
+                      <Input
+                        value={ch.topicsText ?? ""}
+                        onChange={(e) => updateChapter(idx, "topicsText", e.target.value)}
+                        placeholder="e.g., Push and pull; Types of force"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Study notes (used by the Copilot to explain this chapter)</Label>
+                      <textarea
+                        value={ch.content ?? ""}
+                        onChange={(e) => updateChapter(idx, "content", e.target.value)}
+                        rows={4}
+                        className="lg-field w-full"
+                        placeholder="Key points, definitions and examples from the textbook…"
                       />
                     </div>
                   </div>

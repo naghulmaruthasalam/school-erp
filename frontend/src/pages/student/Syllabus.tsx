@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, Card } from "../../components/ui";
 import { SyllabusViewer } from "../../components/SyllabusViewer";
+import SyllabusBrowser from "../../components/SyllabusBrowser";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
 import { BookOpen, GraduationCap, FileText, Sparkles } from "lucide-react";
@@ -60,6 +61,8 @@ export default function StudentSyllabus() {
           </div>
         </div>
       </Card>
+
+      <SyllabusBrowser role="student" />
 
       <SyllabusViewer
         syllabusList={syllabusQuery.data?.items || []}

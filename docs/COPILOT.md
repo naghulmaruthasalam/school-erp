@@ -3,8 +3,10 @@
 An AI assistant inside the ERP, built from the Skillorea Teacher Copilot backend (chat pipeline, safety gate,
 worksheet and lesson-plan generators) and adapted to the ERP's own login, roles, database and syllabus data.
 
-It appears as a floating button on every dashboard. **Student, parent and teacher** get the Copilot; the other
-roles keep the classic assistant until you switch their Copilot on (see "Other roles").
+It appears as **one floating round button on every dashboard, for every login**: student, parent, teacher, principal,
+school admin and super admin. There is no other assistant button anywhere: what the button offers (modes, quick
+actions, tools, history) depends on the role (see "What each login gets" and "Other roles"). Demo mode runs the same
+Copilot on sample data in the browser.
 
 ## What each login gets
 
@@ -89,7 +91,7 @@ GEMINI_API_KEY=...                 # https://aistudio.google.com/apikey  (defaul
 GEMINI_MODEL_NAME=gemini-2.0-flash
 # optional
 COPILOT_LLM_PROVIDER=gemini        # or openai (then set OPENAI_API_KEY / OPENAI_MODEL)
-COPILOT_ENABLED_ROLES=STUDENT,PARENT,TEACHER
+COPILOT_ENABLED_ROLES=STUDENT,PARENT,TEACHER,PRINCIPAL,SCHOOL_ADMIN,SUPER_ADMIN   # the default: every login
 COPILOT_MESSAGES_PER_MINUTE=20
 COPILOT_MAX_CONTEXT_CHARS=60000
 ```
@@ -120,20 +122,17 @@ service.py    the two chat modes (study / school), streaming
 sessions.py   owner-scoped history, rate limiting     models/copilot.py  the collection
 ```
 Frontend: `frontend/src/copilot/` (`CopilotWidget` + `ToolRunner`, `ContextPicker`, `Markdown`, `results`).
-`DashboardLayout` mounts `CopilotWidget`, which falls back to the classic `AiChatWidget` for roles without a
-Copilot (and in demo mode).
+`DashboardLayout` mounts `CopilotWidget`, the only assistant button. If the server can't be reached it shows the same
+round button with a short explanation and "Try again"; it shows nothing only when an operator removed the role from
+`COPILOT_ENABLED_ROLES`. Demo mode (`copilot/demo/`, `api/demo*.ts`) answers from sample data in the browser.
 
-## Other roles (integration-ready)
+## Other roles
 
-Profiles for **principal** ("School Insights"), **school admin** ("Operations Copilot") and **super admin** already
-exist in `profiles.py`. Switch them on without code changes:
-
-```
-COPILOT_ENABLED_ROLES=STUDENT,PARENT,TEACHER,PRINCIPAL,SCHOOL_ADMIN
-```
-They get "My school" answers over their role's ERP tools (school summary, attendance trend, fee collection,
-admissions) and the Announcement draft tool; principals also get Study help. Super admins have no school, so the
-Copilot stays off for them.
+**Principal** ("School Insights"), **school admin** ("Operations Copilot") and **super admin** ("Platform Copilot")
+are on by default. They get "My school" answers over their role's ERP tools (school summary, attendance trend, fee
+collection, admissions) and the Announcement draft tool; principals also get Study help. The super admin has no
+school, so theirs is a single chat about platform data (no saved sessions, tools or files). To switch a role off,
+remove it from `COPILOT_ENABLED_ROLES`.
 
 ### Add a role or tune one
 Edit its `Profile` in `profiles.py`: `persona`, `scope` (what the gate treats as on-topic), `quick_actions` per

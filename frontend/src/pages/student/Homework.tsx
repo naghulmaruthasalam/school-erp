@@ -5,6 +5,7 @@ import { Badge, Button, Card, ErrorText, PageHeader, Spinner } from "../../compo
 import { DataTable, Pagination, type Column } from "../../components/DataTable";
 import { fetchHomework, fetchHomeworkSubmissions, fetchPendingHomework, updateHomeworkSubmission } from "./api";
 import { useMyProfile, useSubjects, subjectMap } from "./hooks";
+import { openCopilot } from "../../copilot/events";
 import type { Homework, PendingHomework } from "./types";
 import { BookOpen, Calendar, Clock, Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Star, Award, X, Sparkles, ThumbsUp, Target } from "lucide-react";
 
@@ -220,7 +221,7 @@ function MarkSubmittedButton({ homeworkId, studentId }: { homeworkId: string; st
   );
 }
 
-function PendingHomeworkCard({ hw, subjectName, studentId }: { hw: PendingHomework; subjectName: string; studentId: string }) {
+function PendingHomeworkCard({ hw, subjectName, studentId, classId }: { hw: PendingHomework; subjectName: string; studentId: string; classId?: string }) {
   const [expanded, setExpanded] = useState(false);
   const overdue = hw.due_date < new Date().toISOString().slice(0, 10);
   const dueToday = hw.due_date === new Date().toISOString().slice(0, 10);
@@ -244,6 +245,7 @@ function PendingHomeworkCard({ hw, subjectName, studentId }: { hw: PendingHomewo
               <h3 className="font-bold text-lg text-ink dark:text-white">{hw.title}</h3>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <Badge tone="violet">{subjectName}</Badge>
+                {hw.chapter && <Badge tone="blue">{hw.chapter}</Badge>}
                 {overdue && <Badge tone="red">Overdue</Badge>}
                 {dueToday && !overdue && <Badge tone="amber">Due Today</Badge>}
               </div>
@@ -286,6 +288,12 @@ function PendingHomeworkCard({ hw, subjectName, studentId }: { hw: PendingHomewo
         {/* Right: Upload & Submit */}
         <div className="lg:w-72 lg:border-l lg:border-line lg:pl-4">
           <MarkSubmittedButton homeworkId={hw.id} studentId={studentId} />
+          {classId && (
+            <button type="button" className="mt-3 text-xs font-medium text-accent-fg hover:underline"
+              onClick={() => openCopilot({ classId, subjectId: hw.subject_id, chapter: hw.chapter ?? undefined, message: `I need help getting started with my homework "${hw.title}". Give me a hint, not the answer.` })}>
+              Get a hint from the Copilot
+            </button>
+          )}
         </div>
       </div>
     </Card>
@@ -397,6 +405,7 @@ export default function StudentHomework() {
                   hw={hw}
                   subjectName={subjects_[hw.subject_id]?.name ?? "—"}
                   studentId={hw.student_id}
+                  classId={profile?.class_id}
                 />
               ))}
           </div>

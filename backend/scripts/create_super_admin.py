@@ -18,11 +18,13 @@ async def main() -> None:
     existing = await User.find_one(User.school_id == None, User.email == settings.super_admin_email)  # noqa: E711
     if existing:
         existing.hashed_password = hash_password(settings.super_admin_password)
+        existing.username = existing.username or settings.super_admin_username
         await existing.save()
         print(f"Super admin password reset: {settings.super_admin_email}")
     else:
         user = User(
             school_id=None,
+            username=settings.super_admin_username,
             email=settings.super_admin_email,
             hashed_password=hash_password(settings.super_admin_password),
             role=Role.SUPER_ADMIN,
@@ -30,7 +32,7 @@ async def main() -> None:
             must_change_password=True,
         )
         await user.insert()
-        print(f"Created super admin: {settings.super_admin_email}")
+        print(f"Created super admin: {settings.super_admin_username} / {settings.super_admin_email}")
 
     await close_db()
 

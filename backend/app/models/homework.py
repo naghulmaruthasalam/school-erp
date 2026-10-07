@@ -12,6 +12,7 @@ class Homework(TenantDocument):
     teacher_id: str
     title: str
     description: str | None = None
+    chapter: str | None = None  # syllabus chapter this homework belongs to
     attachment_document_ids: list[str] = Field(default_factory=list)
     assigned_date: date
     due_date: date

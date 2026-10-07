@@ -56,7 +56,7 @@ async def add_vehicle(
 async def list_vehicles(
     status: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     current: CurrentUser = Depends(get_current_user),
 ) -> PageResponse[dict[str, Any]]:
     return await transport_service.list_vehicles(
@@ -84,7 +84,7 @@ async def add_route(
 async def list_routes(
     active_only: bool = Query(True),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     current: CurrentUser = Depends(get_current_user),
 ) -> PageResponse[dict[str, Any]]:
     return await transport_service.list_routes(
@@ -107,7 +107,7 @@ async def list_assignments(
     route_id: str | None = Query(None),
     student_id: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     current: CurrentUser = Depends(get_current_user),
 ) -> PageResponse[dict[str, Any]]:
     return await transport_service.list_assignments(

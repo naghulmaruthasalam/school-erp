@@ -1,14 +1,9 @@
 from datetime import datetime
-from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from app.core.enums import SyllabusStatus
 from app.models.base import TenantDocument
-
-
-class SyllabusStatus(str, Enum):
-    DRAFT = "DRAFT"
-    PUBLISHED = "PUBLISHED"
 
 
 class Chapter(BaseModel):
@@ -18,6 +13,8 @@ class Chapter(BaseModel):
     video_url: str | None = None  # S3 presigned URL or external video link
     video_s3_key: str | None = None  # S3 object key for generating fresh URLs
     duration_minutes: int | None = None
+    topics: list[str] = Field(default_factory=list)  # sub-topics inside the chapter
+    content: str | None = None  # study notes / textbook text for the chapter (what the Copilot reads)
 
 
 class Syllabus(TenantDocument):
@@ -26,7 +23,7 @@ class Syllabus(TenantDocument):
     subject_id: str
     title: str
     description: str | None = None
-    status: SyllabusStatus = SyllabusStatus.DRAFT
+    status: SyllabusStatus = SyllabusStatus.PUBLISHED
     chapters: list[Chapter] = Field(default_factory=list)
     document_ids: list[str] = Field(default_factory=list)
     created_by: str  # user_id of creator

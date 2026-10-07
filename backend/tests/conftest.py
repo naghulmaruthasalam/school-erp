@@ -18,8 +18,52 @@ async def _init_test_db() -> AsyncIterator[None]:
     collections registered. No real MongoDB needed for unit/service tests."""
     client = AsyncMongoMockClient()
     await init_beanie(database=client["test_db"], document_models=get_document_models())
+    # Services look the school up by id (e.g. to build admission/employee numbers), so the ids
+    # tests pass as `school_id` must belong to real tenants.
+    from beanie import PydanticObjectId
+
+    from app.models.tenant import Tenant
+
+    for n in [*range(1, 10), 99]:
+        await Tenant(id=PydanticObjectId("5c0000000000000000000%03d" % n), name=f"Fixture School {n}", code=f"FX{n}").insert()
     yield
     app.dependency_overrides.pop(get_current_user, None)
+
+
+SCHOOL_A = "000000000000000000000a01"
+SCHOOL_B = "000000000000000000000b01"
+SECTION_A = "000000000000000000000c01"
+SECTION_B = "000000000000000000000c02"
+TEACHER_A = "000000000000000000000f01"
+TEACHER_B = "000000000000000000000f02"
+
+
+async def seed_teacher_access() -> None:
+    """A class + section + assigned teacher in each of two schools. Teachers may only act on
+    classes they are assigned to, so tests that act as a teacher need this to exist."""
+    from beanie import PydanticObjectId
+
+    from app.models.academic import Class, Section
+    from app.models.teacher import Teacher
+
+    for school_id, section_id, teacher_id in ((SCHOOL_A, SECTION_A, TEACHER_A), (SCHOOL_B, SECTION_B, TEACHER_B)):
+        klass = Class(school_id=school_id, academic_year_id="ay-1", name="Class 1", order=1)
+        await klass.insert()
+        await Section(id=PydanticObjectId(section_id), school_id=school_id, class_id=str(klass.id), name="A").insert()
+        await Teacher(
+            id=PydanticObjectId(teacher_id),
+            school_id=school_id,
+            employee_no="T-001",
+            first_name="Test",
+            last_name="Teacher",
+            phone="9000000000",
+            assigned_class_ids=[str(klass.id)],
+        ).insert()
+
+
+@pytest_asyncio.fixture
+async def teacher_access() -> None:
+    await seed_teacher_access()
 
 
 @pytest_asyncio.fixture

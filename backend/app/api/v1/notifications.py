@@ -48,7 +48,7 @@ async def list_notifications(
     notification_type: str | None = Query(None),
     include_expired: bool = Query(False),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     current: CurrentUser = Depends(get_current_user),
 ) -> PageResponse[dict[str, Any]]:
     return await notification_service.list_notifications(

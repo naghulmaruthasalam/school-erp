@@ -11,6 +11,7 @@ class Document(TenantDocument):
     uploaded_by: str  # User id
     linked_entity_type: str | None = None  # e.g. "student", "teacher", "homework"
     linked_entity_id: str | None = None
+    category: str = "General"  # document-manager category (Circular, Policy, Form...)
 
     class Settings:
         name = "documents"

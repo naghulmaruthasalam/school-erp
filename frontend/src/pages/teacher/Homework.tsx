@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, type FormEvent, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Button, Card, ErrorText, PageHeader, Spinner, Badge } from "../../components/ui";
 import { createHomework, listHomework } from "./api";
 import { sectionLabel, useClasses, useMySectionIds, useOwnTeacherId, useSections, useSubjects } from "./hooks";
@@ -10,6 +10,7 @@ import {
   MessageCircle, BookOpen, Calendar, Clock, GraduationCap, Languages
 } from "lucide-react";
 import { api } from "../../api/client";
+import { fetchSyllabusTree } from "../admin/syllabusApi";
 import { MarkdownRenderer } from "../../components/MarkdownRenderer";
 
 function todayIso(): string {
@@ -17,7 +18,7 @@ function todayIso(): string {
 }
 
 const emptyForm: HomeworkCreateRequest = {
-  section_id: "", subject_id: "", title: "", description: "",
+  section_id: "", subject_id: "", title: "", description: "", chapter: "",
   assigned_date: todayIso(), due_date: todayIso(),
 };
 
@@ -31,7 +32,16 @@ export default function TeacherHomework() {
   const { data: subjects } = useSubjects();
   const queryClient = useQueryClient();
 
-  const [form, setForm] = useState<HomeworkCreateRequest>(emptyForm);
+  const location = useLocation();
+  const prefill = (location.state as { prefill?: { class_id?: string; subject_id?: string; chapter?: string; title?: string; description?: string } } | null)?.prefill;
+  const [form, setForm] = useState<HomeworkCreateRequest>(() => ({
+    ...emptyForm,
+    subject_id: prefill?.subject_id ?? "",
+    chapter: prefill?.chapter ?? "",
+    title: prefill?.title ?? "",
+    description: prefill?.description ?? "",
+  }));
+  const treeQuery = useQuery({ queryKey: ["syllabus", "tree"], queryFn: fetchSyllabusTree, staleTime: 60_000 });
   const [formError, setFormError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +87,20 @@ export default function TeacherHomework() {
     enabled: !!aiGrade && !!aiSubject,
   });
 
+  // Coming from a chapter: pre-select the section of that class when there is exactly one to choose from.
+  const prefilledSection = useRef(false);
+  useEffect(() => {
+    if (!prefill?.class_id || prefilledSection.current || !sections || sectionIds.length === 0) return;
+    prefilledSection.current = true;
+    const match = sectionIds.filter((id) => sections.find((s) => s.id === id)?.class_id === prefill.class_id);
+    if (match.length === 1) setForm((f) => ({ ...f, section_id: match[0] }));
+  }, [prefill?.class_id, sections, sectionIds]);
+  const formClassId = sections?.find((s) => s.id === form.section_id)?.class_id ?? prefill?.class_id;
+  const chapterOptions =
+    treeQuery.data
+      ?.filter((c) => !formClassId || c.id === formClassId)
+      .flatMap((c) => c.subjects.filter((sub) => sub.id === form.subject_id).flatMap((sub) => sub.chapters.map((ch) => ch.name))) ?? [];
+
   const homeworkQuery = useQuery({
     queryKey: ["teacher", "homework"],
     queryFn: () => listHomework({ page_size: 100 }),
@@ -112,7 +136,7 @@ export default function TeacherHomework() {
       setFormError("Section, subject, title, assigned date and due date are required.");
       return;
     }
-    createMutation.mutate({ ...form, description: form.description || null });
+    createMutation.mutate({ ...form, description: form.description || null, chapter: form.chapter?.trim() || null });
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -226,6 +250,12 @@ export default function TeacherHomework() {
                   <option value="">Select a subject</option>
                   {subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Chapter <span className="font-normal text-ink-3">(optional)</span></label>
+                <input type="text" list="hw-chapters" value={form.chapter ?? ""} onChange={(e) => setForm((f) => ({ ...f, chapter: e.target.value }))}
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="Pick from the syllabus or type one" />
+                <datalist id="hw-chapters">{chapterOptions.map((c) => <option key={c} value={c} />)}</datalist>
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-ink dark:text-white mb-2">Title</label>

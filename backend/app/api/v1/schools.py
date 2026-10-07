@@ -1,11 +1,12 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.deps import CurrentUser, require_roles, require_tenant_user
 from app.core.enums import Role
 from app.core.exceptions import NotFoundError
+from app.models.base import utcnow
 from app.models.tenant import Tenant
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.school import SchoolCreateRequest, SchoolCreateResponse, SchoolOut, SchoolUpdateRequest
@@ -34,6 +35,73 @@ async def register_school(payload: SchoolCreateRequest) -> SchoolCreateResponse:
     oversight; add one before relying on this in real production (e.g. a
     reverse-proxy/API-gateway rate limit, or a library like slowapi)."""
     return await school_service.create_school(payload)
+
+
+def _school_settings_out(tenant: Tenant) -> dict[str, Any]:
+    return {
+        "id": str(tenant.id),
+        "name": tenant.name,
+        "code": tenant.code,
+        "email": tenant.email or "",
+        "phone": tenant.phone or "",
+        "address": tenant.address or "",
+        "city": tenant.city or "",
+        "state": tenant.state or "",
+        "pincode": tenant.postal_code or "",
+        "website": tenant.website or "",
+        "logo_url": "",
+        "academic_year_start_month": tenant.academic_year_start_month,
+        "currency": tenant.currency,
+        "timezone": tenant.timezone,
+    }
+
+
+class SchoolSettingsUpdate(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    pincode: str | None = None
+    website: str | None = None
+    academic_year_start_month: int | None = Field(default=None, ge=1, le=12)
+    currency: str | None = None
+    timezone: str | None = None
+
+
+# NOTE: declared before the /{school_id} routes so "current" is never read as a school id.
+
+
+@router.get("/current", response_model=dict[str, Any])
+async def get_current_school(
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict[str, Any]:
+    """The signed-in user's own school (settings page, branding)."""
+    tenant = await Tenant.get(current.school_id)
+    if not tenant:
+        raise NotFoundError("School not found")
+    return _school_settings_out(tenant)
+
+
+@router.patch("/current", response_model=dict[str, Any])
+async def update_current_school(
+    payload: SchoolSettingsUpdate,
+    current: CurrentUser = Depends(_admin_roles),
+) -> dict[str, Any]:
+    """Update the signed-in admin's own school."""
+    tenant = await Tenant.get(current.school_id)
+    if not tenant:
+        raise NotFoundError("School not found")
+
+    update_data = payload.model_dump(exclude_none=True)
+    if "pincode" in update_data:
+        update_data["postal_code"] = update_data.pop("pincode")
+    for key, value in update_data.items():
+        setattr(tenant, key, value)
+    tenant.updated_at = utcnow()
+    await tenant.save()
+    return _school_settings_out(tenant)
 
 
 @router.get("", response_model=PageResponse[SchoolOut])
@@ -89,67 +157,3 @@ async def get_school_stats(
     current: CurrentUser = Depends(_super_admin_only),
 ) -> dict[str, Any]:
     return await school_service.get_school_stats(school_id)
-
-
-@router.get("/current", response_model=dict[str, Any])
-async def get_current_school(
-    current: CurrentUser = Depends(require_tenant_user),
-) -> dict[str, Any]:
-    """Get the current user's school information."""
-    tenant = await Tenant.find_one(Tenant.school_id == current.school_id)
-    if not tenant:
-        raise NotFoundError("School not found")
-    return {
-        "id": str(tenant.id),
-        "name": tenant.name,
-        "code": tenant.school_id,
-        "email": tenant.email or "",
-        "phone": tenant.phone or "",
-        "address": tenant.address or "",
-        "city": tenant.city or "",
-        "state": tenant.state or "",
-        "pincode": tenant.pincode or "",
-        "website": tenant.website or "",
-        "logo_url": tenant.logo_url or "",
-    }
-
-
-class SchoolSettingsUpdate(BaseModel):
-    name: str | None = None
-    email: str | None = None
-    phone: str | None = None
-    address: str | None = None
-    city: str | None = None
-    state: str | None = None
-    pincode: str | None = None
-    website: str | None = None
-
-
-@router.patch("/current", response_model=dict[str, Any])
-async def update_current_school(
-    payload: SchoolSettingsUpdate,
-    current: CurrentUser = Depends(_admin_roles),
-) -> dict[str, Any]:
-    """Update the current school's information."""
-    tenant = await Tenant.find_one(Tenant.school_id == current.school_id)
-    if not tenant:
-        raise NotFoundError("School not found")
-
-    update_data = payload.model_dump(exclude_none=True)
-    for key, value in update_data.items():
-        setattr(tenant, key, value)
-    await tenant.save()
-
-    return {
-        "id": str(tenant.id),
-        "name": tenant.name,
-        "code": tenant.school_id,
-        "email": tenant.email or "",
-        "phone": tenant.phone or "",
-        "address": tenant.address or "",
-        "city": tenant.city or "",
-        "state": tenant.state or "",
-        "pincode": tenant.pincode or "",
-        "website": tenant.website or "",
-        "logo_url": tenant.logo_url or "",
-    }

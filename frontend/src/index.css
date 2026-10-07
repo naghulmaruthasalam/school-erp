@@ -601,3 +601,7 @@
   html::before, html::after { display: none; }
   .glass, .glass-card, .glass-strong { box-shadow: none; backdrop-filter: none; background: #fff; }
 }
+
+/* Copilot: maths is always left-to-right, even inside Arabic (RTL) replies */
+.copilot-md .katex { direction: ltr; unicode-bidi: isolate; }
+.copilot-md .katex-display { direction: ltr; overflow-x: auto; overflow-y: hidden; }

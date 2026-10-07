@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -22,6 +23,7 @@ async def ensure_super_admin():
     existing = await User.find_one(User.email == settings.super_admin_email, User.school_id == None)
     if existing is None:
         user = User(
+            username=settings.super_admin_username,
             email=settings.super_admin_email,
             hashed_password=hash_password(settings.super_admin_password),
             role=Role.SUPER_ADMIN,
@@ -32,6 +34,9 @@ async def ensure_super_admin():
         await user.insert()
         logger.info(f"Super admin created: {settings.super_admin_email}")
     else:
+        if not existing.username:
+            existing.username = settings.super_admin_username
+            await existing.save()
         logger.info(f"Super admin already exists: {settings.super_admin_email}")
 
 
@@ -39,7 +44,11 @@ async def ensure_super_admin():
 async def lifespan(app: FastAPI):
     await init_db()
     await ensure_super_admin()
+    from app.services.curriculum_source_service import auto_sync_loop
+
+    auto_sync = asyncio.create_task(auto_sync_loop())
     yield
+    auto_sync.cancel()
     await close_db()
 
 

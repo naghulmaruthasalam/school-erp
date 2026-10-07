@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, ErrorText } from "../../components/ui";
 import { SyllabusViewer } from "../../components/SyllabusViewer";
+import SyllabusBrowser from "../../components/SyllabusBrowser";
 import { listSyllabus, getSyllabusDocumentUrl } from "../admin/syllabusApi";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
 
@@ -40,6 +41,8 @@ export default function ParentSyllabusPage() {
         title="Course Syllabus"
         subtitle="View your child's curriculum and study materials"
       />
+
+      <SyllabusBrowser role="parent" />
 
       <SyllabusViewer
         syllabusList={Array.isArray(syllabusQuery.data?.items) ? syllabusQuery.data.items : []}

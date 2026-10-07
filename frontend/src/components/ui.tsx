@@ -115,9 +115,9 @@ export function Spinner({ className = "", size = "md" }: { className?: string; s
   return <div className={clsx("spinner-gradient", sizes[size], className)} />;
 }
 
-export function ErrorText({ children }: { children: ReactNode }) {
+export function ErrorText({ children, className = "" }: { children: ReactNode; className?: string }) {
   if (!children) return null;
-  return <p className="text-sm font-medium text-red-600 dark:text-red-400">{children}</p>;
+  return <p className={clsx("text-sm font-medium text-red-600 dark:text-red-400", className)}>{children}</p>;
 }
 
 const TONES: Record<string, [string, string]> = {

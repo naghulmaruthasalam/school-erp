@@ -15,6 +15,7 @@ class HomeworkCreateRequest(BaseModel):
     teacher_id: str | None = None  # defaults to current.user.teacher_id when role == TEACHER
     title: str
     description: str | None = None
+    chapter: str | None = None
     attachment_document_ids: list[str] = Field(default_factory=list)
     assigned_date: date
     due_date: date
@@ -24,6 +25,7 @@ class HomeworkUpdateRequest(BaseModel):
     subject_id: str | None = None
     title: str | None = None
     description: str | None = None
+    chapter: str | None = None
     attachment_document_ids: list[str] | None = None
     assigned_date: date | None = None
     due_date: date | None = None
@@ -37,6 +39,7 @@ class HomeworkOut(BaseModel):
     teacher_id: str
     title: str
     description: str | None = None
+    chapter: str | None = None
     attachment_document_ids: list[str] = Field(default_factory=list)
     assigned_date: date
     due_date: date

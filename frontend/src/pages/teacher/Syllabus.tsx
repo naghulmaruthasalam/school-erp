@@ -3,12 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button, PageHeader, Card, Spinner, Badge } from "../../components/ui";
 import { listSyllabus } from "../admin/syllabusApi";
+import SyllabusBrowser from "../../components/SyllabusBrowser";
+import SyllabusImportDialog from "../../components/SyllabusImportDialog";
 import { fetchClasses, fetchSubjects, fetchAcademicYears } from "../admin/api";
-import { Plus, Filter, BookOpen, GraduationCap, FileText, Sparkles } from "lucide-react";
+import { Plus, Filter, BookOpen, GraduationCap, FileText, Sparkles, Upload } from "lucide-react";
 
 export default function TeacherSyllabus() {
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
 
   const syllabusQuery = useQuery({
     queryKey: ["teacher", "syllabus", selectedClass, selectedSubject],
@@ -38,6 +41,10 @@ export default function TeacherSyllabus() {
   return (
     <div className="animate-page-enter">
       <PageHeader title="Syllabus Management" subtitle="Manage and upload course curriculum">
+        <Button variant="secondary" className="flex items-center gap-2" onClick={() => setImportOpen(true)}>
+          <Upload size={18} />
+          Import
+        </Button>
         <Link to="/teacher/syllabus/new">
           <Button glow className="flex items-center gap-2">
             <Plus size={18} />
@@ -45,6 +52,9 @@ export default function TeacherSyllabus() {
           </Button>
         </Link>
       </PageHeader>
+      <SyllabusImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
+
+      <SyllabusBrowser role="teacher" />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">

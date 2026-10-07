@@ -36,6 +36,30 @@ def to_out(admission: Admission) -> AdmissionOut:
         guardian_phone=admission.guardian_phone,
         guardian_email=admission.guardian_email,
         document_ids=admission.document_ids,
+        applicant_middle_name=admission.applicant_middle_name,
+        blood_group=admission.blood_group,
+        academic_year_id=admission.academic_year_id,
+        previous_school=admission.previous_school,
+        student_photo_id=admission.student_photo_id,
+        father_name=admission.father_name,
+        father_phone=admission.father_phone,
+        father_email=admission.father_email,
+        mother_name=admission.mother_name,
+        mother_phone=admission.mother_phone,
+        mother_email=admission.mother_email,
+        primary_guardian=admission.primary_guardian,
+        guardian_relationship=admission.guardian_relationship,
+        address_line1=admission.address_line1,
+        address_line2=admission.address_line2,
+        city=admission.city,
+        state=admission.state,
+        country=admission.country,
+        postal_code=admission.postal_code,
+        previous_class=admission.previous_class,
+        previous_board=admission.previous_board,
+        previous_school_location=admission.previous_school_location,
+        transfer_certificate_no=admission.transfer_certificate_no,
+        admission_type=admission.admission_type,
         status=admission.status,
         reviewed_by=admission.reviewed_by,
         review_notes=admission.review_notes,
@@ -107,6 +131,18 @@ async def _generate_roll_number(school_id: str, section_id: str) -> str:
     return str(count + 1)
 
 
+def _format_address(admission: Admission) -> str | None:
+    parts = [
+        admission.address_line1,
+        admission.address_line2,
+        admission.city,
+        admission.state,
+        admission.postal_code,
+    ]
+    joined = ", ".join(p.strip() for p in parts if p and p.strip())
+    return joined or None
+
+
 async def review_admission(
     current: CurrentUser, admission_id: str, payload: AdmissionReviewRequest
 ) -> AdmissionReviewResponse:
@@ -161,6 +197,9 @@ async def review_admission(
         admission_date=date.today(),
         status=StudentStatus.ACTIVE,
         email=admission.applicant_email,
+        blood_group=admission.blood_group,
+        address=_format_address(admission),
+        photo_document_id=admission.student_photo_id,
         document_ids=admission.document_ids,
     )
     await student.insert()
@@ -173,8 +212,10 @@ async def review_admission(
         guardian = Guardian(
             school_id=current.school_id,
             full_name=admission.guardian_name,
+            relation=admission.guardian_relationship or admission.primary_guardian or "Guardian",
             phone=admission.guardian_phone,
             email=admission.guardian_email,
+            address=_format_address(admission),
         )
         await guardian.insert()
 

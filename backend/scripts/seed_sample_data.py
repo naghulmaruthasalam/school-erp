@@ -94,7 +94,12 @@ async def create_super_admin():
     # Check by email since that's the unique constraint
     existing = await User.find_one(User.email == "superadmin@cogniitec.com")
     if existing:
-        print(f"Super Admin already exists: {creds['username']}")
+        # The API creates a super admin on startup; give it the documented demo login.
+        existing.username = creds["username"]
+        existing.hashed_password = hash_password(creds["password"])
+        existing.must_change_password = False
+        await existing.save()
+        print(f"Super Admin ready: {creds['username']} / {creds['password']}")
         return
 
     user = User(
@@ -448,7 +453,7 @@ async def main():
         print("\n" + "="*60)
         print("SAMPLE CREDENTIALS")
         print("="*60)
-        print(f"\nSchool: {SCHOOL_NAME}\n")
+        print(f"\nSchool: {SCHOOL_NAME} (school code: DEMO)\n")
         print(f"{'Role':<15} {'Username':<20} {'Password':<15}")
         print("-"*50)
         print(f"{'Super Admin':<15} {'superadmin':<20} {'Super@123':<15}")

@@ -2,7 +2,8 @@ from datetime import date
 
 from fastapi import APIRouter, Depends
 
-from app.core.deps import CurrentUser, require_tenant_user
+from app.core.deps import CurrentUser, require_roles, require_tenant_user
+from app.core.enums import Role
 from app.schemas.attendance import (
     StaffAttendanceBulkMarkRequest,
     StaffAttendanceOut,
@@ -42,6 +43,17 @@ async def list_student_attendance(
     return await attendance_service.list_student_attendance(
         current, section_id, student_id, date_from, date_to, params
     )
+
+
+@router.get("/stats")
+async def student_attendance_stats(
+    date: date | None = None,
+    class_id: str | None = None,
+    section_id: str | None = None,
+    current: CurrentUser = Depends(require_roles(Role.SCHOOL_ADMIN, Role.PRINCIPAL, Role.TEACHER)),
+) -> dict:
+    """Day totals (present / absent / rate) for the school, a class or a section."""
+    return await attendance_service.attendance_stats(current, date, class_id, section_id)
 
 
 @router.get("/students/summary", response_model=list[StudentAttendanceSummaryItem])

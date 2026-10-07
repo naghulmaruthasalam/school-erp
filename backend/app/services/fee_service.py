@@ -58,7 +58,12 @@ def to_fee_assignment_out(a: FeeAssignment) -> FeeAssignmentOut:
     )
 
 
-def to_invoice_out(i: Invoice) -> InvoiceOut:
+def invoice_number(i: Invoice) -> str:
+    """Human-friendly invoice number derived from the creation year and id."""
+    return f"INV-{i.created_at.year}-{str(i.id)[-6:].upper()}"
+
+
+def to_invoice_out(i: Invoice, student_name: str | None = None) -> InvoiceOut:
     return InvoiceOut(
         id=str(i.id),
         school_id=i.school_id,
@@ -68,11 +73,76 @@ def to_invoice_out(i: Invoice) -> InvoiceOut:
         total_amount=i.total_amount,
         amount_paid=i.amount_paid,
         outstanding_amount=i.total_amount - i.amount_paid,
+        paid_amount=i.amount_paid,
+        invoice_number=invoice_number(i),
+        student_name=student_name,
         due_date=i.due_date,
         status=i.status,
         created_at=i.created_at,
         updated_at=i.updated_at,
     )
+
+
+async def _student_names(student_ids: set[str]) -> dict[str, str]:
+    """student_id -> full name, resolved with a single query."""
+    from beanie import PydanticObjectId
+    from beanie.operators import In
+
+    oids = []
+    for sid in student_ids:
+        try:
+            oids.append(PydanticObjectId(sid))
+        except Exception:
+            continue
+    if not oids:
+        return {}
+    students = await Student.find(In(Student.id, oids)).to_list()
+    return {str(st.id): st.full_name for st in students}
+
+
+async def fee_stats(current: CurrentUser) -> dict:
+    """School-wide fee totals for the admin/principal report screens."""
+    invoices = await Invoice.find(Invoice.school_id == current.school_id).to_list()
+    expected = sum(i.total_amount for i in invoices)
+    collected = sum(i.amount_paid for i in invoices)
+    pending = max(expected - collected, 0)
+    rate = round(collected / expected * 100, 1) if expected else 0.0
+    today = utcnow().date()
+    overdue = sum(1 for i in invoices if i.due_date < today and i.amount_paid < i.total_amount)
+    return {
+        "total_expected": expected,
+        "total_collected": collected,
+        "total_pending": pending,
+        "collection_rate": rate,
+        "collection_percentage": rate,
+        "overdue_invoices": overdue,
+        "total_invoices": len(invoices),
+    }
+
+
+async def list_payments(current: CurrentUser, params: PageParams) -> PageResponse[dict]:
+    """School payments, newest first (staff only)."""
+    if current.role not in STAFF_ROLES:
+        raise PermissionDeniedError("Only staff can list school payments")
+    query = Payment.find(Payment.school_id == current.school_id)
+    total = await query.count()
+    rows = await query.sort(-Payment.created_at).skip(params.skip).limit(params.page_size).to_list()
+    names = await _student_names({p.student_id for p in rows})
+    items = [
+        {
+            "id": str(p.id),
+            "invoice_id": p.invoice_id,
+            "student_id": p.student_id,
+            "student_name": names.get(p.student_id),
+            "amount": p.amount,
+            "payment_method": p.method.value,
+            "status": p.status.value,
+            "transaction_id": p.payu_mihpayid or p.payu_txnid,
+            "payment_date": (p.paid_at or p.created_at).isoformat(),
+        }
+        for p in rows
+    ]
+    return PageResponse(items=items, total=total, page=params.page, page_size=params.page_size)
 
 
 # ---------------------------------------------------------------------------
@@ -348,16 +418,21 @@ async def list_invoices(
         query["academic_year_id"] = academic_year_id
 
     total = await Invoice.find(query).count()
-    invoices = await Invoice.find(query).skip(params.skip).limit(params.page_size).to_list()
+    invoices = await Invoice.find(query).sort(-Invoice.created_at).skip(params.skip).limit(params.page_size).to_list()
+    names = await _student_names({i.student_id for i in invoices})
     return PageResponse(
-        items=[to_invoice_out(i) for i in invoices], total=total, page=params.page, page_size=params.page_size
+        items=[to_invoice_out(i, names.get(i.student_id)) for i in invoices],
+        total=total,
+        page=params.page,
+        page_size=params.page_size,
     )
 
 
 async def get_invoice(current: CurrentUser, invoice_id: str) -> InvoiceOut:
     invoice = await get_invoice_for_school(current.school_id, invoice_id)
     await assert_invoice_access(current, invoice)
-    return to_invoice_out(invoice)
+    names = await _student_names({invoice.student_id})
+    return to_invoice_out(invoice, names.get(invoice.student_id))
 
 
 def to_payment_out(p: Payment) -> PaymentOut:

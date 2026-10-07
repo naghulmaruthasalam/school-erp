@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+# Chromium for the Copilot's PDF export (question papers, worksheets, lesson plans, grading reports)
+RUN playwright install --with-deps chromium
 
 COPY . .
 

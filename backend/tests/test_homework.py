@@ -9,7 +9,12 @@ from app.main import app as fastapi_app
 from app.models.guardian import Guardian
 from app.models.homework import HomeworkSubmission
 from app.models.student import Student
-from tests.conftest import make_current_user, override_current_user
+from tests.conftest import make_current_user, override_current_user, seed_teacher_access
+
+
+@pytest.fixture(autouse=True)
+async def _teachers(_init_test_db):
+    await seed_teacher_access()
 
 # The homework router isn't wired into app/api/v1/router.py yet (that file
 # is owned by the integration step across all parallel modules). Register it
@@ -20,7 +25,7 @@ if not any(r.path.startswith(f"{_settings.api_v1_prefix}/homework") for r in fas
     fastapi_app.include_router(homework_router, prefix=_settings.api_v1_prefix)
 
 SCHOOL_A = "000000000000000000000a01"
-SECTION_A = "000000000000000000000sec1"
+SECTION_A = "000000000000000000000c01"
 
 
 async def _make_student(school_id: str, section_id: str, admission_no: str, status=StudentStatus.ACTIVE) -> Student:
@@ -44,7 +49,7 @@ async def test_create_homework_auto_creates_pending_submissions_for_active_stude
     active2 = await _make_student(SCHOOL_A, SECTION_A, "H002")
     inactive = await _make_student(SCHOOL_A, SECTION_A, "H003", status=StudentStatus.INACTIVE)
 
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
 
     today = dt.date.today()
@@ -60,7 +65,7 @@ async def test_create_homework_auto_creates_pending_submissions_for_active_stude
     )
     assert r.status_code == 201
     homework_id = r.json()["id"]
-    assert r.json()["teacher_id"] == "teacher-1"
+    assert r.json()["teacher_id"] == "000000000000000000000f01"
 
     submissions = await HomeworkSubmission.find(HomeworkSubmission.homework_id == homework_id).to_list()
     submitted_student_ids = {s.student_id for s in submissions}
@@ -74,7 +79,7 @@ async def test_student_can_mark_own_submission_not_another(client):
     student1 = await _make_student(SCHOOL_A, SECTION_A, "H004")
     student2 = await _make_student(SCHOOL_A, SECTION_A, "H005")
 
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
     today = dt.date.today()
     r = await client.post(
@@ -113,11 +118,16 @@ async def test_student_can_mark_own_submission_not_another(client):
 
 @pytest.mark.asyncio
 async def test_student_sees_only_own_section_homework(client):
-    section_b = "000000000000000000000sec2"
+    from app.models.academic import Section
+
+    section_a_doc = await Section.get(SECTION_A)
+    section_b_doc = Section(school_id=SCHOOL_A, class_id=section_a_doc.class_id, name="B")
+    await section_b_doc.insert()
+    section_b = str(section_b_doc.id)
     student = await _make_student(SCHOOL_A, SECTION_A, "H006")
     await _make_student(SCHOOL_A, section_b, "H007")
 
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
     today = dt.date.today()
     await client.post(
@@ -156,7 +166,7 @@ async def test_parent_reads_only_children_homework_and_cannot_write(client):
     guardian = Guardian(school_id=SCHOOL_A, full_name="Parent", phone="1234567890", student_ids=[str(child.id)])
     await guardian.insert()
 
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
     today = dt.date.today()
     r = await client.post(
@@ -196,7 +206,7 @@ async def test_parent_reads_only_children_homework_and_cannot_write(client):
 @pytest.mark.asyncio
 async def test_pending_homework_for_student(client):
     student = await _make_student(SCHOOL_A, SECTION_A, "H009")
-    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="teacher-1")
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
     override_current_user(teacher)
     today = dt.date.today()
     await client.post(
@@ -217,3 +227,50 @@ async def test_pending_homework_for_student(client):
     body = r.json()
     assert len(body) == 1
     assert body[0]["student_id"] == str(student.id)
+
+
+@pytest.mark.asyncio
+async def test_admin_homework_resolves_subject_teacher_or_requires_one(client):
+    from app.models.academic import ClassSubjectTeacher
+
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, SCHOOL_A))
+    today = dt.date.today()
+    body = {
+        "section_id": SECTION_A,
+        "subject_id": "subj-9",
+        "title": "Admin set homework",
+        "assigned_date": today.isoformat(),
+        "due_date": (today + dt.timedelta(days=2)).isoformat(),
+    }
+    # No teacher given and nobody teaches the subject -> clear validation error
+    r = await client.post("/api/v1/homework", json=body)
+    assert r.status_code == 422
+    assert "teacher" in r.json()["detail"].lower()
+
+    # Once a subject teacher is assigned for the section, the admin does not need to pick one
+    await ClassSubjectTeacher(
+        school_id=SCHOOL_A, section_id=SECTION_A, subject_id="subj-9", teacher_id="000000000000000000000f01"
+    ).insert()
+    r = await client.post("/api/v1/homework", json=body)
+    assert r.status_code == 201
+    assert r.json()["teacher_id"] == "000000000000000000000f01"
+
+    # An explicit teacher always wins
+    r = await client.post("/api/v1/homework", json={**body, "teacher_id": "tchr-explicit"})
+    assert r.status_code == 201 and r.json()["teacher_id"] == "tchr-explicit"
+
+
+@pytest.mark.asyncio
+async def test_homework_can_be_linked_to_a_syllabus_chapter(client):
+    teacher = make_current_user(Role.TEACHER, SCHOOL_A, teacher_id="000000000000000000000f01")
+    override_current_user(teacher)
+    today = dt.date.today()
+    r = await client.post(
+        "/api/v1/homework",
+        json={"section_id": SECTION_A, "subject_id": "subj-1", "title": "Draw a leaf", "chapter": "Photosynthesis",
+              "assigned_date": today.isoformat(), "due_date": (today + dt.timedelta(days=2)).isoformat()},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["chapter"] == "Photosynthesis"
+    got = await client.get(f"/api/v1/homework/{r.json()['id']}")
+    assert got.json()["chapter"] == "Photosynthesis"

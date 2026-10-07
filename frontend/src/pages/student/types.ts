@@ -139,6 +139,7 @@ export interface Homework {
   teacher_id: string;
   title: string;
   description: string | null;
+  chapter?: string | null;
   attachment_document_ids: string[];
   assigned_date: string;
   due_date: string;

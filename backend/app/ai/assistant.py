@@ -65,7 +65,7 @@ async def run_assistant(
     chat = model.start_chat(history=history)
     conversation.messages.append(ConversationMessage(role="user", content=message))
 
-    response = chat.send_message(message, tools=tools)
+    response = await chat.send_message_async(message, tools=tools)
 
     for _ in range(MAX_TOOL_ITERATIONS):
         candidate = response.candidates[0]
@@ -106,7 +106,7 @@ async def run_assistant(
                 )
             )
 
-        response = chat.send_message(response_parts)
+        response = await chat.send_message_async(response_parts)
     else:
         logger.warning("AI assistant hit max tool iterations for user %s", current.id)
 
@@ -173,5 +173,5 @@ Please provide a well-structured homework with:
 Format the response in a clean, professional way suitable for printing."""
 
     model = get_model(system_instruction="You are an expert teacher assistant that creates engaging, age-appropriate homework assignments. Format your output with proper markdown headers and lists for professional presentation.")
-    response = model.generate_content(prompt)
+    response = await model.generate_content_async(prompt)
     return response.text

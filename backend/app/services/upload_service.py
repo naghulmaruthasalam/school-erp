@@ -25,6 +25,7 @@ def to_document_out(document: Document, url: str) -> DocumentOut:
         uploaded_by=document.uploaded_by,
         linked_entity_type=document.linked_entity_type,
         linked_entity_id=document.linked_entity_id,
+        category=document.category,
         url=url,
         created_at=document.created_at,
         updated_at=document.updated_at,
@@ -69,6 +70,8 @@ async def _check_read_permission(current: CurrentUser, document: Document) -> No
         return
     if document.uploaded_by == current.id:
         return
+    if document.linked_entity_type in ("syllabus", "homework"):
+        return  # class material shared with the whole school; the owning module enforces who may list it
     if not await _is_authorized_for_link(current, document.linked_entity_type, document.linked_entity_id):
         raise PermissionDeniedError("You are not authorized to access this document")
 
@@ -94,6 +97,7 @@ async def upload_document(
     module: DocumentModule,
     linked_entity_type: str | None,
     linked_entity_id: str | None,
+    category: str = "General",
 ) -> DocumentOut:
     await _check_upload_permission(current, linked_entity_type, linked_entity_id)
 
@@ -117,6 +121,7 @@ async def upload_document(
         uploaded_by=current.id,
         linked_entity_type=linked_entity_type,
         linked_entity_id=linked_entity_id,
+        category=category,
     )
     await document.insert()
 
@@ -147,31 +152,41 @@ async def delete_document(current: CurrentUser, document_id: str) -> None:
 async def list_documents(
     current: CurrentUser,
     params: PageParams | None = None,
+    category: str | None = None,
 ) -> PageResponse[dict[str, Any]]:
-    """List all documents for the school."""
+    """List the school's document-manager files (optionally one category), newest first."""
+    from app.models.user import User
+
     params = params or PageParams()
 
-    query = Document.find(Document.school_id == current.school_id)
+    conditions = [Document.school_id == current.school_id, Document.linked_entity_type == "school"]
+    if category:
+        conditions.append(Document.category == category)
+    query = Document.find(*conditions)
     total = await query.count()
     documents = await query.sort(-Document.created_at).skip(params.skip).limit(params.page_size).to_list()
 
-    items = []
-    for doc in documents:
-        items.append({
+    uploader_names: dict[str, str] = {}
+    for uploader_id in {d.uploaded_by for d in documents}:
+        try:
+            user = await User.get(uploader_id)
+        except Exception:
+            user = None
+        uploader_names[uploader_id] = user.full_name if user else uploader_id
+
+    items = [
+        {
             "id": str(doc.id),
             "filename": doc.s3_key.split("/")[-1] if doc.s3_key else "",
             "original_filename": doc.original_filename,
             "content_type": doc.content_type,
             "size": doc.size_bytes,
-            "category": "General",  # Default category
+            "category": doc.category,
             "uploaded_by": doc.uploaded_by,
-            "uploaded_by_name": doc.uploaded_by,  # Would need to lookup user
+            "uploaded_by_name": uploader_names.get(doc.uploaded_by, doc.uploaded_by),
             "created_at": doc.created_at.isoformat() if doc.created_at else "",
-        })
+        }
+        for doc in documents
+    ]
 
-    return PageResponse(
-        items=items,
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-    )
+    return PageResponse(items=items, total=total, page=params.page, page_size=params.page_size)

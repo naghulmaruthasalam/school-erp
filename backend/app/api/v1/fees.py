@@ -24,6 +24,12 @@ router = APIRouter(prefix="/fees", tags=["fees"])
 
 _admin_only = require_roles(*ADMIN_ROLES)
 
+@router.get("/stats")
+async def fee_stats(current: CurrentUser = Depends(_admin_only)) -> dict:
+    """Totals for the admin / principal fee reports."""
+    return await fee_service.fee_stats(current)
+
+
 # ---------------------------------------------------------------------------
 # FeeCategory
 # ---------------------------------------------------------------------------

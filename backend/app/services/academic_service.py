@@ -102,6 +102,9 @@ async def create_academic_year(school_id: str, payload: AcademicYearCreateReques
     if payload.end_date <= payload.start_date:
         raise ValidationAppError("end_date must be after start_date")
 
+    if await AcademicYear.find_one(AcademicYear.school_id == school_id, AcademicYear.name == payload.name):
+        raise ConflictError(f"Academic year '{payload.name}' already exists")
+
     if payload.is_current:
         await _unset_current_academic_year(school_id)
 
@@ -152,6 +155,10 @@ async def update_academic_year(school_id: str, year_id: str, payload: AcademicYe
 
 async def create_class(school_id: str, payload: ClassCreateRequest) -> Class:
     await get_academic_year(school_id, payload.academic_year_id)
+    if await Class.find_one(
+        Class.school_id == school_id, Class.academic_year_id == payload.academic_year_id, Class.name == payload.name
+    ):
+        raise ConflictError(f"Class '{payload.name}' already exists in this academic year")
     cls = Class(school_id=school_id, **payload.model_dump())
     await cls.insert()
     return cls
@@ -261,6 +268,10 @@ async def _check_teacher_exists(school_id: str, teacher_id: str) -> None:
 
 async def create_section(school_id: str, payload: SectionCreateRequest) -> Section:
     await get_class(school_id, payload.class_id)
+    if await Section.find_one(
+        Section.school_id == school_id, Section.class_id == payload.class_id, Section.name == payload.name
+    ):
+        raise ConflictError(f"Section '{payload.name}' already exists in this class")
     if payload.class_teacher_id is not None:
         await _check_teacher_exists(school_id, payload.class_teacher_id)
 

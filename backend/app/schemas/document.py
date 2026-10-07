@@ -15,6 +15,7 @@ class DocumentOut(BaseModel):
     uploaded_by: str
     linked_entity_type: str | None = None
     linked_entity_id: str | None = None
+    category: str = "General"
     url: str
     created_at: datetime
     updated_at: datetime

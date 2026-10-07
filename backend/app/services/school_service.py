@@ -65,10 +65,11 @@ async def create_school(payload: SchoolCreateRequest) -> SchoolCreateResponse:
     await tenant.insert()
 
     try:
-        admin_user = await provision_user_account(
+        admin_user, _ = await provision_user_account(
             school_id=str(tenant.id),
             role=Role.SCHOOL_ADMIN,
             full_name=payload.admin_full_name,
+            username=payload.admin_email,  # school admins sign in with their email
             email=payload.admin_email,
             phone=payload.admin_phone,
             password=payload.admin_password,

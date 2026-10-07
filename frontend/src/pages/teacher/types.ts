@@ -118,6 +118,7 @@ export interface HomeworkCreateRequest {
   subject_id: string;
   title: string;
   description?: string | null;
+  chapter?: string | null;
   assigned_date: string;
   due_date: string;
   attachment_document_ids?: string[];
@@ -131,6 +132,7 @@ export interface HomeworkOut {
   teacher_id: string;
   title: string;
   description: string | null;
+  chapter?: string | null;
   attachment_document_ids: string[];
   assigned_date: string;
   due_date: string;

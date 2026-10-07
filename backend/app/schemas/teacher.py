@@ -19,6 +19,8 @@ class TeacherCreateRequest(BaseModel):
     assigned_class_ids: list[str] = Field(default_factory=list, description="Classes/grades this teacher can manage")
     joining_date: date | None = None
     status: TeacherStatus = TeacherStatus.ACTIVE
+    photo_document_id: str | None = None
+    document_ids: list[str] = Field(default_factory=list)
 
 
 class TeacherUpdateRequest(BaseModel):

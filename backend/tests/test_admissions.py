@@ -249,3 +249,47 @@ async def test_admission_tenant_isolation(client):
     override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_b))
     r = await client.get(f"/api/v1/admissions/{admission_id}")
     assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_admission_keeps_extra_form_fields_and_carries_them_to_student(client):
+    school_id = await _make_school("ADMX")
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, school_id))
+    year_id, class_id, section_id = await _make_academic_setup(school_id)
+
+    r = await client.post(
+        "/api/v1/admissions",
+        json={
+            "applicant_first_name": "Asha",
+            "applicant_last_name": "Rao",
+            "applying_for_class_id": class_id,
+            "guardian_name": "Ravi Rao",
+            "guardian_phone": "9990002222",
+            "guardian_relationship": "Father",
+            "blood_group": "O+",
+            "father_name": "Ravi Rao",
+            "address_line1": "12 MG Road",
+            "city": "Pune",
+            "state": "MH",
+            "postal_code": "411001",
+            "admission_type": "New",
+            "student_photo_id": "photo-1",
+            "document_ids": ["doc-1"],
+        },
+    )
+    assert r.status_code == 201
+    body = r.json()
+    assert body["blood_group"] == "O+" and body["city"] == "Pune" and body["father_name"] == "Ravi Rao"
+    assert body["student_photo_id"] == "photo-1" and body["document_ids"] == ["doc-1"]
+
+    r = await client.post(
+        f"/api/v1/admissions/{body['id']}/review",
+        json={"action": "approve", "academic_year_id": year_id, "section_id": section_id},
+    )
+    assert r.status_code == 200
+    student = await Student.get(r.json()["student_id"])
+    assert student.blood_group == "O+"
+    assert student.address == "12 MG Road, Pune, MH, 411001"
+    assert student.photo_document_id == "photo-1"
+    guardian = await Guardian.get(r.json()["guardian_id"])
+    assert guardian.relation == "Father"
