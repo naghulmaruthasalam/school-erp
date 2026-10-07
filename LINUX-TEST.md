@@ -35,3 +35,10 @@ principal `principal@demo` / `Principal@123`, admin `admin@demo` / `Admin@123`, 
 - Logs of the checks: `/tmp/school-erp-smoke.log`.
 - Re-running `linux-test-flow.sh` is safe (seed and sync are idempotent).
 - Send me the exact failing line.
+
+## Video lessons (Class 6 Social Studies, chapter 1)
+`./linux-test-flow.sh` attaches the two videos in `media/` automatically (or run `./linux-load-videos.sh`; Windows: `load-videos.bat`).
+Student > Syllabus > Social Studies > chapter 1 ("Maps: Symbols & Geographic Names"): a video player sits above the notes.
+UI in English: the English video; switch to العربية: the Arabic video (and the notes switch too). If a chapter has only one
+language's video, that one plays with a note saying so. More chapters/subjects later: same command with `--subject`/`--unit`,
+or the upload endpoint `POST /syllabus/{id}/chapters/{index}/video` with `language=en|ar`.

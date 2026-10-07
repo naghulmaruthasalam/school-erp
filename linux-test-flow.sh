@@ -29,6 +29,11 @@ PY
 echo "DEMO school id: $SID"
 python -m scripts.sync_curriculum "$SID" --apply --create-missing | tail -25
 
+if [ -f ../media/social6_ch1_en.mp4 ] && [ -f ../media/social6_ch1_ar.mp4 ]; then
+  echo "== video lessons (chapter 1) =="
+  python -m scripts.attach_chapter_videos "$SID" --grade 6 --subject "Social Studies" --unit 1 --en ../media/social6_ch1_en.mp4 --ar ../media/social6_ch1_ar.mp4
+fi
+
 echo "== 4/4 start the API for the checks =="
 ( uvicorn app.main:app --port 8000 >/tmp/school-erp-smoke.log 2>&1 & echo $! > /tmp/school-erp-smoke.pid )
 trap 'kill "$(cat /tmp/school-erp-smoke.pid)" 2>/dev/null || true' EXIT

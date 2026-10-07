@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
-import { BookOpen, ChevronRight, ClipboardCheck, FileText, Lightbulb, ListChecks, MessageSquareText, NotebookPen, PencilLine } from "lucide-react";
+import { BookOpen, ChevronRight, PlayCircle, ClipboardCheck, FileText, Lightbulb, ListChecks, MessageSquareText, NotebookPen, PencilLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -126,7 +126,7 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
               <button key={c.id} onClick={() => setChapterId(c.id)} aria-current={c.id === chapter?.id} className={clsx("glass-row !items-start text-start", c.id === chapter?.id && "ring-2 ring-accent/50")}>
                 <span className="lg-icon !h-8 !w-8 shrink-0 !rounded-[10px] text-xs font-semibold">{fmtNumber(i + 1)}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-ink">{c.name}</span>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">{c.name}{c.has_video && <PlayCircle size={14} className="shrink-0 text-accent-fg" aria-label={t("lead.browser.video")} />}</span>
                   <span className="block text-xs text-ink-3">
                     {c.topics.length > 0 ? t("shell.syllabusBrowser.topicCount", { n: fmtNumber(c.topics.length) }) : c.description ?? t("shell.syllabusBrowser.chapter")}
                   </span>
@@ -156,6 +156,22 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
                 )}
 
                 {detail.isLoading && <Spinner size="sm" />}
+                {full?.video_url && (
+                  <div data-testid="chapter-video">
+                    <p className="mb-1.5 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
+                      <PlayCircle size={14} /> {t("lead.browser.video")}
+                      {full.duration_minutes ? <span className="font-normal normal-case">{t("lead.browser.minutes", { n: fmtNumber(full.duration_minutes) })}</span> : null}
+                    </p>
+                    {full.video_language && full.video_language !== language && (
+                      <p className="mb-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                        {t(full.video_language === "ar" ? "lead.browser.videoOnlyArabic" : "lead.browser.videoOnlyEnglish")}
+                      </p>
+                    )}
+                    {/* keyed by link, so switching language swaps the video instead of reusing the player */}
+                    <video key={full.video_url} controls preload="metadata" playsInline src={full.video_url} className="w-full max-h-[26rem] rounded-xl bg-black" />
+                  </div>
+                )}
+
                 {full?.content ? (
                   <div>
                     <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{t("shell.syllabusBrowser.notes")}</p>
@@ -170,13 +186,6 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
                   </div>
                 ) : !detail.isLoading && (
                   <p className="rounded-xl bg-surface p-3 text-sm text-ink-3">{t("lead.browser.noNotes")}</p>
-                )}
-
-                {full?.video_url && (
-                  <div>
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{t("lead.browser.video")}</p>
-                    <video controls preload="metadata" src={full.video_url} className="w-full max-h-72 rounded-xl bg-black" />
-                  </div>
                 )}
 
                 {(detail.data?.documents ?? []).length > 0 && (

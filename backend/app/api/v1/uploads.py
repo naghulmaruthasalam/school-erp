@@ -1,8 +1,9 @@
 import mimetypes
+import re
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
+from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 
 from app.core.deps import CurrentUser, require_tenant_user
 from app.core.enums import DocumentModule
@@ -76,8 +77,39 @@ async def delete_document(
     await upload_service.delete_document(current, document_id)
 
 
+def ranged_file_response(request: Request, path, content_type: str):
+    """FileResponse plus HTTP Range support, which browsers need to seek in (and start quickly on) a video."""
+    size = path.stat().st_size
+    header = request.headers.get("range", "")
+    m = re.fullmatch(r"bytes=(\d*)-(\d*)", header.strip()) if header else None
+    if not m or (not m.group(1) and not m.group(2)):
+        return FileResponse(path, media_type=content_type, headers={"Accept-Ranges": "bytes"})
+    if m.group(1):
+        start = int(m.group(1))
+        end = int(m.group(2)) if m.group(2) else size - 1
+    else:  # "bytes=-N": the last N bytes
+        start, end = max(size - int(m.group(2)), 0), size - 1
+    end = min(end, size - 1)
+    if start > end or start >= size:
+        return Response(status_code=416, headers={"Content-Range": f"bytes */{size}"})
+
+    def chunks(chunk_size: int = 1024 * 256):
+        with open(path, "rb") as f:
+            f.seek(start)
+            left = end - start + 1
+            while left > 0:
+                data = f.read(min(chunk_size, left))
+                if not data:
+                    break
+                left -= len(data)
+                yield data
+
+    return StreamingResponse(chunks(), status_code=206, media_type=content_type, headers={
+        "Content-Range": f"bytes {start}-{end}/{size}", "Accept-Ranges": "bytes", "Content-Length": str(end - start + 1)})
+
+
 @router.get("/local/{filename}")
-async def serve_local_file(filename: str, expires: int = Query(...), sig: str = Query(...)):
+async def serve_local_file(request: Request, filename: str, expires: int = Query(...), sig: str = Query(...)):
     """Serves locally stored files when S3 isn't configured. Access needs a link signed by the API
     (the local equivalent of an S3 presigned URL), so files can't be fetched by guessing names."""
     if not verify_local_signature(filename, expires, sig):
@@ -89,7 +121,7 @@ async def serve_local_file(filename: str, expires: int = Query(...), sig: str = 
         raise HTTPException(status_code=404, detail="File not found")
 
     content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-    return FileResponse(file_path, media_type=content_type)
+    return ranged_file_response(request, file_path, content_type)
 
 
 # --- Single documents by id -----------------------------------------------------------------

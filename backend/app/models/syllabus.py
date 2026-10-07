@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from pydantic import BaseModel, Field
@@ -13,6 +13,9 @@ class ChapterText(BaseModel):
     description: str | None = None
     topics: list[str] = Field(default_factory=list)
     content: str | None = None
+    video_url: str | None = None  # this language's video lesson (an external link, or None when video_s3_key is set)
+    video_s3_key: str | None = None  # object key of the uploaded video: the playable link is generated from it on every read
+    duration_minutes: int | None = None
 
 
 @dataclass
@@ -23,6 +26,10 @@ class LocalizedChapter:
     content: str | None
     content_language: str | None  # the language the notes are actually in (may differ from the one asked for)
     languages: list[str]  # languages this chapter has notes in
+    video_s3_key: str | None = None  # the video to play: the requested language's, else the other language's
+    video_url: str | None = None
+    video_language: str | None = None
+    video_languages: list[str] = field(default_factory=list)
 
 
 class Chapter(BaseModel):
@@ -43,10 +50,16 @@ class Chapter(BaseModel):
         languages = [k for k, v in notes.items() if v]
         served = lang if notes.get(lang) else next((k for k in ("en", *self.translations) if notes.get(k)), None)
         text = notes.get(served) if served else None
+        # videos: the chapter's own fields are the English video, translations["ar"] holds the Arabic one
+        videos = {"en": (self.video_s3_key, self.video_url)} | {k: (v.video_s3_key, v.video_url) for k, v in self.translations.items()}
+        have = [k for k, (key, url) in videos.items() if key or url]
+        vlang = lang if lang in have else next(iter(have), None)
+        vkey, vurl = videos[vlang] if vlang else (None, None)
+        extra = {"video_s3_key": vkey, "video_url": vurl, "video_language": vlang, "video_languages": have}
         if tr is None:
-            return LocalizedChapter(self.name, self.description, list(self.topics), text or None, served, languages)
+            return LocalizedChapter(self.name, self.description, list(self.topics), text or None, served, languages, **extra)
         return LocalizedChapter(
-            tr.name or self.name, tr.description or self.description, list(tr.topics or self.topics), text or None, served, languages,
+            tr.name or self.name, tr.description or self.description, list(tr.topics or self.topics), text or None, served, languages, **extra,
         )
 
     def names(self) -> set[str]:

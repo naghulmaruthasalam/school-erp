@@ -35,6 +35,8 @@ class ChapterOut(BaseModel):
     content: str | None = None
     content_language: str | None = None  # language the notes are in (differs from the one asked for when only the other exists)
     languages: list[str] = Field(default_factory=list)  # languages this chapter has notes in
+    video_language: str | None = None  # language of the video_url shown (the other one's when only that exists)
+    video_languages: list[str] = Field(default_factory=list)
 
 
 class SyllabusDocumentOut(BaseModel):

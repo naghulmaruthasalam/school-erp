@@ -81,6 +81,24 @@ def main():
         check("same chapter: English notes are English, Arabic notes are Arabic",
               any(not ARABIC.search(e[2][:300]) and ARABIC.search(r[2][:300]) for e, r in both) if both else None, "no chapter has both editions" if not both else "")
 
+    # 2b: video lessons, one per language (only when scripts.attach_chapter_videos / load-videos was run)
+    vids = {}
+    for lang in ("en", "ar"):
+        code, tree = call(b, "GET", "/syllabus/tree", student, lang=lang)
+        for c in tree.get("classes", []) if code == 200 else []:
+            for subj in c.get("subjects", []):
+                for ch in subj["chapters"]:
+                    if ch.get("has_video"):
+                        code, syl = call(b, "GET", f"/syllabus/{subj['syllabus_id']}", student, lang=lang)
+                        full = next((x for x in syl.get("chapters", []) if x["id"] == ch["id"]), {})
+                        vids.setdefault(ch["key"], {})[lang] = (full.get("video_language"), (full.get("video_url") or "").split("?")[0])
+    if vids:
+        for key, per in vids.items():
+            if "en" in per and "ar" in per and per["en"][0] == "en" and per["ar"][0] == "ar":
+                check(f"video lesson '{key[:40]}': English and Arabic students get different videos", per["en"][1] != per["ar"][1])
+    else:
+        print("SKIP video lessons: none attached yet (run load-videos / linux-load-videos.sh)")
+
     # 3: curriculum library
     for lang in ("en", "ar"):
         code, data = call(b, "GET", "/curriculum/chapters?grade=6&subject=Social%20Studies", teacher, lang=lang)

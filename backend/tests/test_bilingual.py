@@ -240,3 +240,58 @@ async def test_teacher_copilot_generators_write_in_the_language_asked_for(client
                               json={"chapter_name": "Maps", "chapter_content": "x", "subject": "SS", "grade": "6", "language": language})
         assert r.status_code == 200, r.text
         assert f"write every sentence of your answer in {word}" in seen[-1]
+
+
+# ------------------------------------------------------------------ one video per language
+
+@pytest.mark.asyncio
+async def test_each_language_plays_its_own_video_with_fallback(client, library, tmp_path, monkeypatch):
+    from app.core import s3
+
+    import app.api.v1.uploads as uploads_api
+
+    monkeypatch.setattr(s3, "LOCAL_UPLOADS_DIR", tmp_path)
+    monkeypatch.setattr(uploads_api, "LOCAL_UPLOADS_DIR", tmp_path)
+    monkeypatch.setattr(s3, "_use_local_storage", True)
+    await run_import(client)
+    syl = next(s for s in await Syllabus.find(Syllabus.school_id == SCHOOL).to_list() if s.subject_id == library["ss"])
+    en_bytes, ar_bytes = b"E" * 5000, b"A" * 7000
+    for lang, data in (("en", en_bytes), ("ar", ar_bytes)):
+        r = await client.post(f"/api/v1/syllabus/{syl.id}/chapters/0/video", data={"language": lang},
+                              files={"file": (f"{lang}.mp4", data, "video/mp4")})
+        assert r.status_code == 200, r.text
+        assert r.json()["language"] == lang
+
+    async def video(lang):
+        ch = (await client.get(f"/api/v1/syllabus/{syl.id}", params={"lang": lang})).json()["chapters"][0]
+        return ch["video_url"], ch["video_language"], ch["video_languages"]
+
+    en_url, en_lang, langs = await video("en")
+    ar_url, ar_lang, _ = await video("ar")
+    assert en_lang == "en" and ar_lang == "ar" and sorted(langs) == ["ar", "en"] and en_url != ar_url
+    # the links really serve different files, with Range support for seeking
+    path = lambda u: u.split("://", 1)[1].split("/", 1)[1].join(["/", ""])  # noqa: E731  (the link without its host)
+    assert (await client.get(path(en_url))).content == en_bytes
+    assert (await client.get(path(ar_url))).content == ar_bytes
+    part = await client.get(path(ar_url), headers={"Range": "bytes=100-199"})
+    assert part.status_code == 206 and part.content == ar_bytes[100:200] and part.headers["content-range"] == "bytes 100-199/7000"
+    tail = await client.get(path(ar_url), headers={"Range": "bytes=-50"})
+    assert tail.status_code == 206 and tail.content == ar_bytes[-50:]
+    # tree says which chapters have a video
+    tree = (await client.get("/api/v1/syllabus/tree", params={"lang": "ar"})).json()
+    chapters = [ch for c in tree["classes"] for s in c["subjects"] for ch in s["chapters"] if s["syllabus_id"] == str(syl.id)]
+    assert chapters[0]["has_video"] and chapters[0]["video_language"] == "ar"
+
+    # saving the chapter from the editor (which echoes the link it was shown) must not move a video into the other language
+    shown = (await client.get(f"/api/v1/syllabus/{syl.id}", params={"lang": "ar"})).json()["chapters"]
+    r = await client.patch(f"/api/v1/syllabus/{syl.id}", params={"lang": "ar"}, json={"chapters": shown})
+    assert r.status_code == 200
+    again = await Syllabus.get(syl.id)
+    assert again.chapters[0].video_s3_key and again.chapters[0].translations["ar"].video_s3_key
+    assert again.chapters[0].video_s3_key != again.chapters[0].translations["ar"].video_s3_key and again.chapters[0].video_url is None
+
+    # only an Arabic video exists -> English readers get it (and are told its language)
+    again.chapters[0].video_s3_key = None
+    await again.save()
+    _, lang_en_fallback, _ = await video("en")
+    assert lang_en_fallback == "ar"

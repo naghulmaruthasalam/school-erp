@@ -4,7 +4,8 @@ from pydantic import BaseModel, Field
 
 from app.core.deps import CurrentUser, require_tenant_user
 from app.core.enums import DocumentModule, Role, SyllabusStatus
-from app.core.lang import Lang, get_lang
+from app.core.lang import Lang, get_lang, normalize_lang
+from app.models.syllabus import ChapterText
 from app.core.s3 import build_object_key, generate_presigned_url_with_log, upload_bytes_with_log
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.document import PresignedUrlOut
@@ -179,9 +180,11 @@ async def upload_chapter_video(
     syllabus_id: str,
     chapter_index: int,
     file: UploadFile = File(...),
+    language: str = Form("en"),
     current: CurrentUser = Depends(require_tenant_user),
 ) -> dict:
-    """Upload video for a specific chapter. Stores in S3 and updates chapter's video_url."""
+    """Upload a video for a chapter, for one language ("en" = the chapter's own video, "ar" = the Arabic one). Students watch
+    the video of the language they use in the app."""
     syllabus = await syllabus_service.get_syllabus_model(current, syllabus_id)
 
     if chapter_index < 0 or chapter_index >= len(syllabus.chapters):
@@ -197,8 +200,12 @@ async def upload_chapter_video(
 
     video_url = await generate_presigned_url_with_log(key, school_id=current.school_id, user_id=current.id)
 
-    syllabus.chapters[chapter_index].video_s3_key = key
-    syllabus.chapters[chapter_index].video_url = video_url
+    chapter = syllabus.chapters[chapter_index]
+    if normalize_lang(language) == "ar":
+        tr = chapter.translations.setdefault("ar", ChapterText())
+        tr.video_s3_key, tr.video_url = key, None
+    else:
+        chapter.video_s3_key, chapter.video_url = key, None
     await syllabus.save()
 
-    return {"video_url": video_url, "s3_key": key}
+    return {"video_url": video_url, "s3_key": key, "language": normalize_lang(language)}

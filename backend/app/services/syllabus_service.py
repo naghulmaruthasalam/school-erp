@@ -23,12 +23,24 @@ from app.schemas.syllabus import (
 _STAFF_WRITE_ROLES = (Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL, Role.SUPER_ADMIN)
 
 
+def video_link(key: str | None, url: str | None) -> str | None:
+    """A playable link: freshly signed from the stored object key (links expire), else the external URL."""
+    if key:
+        from app.core.s3 import generate_presigned_get_url
+
+        return generate_presigned_get_url(key)
+    return url
+
+
 def _chapter_out(doc: Syllabus, i: int, c: Chapter, lang: str) -> ChapterOut:
     loc = c.localized(lang)
+    tr = c.translations.get(loc.video_language or "") if loc.video_language and loc.video_language != "en" else None
     return ChapterOut(
         id=f"{doc.id}-{i}", syllabus_id=str(doc.id), key=c.name, name=loc.name, description=loc.description, order=c.order,
-        topics=loc.topics, content=loc.content, video_url=c.video_url, duration_minutes=c.duration_minutes,
+        topics=loc.topics, content=loc.content, video_url=video_link(loc.video_s3_key, loc.video_url),
+        duration_minutes=(tr.duration_minutes if tr else c.duration_minutes),
         content_language=loc.content_language, languages=loc.languages,
+        video_language=loc.video_language, video_languages=loc.video_languages,
     )
 
 
@@ -207,28 +219,44 @@ async def get_syllabus_model(current: CurrentUser, syllabus_id: str) -> Syllabus
     return await _get_syllabus_or_404(current, syllabus_id)
 
 
+def _apply_video(old: Chapter, new: Chapter, c: dict, lang: str) -> None:
+    """The editor echoes the video link it was shown. An uploaded video is changed only by uploading another (the link is
+    signed and different on every read), and a link shown for one language is never written into the other language."""
+    if "video_url" not in c and "duration_minutes" not in c:
+        return
+    shown = old.localized(lang)
+    if shown.video_language != lang:  # what the editor holds is the other language's video: not an edit of this one
+        return
+    target = new if lang == "en" else new.translations.setdefault(lang, ChapterText())
+    if target.video_s3_key:
+        return
+    if "video_url" in c and (c["video_url"] or None) != (shown.video_url or None):
+        target.video_url = c["video_url"] or None
+    if "duration_minutes" in c:
+        target.duration_minutes = c["duration_minutes"]
+
+
 def _rebuild_chapter(old: Chapter | None, c: dict, lang: str) -> Chapter:
     """Apply the editor's version of one chapter. In English it edits the chapter itself; in another language it edits
     only that language's text, and only the fields the user actually changed (so opening the editor in Arabic and saving
     never copies English text into the Arabic version, or the other way round)."""
     order = c["order"]
-    video_url = c["video_url"] if "video_url" in c else (old.video_url if old else None)
-    duration = c["duration_minutes"] if "duration_minutes" in c else (old.duration_minutes if old else None)
     if old is None:
         return Chapter(name=c["name"], description=c.get("description"), order=order, topics=c.get("topics") or [],
-                       content=c.get("content"), video_url=video_url, duration_minutes=duration)
+                       content=c.get("content"), video_url=c.get("video_url") if lang == "en" else None,
+                       duration_minutes=c.get("duration_minutes") if lang == "en" else None,
+                       translations={} if lang == "en" else {lang: ChapterText(video_url=c.get("video_url"))})
+    new = old.model_copy(deep=True)
+    new.order = order
     if lang == "en":
-        new = old.model_copy(deep=True)
         new.name = c["name"]
         new.description = c.get("description")
-        new.order, new.video_url, new.duration_minutes = order, video_url, duration
         if "topics" in c:
             new.topics = c["topics"]
         if "content" in c:
             new.content = c["content"]
+        _apply_video(old, new, c, lang)
         return new
-    new = old.model_copy(deep=True)
-    new.order, new.video_url, new.duration_minutes = order, video_url, duration
     shown = old.localized(lang)
     tr = new.translations.get(lang) or ChapterText()
     if c["name"] != shown.name:
@@ -239,8 +267,10 @@ def _rebuild_chapter(old: Chapter | None, c: dict, lang: str) -> Chapter:
         tr.topics = c["topics"]
     if "content" in c and (c["content"] or None) != (shown.content or None):
         tr.content = c["content"]
-    if tr.model_dump(exclude_defaults=True):
-        new.translations[lang] = tr
+    new.translations[lang] = tr
+    _apply_video(old, new, c, lang)
+    if not new.translations[lang].model_dump(exclude_defaults=True):
+        del new.translations[lang]
     return new
 
 
@@ -365,7 +395,8 @@ async def get_tree(current: CurrentUser, lang: str = "en") -> dict:
                 "chapters": [
                     {"id": f"{syl.id}-{i}", "key": ch.name, "name": loc.name, "description": loc.description, "order": ch.order,
                      "topics": loc.topics, "has_content": bool(loc.content), "content_language": loc.content_language,
-                     "languages": loc.languages}
+                     "languages": loc.languages, "has_video": bool(loc.video_s3_key or loc.video_url),
+                     "video_language": loc.video_language}
                     for i, ch, loc in sorted(((i, ch, ch.localized(lang)) for i, ch in enumerate(syl.chapters)), key=lambda t: t[1].order)
                 ],
             })

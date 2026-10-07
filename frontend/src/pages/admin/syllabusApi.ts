@@ -13,6 +13,8 @@ export interface SyllabusChapter {
   content?: string | null;
   content_language?: string | null;
   languages?: string[];
+  video_language?: string | null;
+  video_languages?: string[];
 }
 
 export interface SyllabusDocument {
@@ -117,6 +119,8 @@ export interface TreeChapter {
   order: number;
   topics: string[];
   has_content: boolean;
+  has_video?: boolean;
+  video_language?: string | null;
 }
 
 export interface TreeSubject {
