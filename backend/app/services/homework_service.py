@@ -74,6 +74,8 @@ def to_submission_out(doc: HomeworkSubmission) -> HomeworkSubmissionOut:
         submitted_at=doc.submitted_at,
         attachment_document_ids=doc.attachment_document_ids,
         remarks=doc.remarks,
+        teacher_feedback=doc.teacher_feedback,
+        teacher_feedback_at=doc.teacher_feedback_at,
         created_at=doc.created_at,
         updated_at=doc.updated_at,
     )
@@ -342,6 +344,11 @@ async def update_submission(
             submission.attachment_document_ids = data["attachment_document_ids"]
         if "remarks" in data and data["remarks"] is not None:
             submission.remarks = data["remarks"]
+        if "teacher_feedback" in data:  # the teacher's own comments: second to the AI feedback, which is generated on hand-in
+            text = (data["teacher_feedback"] or "").strip()
+            submission.teacher_feedback = text or None
+            submission.teacher_feedback_at = utcnow() if text else None
+            submission.teacher_feedback_by = str(current.user.id) if text else None
     else:
         raise PermissionDeniedError("Not allowed to update homework submissions")
 

@@ -65,6 +65,8 @@ class HomeworkSubmissionOut(BaseModel):
     submitted_at: datetime | None = None
     attachment_document_ids: list[str] = Field(default_factory=list)
     remarks: str | None = None
+    teacher_feedback: str | None = None
+    teacher_feedback_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -73,3 +75,4 @@ class HomeworkSubmissionUpdateRequest(BaseModel):
     status: HomeworkSubmissionStatus | None = None
     attachment_document_ids: list[str] | None = None
     remarks: str | None = None
+    teacher_feedback: str | None = Field(default=None, max_length=4000)  # staff only

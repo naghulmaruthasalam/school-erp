@@ -146,3 +146,33 @@ async def test_only_the_student_and_staff_can_see_it_and_handing_in_triggers_mar
     as_teacher()
     assert (await client.post(f"/api/v1/homework/submissions/{work['sub'].id}/ai-validate")).json()["status"] == "ready"
     assert len(marking_calls(fake)) == 2  # the teacher's button marks again
+
+
+@pytest.mark.asyncio
+async def test_ai_feedback_comes_first_and_the_teachers_comments_second(client, work, fake):
+    work["sub"].attachment_document_ids = [await upload("a.txt", "text/plain", b"Plants make food from light.")]
+    work["sub"].status = HomeworkSubmissionStatus.SUBMITTED
+    await work["sub"].save()
+    sid = str(work["sub"].id)
+
+    as_student()
+    first = (await client.get(f"/api/v1/homework/submissions/{sid}/feedback")).json()
+    assert first["status"] == "ready" and first["overall_feedback"] == "Good effort."  # the AI marks without anyone's say-so
+    assert first["teacher_feedback"] is None  # nothing from the staff yet
+
+    # a student cannot write the teacher's comments
+    r = await client.patch(f"/api/v1/homework/submissions/{sid}", json={"teacher_feedback": "I give myself 10/10"})
+    assert r.status_code == 200 and r.json()["teacher_feedback"] is None
+
+    as_teacher()
+    r = await client.patch(f"/api/v1/homework/submissions/{sid}", json={"teacher_feedback": "  Well done, remember the oxygen.  "})
+    assert r.status_code == 200 and r.json()["teacher_feedback"] == "Well done, remember the oxygen."
+
+    as_student()
+    second = (await client.get(f"/api/v1/homework/submissions/{sid}/feedback")).json()
+    assert second["overall_feedback"] == "Good effort." and second["teacher_feedback"] == "Well done, remember the oxygen."
+    assert len(marking_calls(fake)) == 1  # the teacher's note did not trigger another AI marking
+
+    as_teacher()
+    cleared = await client.patch(f"/api/v1/homework/submissions/{sid}", json={"teacher_feedback": ""})
+    assert cleared.json()["teacher_feedback"] is None

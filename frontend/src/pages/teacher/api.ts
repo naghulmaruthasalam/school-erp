@@ -114,6 +114,11 @@ export async function createHomework(payload: HomeworkCreateRequest): Promise<Ho
   return data;
 }
 
+export async function saveTeacherFeedback(submissionId: string, teacher_feedback: string): Promise<HomeworkSubmissionOut> {
+  const { data } = await api.patch<HomeworkSubmissionOut>(`/homework/submissions/${submissionId}`, { teacher_feedback });
+  return data;
+}
+
 export async function getHomework(id: string): Promise<HomeworkOut> {
   const { data } = await api.get<HomeworkOut>(`/homework/${id}`);
   return data;

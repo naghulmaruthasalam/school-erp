@@ -149,6 +149,8 @@ export interface HomeworkSubmissionOut {
   submitted_at: string | null;
   attachment_document_ids: string[];
   remarks: string | null;
+  teacher_feedback?: string | null;
+  teacher_feedback_at?: string | null;
   created_at: string;
   updated_at: string;
 }

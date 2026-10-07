@@ -9,7 +9,8 @@ import { useMyProfile, useSubjects, subjectMap } from "./hooks";
 import { openCopilot } from "../../copilot/events";
 import Markdown from "../../copilot/Markdown";
 import type { Homework, PendingHomework } from "./types";
-import { BookOpen, Calendar, Clock, Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Star, Award, X, Sparkles, ThumbsUp, Target } from "lucide-react";
+import { createPortal } from "react-dom";
+import { BookOpen, Calendar, Clock, Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Star, Award, X, Sparkles, ThumbsUp, Target, UserCheck } from "lucide-react";
 
 interface QuestionFeedback {
   question_number: number;
@@ -22,6 +23,8 @@ interface QuestionFeedback {
 }
 
 interface AIFeedback {
+  teacher_feedback?: string | null;
+  teacher_feedback_at?: string | null;
   status: "ready" | "pending" | "unreadable" | "not_configured" | "not_submitted";
   message?: string;
   total_score?: number;
@@ -46,7 +49,7 @@ const gradeColors: Record<string, string> = {
 /** The AI's marking of what the student handed in. It is requested in the app's language (the api client sends it),
  *  so switching to Arabic shows feedback written in Arabic; while the server is still reading the work we poll. */
 function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose: () => void }) {
-  const { t, language, fmtNumber } = useLanguage();
+  const { t, language, fmtNumber, fmtDate } = useLanguage();
   const { data: submissions } = useQuery({
     queryKey: ["homework-submissions", homeworkId],
     queryFn: () => fetchHomeworkSubmissions(homeworkId),
@@ -64,8 +67,8 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
     refetchInterval: (q) => (q.state.data?.status === "pending" ? 4000 : false),
   });
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4" onClick={onClose}>
       <div className="bg-white dark:bg-surface rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-gradient-to-r from-violet-500 to-purple-600 text-white p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
@@ -183,9 +186,27 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
               )}
             </>
           )}
+
+          {/* Second level: the teacher's own comments, after the AI feedback above */}
+          {feedback && (
+            <div className="mt-6 rounded-xl border border-line bg-surface-3 p-4" data-testid="teacher-feedback">
+              <h3 className="mb-2 flex items-center gap-2 font-bold text-ink dark:text-white">
+                <UserCheck className="h-5 w-5 text-accent-fg" /> {t("studentHomework.feedback.teacher")}
+              </h3>
+              {feedback.teacher_feedback ? (
+                <>
+                  <p className="whitespace-pre-line text-sm text-ink-2" dir="auto">{feedback.teacher_feedback}</p>
+                  {feedback.teacher_feedback_at && <p className="mt-2 text-xs text-ink-3">{fmtDate(feedback.teacher_feedback_at)}</p>}
+                </>
+              ) : (
+                <p className="text-sm text-ink-3">{t("studentHomework.feedback.teacherWaiting")}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

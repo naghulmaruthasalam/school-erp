@@ -28,7 +28,10 @@ class HomeworkSubmission(TenantDocument):
     status: HomeworkSubmissionStatus = HomeworkSubmissionStatus.PENDING
     submitted_at: datetime | None = None
     attachment_document_ids: list[str] = Field(default_factory=list)
-    remarks: str | None = None
+    remarks: str | None = None  # a note typed by whoever handed the work in
+    teacher_feedback: str | None = None  # the teacher's own comments, shown to the student after the AI feedback
+    teacher_feedback_at: datetime | None = None
+    teacher_feedback_by: str | None = None
 
     class Settings:
         name = "homework_submissions"

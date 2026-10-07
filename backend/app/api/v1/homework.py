@@ -194,6 +194,8 @@ async def get_submission_feedback(
         children = await homework_service._guardian_student_ids(current)  # noqa: SLF001
         if submission.student_id not in children:
             raise HTTPException(status_code=403, detail="Not your child's submission")
+    teacher = {"teacher_feedback": submission.teacher_feedback, "teacher_feedback_at": submission.teacher_feedback_at}
     if not submission.attachment_document_ids and not (submission.remarks or "").strip():
-        return {"status": "not_submitted", "message": "Nothing has been handed in yet."}
-    return await homework_feedback.feedback_for(submission, lang)
+        return {"status": "not_submitted", "message": "Nothing has been handed in yet.", **teacher}
+    # the AI feedback comes first; the teacher's comments (if any) ride along as the second part
+    return {**await homework_feedback.feedback_for(submission, lang), **teacher}

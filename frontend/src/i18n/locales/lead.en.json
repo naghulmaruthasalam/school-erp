@@ -59,7 +59,9 @@
         "unreadable": "Upload a clear photo, a PDF or a Word (.docx) file of your answers, then check again.",
         "not_configured": "Your school hasn't switched on AI feedback. Your teacher will still review your work.",
         "not_submitted": "Submit your homework to get feedback."
-      }
+      },
+      "teacher": "Teacher's feedback",
+      "teacherWaiting": "Your teacher hasn't added comments yet. They will appear here after the AI feedback."
     }
   },
   "teacherHomework": {
@@ -110,7 +112,21 @@
     "upload": "Upload Files",
     "fileTypes": "PDF, DOC, PPT, Excel, Images",
     "titleHint": "e.g. Algebra worksheet",
-    "assignedDate": "Assigned Date"
+    "assignedDate": "Assigned Date",
+    "review": {
+      "review": "Review",
+      "reviewTitle": "Review submission",
+      "aiFirst": "AI feedback (first level)",
+      "yourFeedback": "Your feedback (second level)",
+      "yourFeedbackHint": "Add your own comments. The student sees them after the AI feedback.",
+      "save": "Save feedback",
+      "saved": "Feedback saved",
+      "reviewed": "Reviewed",
+      "notReviewed": "Not reviewed",
+      "close": "Close",
+      "noAi": "No AI feedback yet.",
+      "col": "Feedback"
+    }
   },
   "teacherCopilot": {
     "pickChapter": "Please select a chapter",
