@@ -82,7 +82,7 @@ export function DocumentSheet({ title, subtitle, metadata, content, type = "work
   const colors = colorMap[type];
 
   return (
-    <div className={`rounded-2xl border-2 ${colors.border} overflow-hidden shadow-lg`}>
+    <div className={`rounded-2xl border-2 ${colors.border} overflow-hidden shadow-lg`} data-no-translate>
       {/* Header */}
       <div className={`bg-gradient-to-r ${colors.gradient} text-white p-6`}>
         <h2 className="text-2xl font-bold mb-1">{title}</h2>

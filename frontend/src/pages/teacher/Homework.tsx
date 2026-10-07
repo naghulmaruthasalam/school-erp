@@ -262,7 +262,7 @@ export default function TeacherHomework() {
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.titleLabel")}</label>
                 <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="e.g. Algebra worksheet" />
+                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder={t("teacherHomework.titleHint")} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.description")}</label>
@@ -293,7 +293,7 @@ export default function TeacherHomework() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink dark:text-white mb-2">Assigned Date</label>
+                <label className="block text-sm font-medium text-ink dark:text-white mb-2">{t("teacherHomework.assignedDate")}</label>
                 <input type="date" value={form.assigned_date} onChange={(e) => setForm((f) => ({ ...f, assigned_date: e.target.value }))}
                   className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" />
               </div>

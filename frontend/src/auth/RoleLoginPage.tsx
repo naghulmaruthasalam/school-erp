@@ -172,8 +172,8 @@ export default function RoleLoginPage() {
 
         <div className="absolute end-6 top-6 flex items-center gap-2">
           <div className="lg-seg">
-            <button aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
-            <button aria-pressed={language === "ar"} onClick={() => setLanguage("ar")}>عربي</button>
+            <button aria-pressed={language === "en"} onClick={() => setLanguage("en")}>{t("common.english")}</button>
+            <button aria-pressed={language === "ar"} onClick={() => setLanguage("ar")}>{t("common.arabic")}</button>
           </div>
           <ThemeToggle />
         </div>

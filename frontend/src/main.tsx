@@ -5,6 +5,7 @@ import { BrowserRouter, HashRouter } from "react-router-dom";
 import App from "./App.tsx";
 import { ThemeProvider } from "./theme/ThemeContext.tsx";
 import { LanguageProvider } from "./i18n/LanguageContext.tsx";
+import AutoTranslate from "./i18n/AutoTranslate.tsx";
 import "./api/client";
 import "./index.css";
 
@@ -27,6 +28,7 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider>
           <Router>
             <App />
+            <AutoTranslate />
           </Router>
         </ThemeProvider>
       </LanguageProvider>

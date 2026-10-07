@@ -25,12 +25,12 @@ export default function LanguageSwitcher({ className = "" }: { className?: strin
 }
 
 export function LanguageSwitcherButtons({ className = "" }: { className?: string }) {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <div className={`lg-seg ${className}`}>
-      <button aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
-      <button aria-pressed={language === "ar"} onClick={() => setLanguage("ar")}>عربي</button>
+      <button aria-pressed={language === "en"} onClick={() => setLanguage("en")}>{t("common.english")}</button>
+      <button aria-pressed={language === "ar"} onClick={() => setLanguage("ar")}>{t("common.arabic")}</button>
     </div>
   );
 }

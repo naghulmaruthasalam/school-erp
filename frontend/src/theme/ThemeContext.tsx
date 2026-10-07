@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/LanguageContext";
 import { Moon, Sun } from "lucide-react";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Role } from "../types/auth";
@@ -126,14 +127,16 @@ export function useRoleColors() {
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const dark = theme === "dark";
+  const label = t(dark ? "lead.theme.toLight" : "lead.theme.toDark");
 
   return (
     <button
       onClick={toggleTheme}
       className="glass-icon-btn relative overflow-hidden"
-      aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
-      title={`Switch to ${dark ? "light" : "dark"} mode`}
+      aria-label={label}
+      title={label}
     >
       <Sun
         size={17}

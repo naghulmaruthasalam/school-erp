@@ -6,7 +6,7 @@ import { entityLabel, type EntityKind } from "./entities";
 
 export type Language = "en" | "ar";
 type Dict = Record<string, unknown>;
-export type TVars = Record<string, string | number>;
+export type TVars = Record<string, string | number | null | undefined>;
 
 /** Page-level dictionaries live in ./locales/<area>.en.json and <area>.ar.json and are merged into the base ones. */
 function collect(files: Record<string, { default: Dict }>, suffix: string): Dict[] {
@@ -43,7 +43,7 @@ function lookup(dict: Dict, key: string): string | undefined {
 export function translate(language: Language, key: string, vars?: TVars): string {
   // Arabic falls back to English (never to the raw key) so a missing translation is readable, not a bug report.
   const raw = lookup(translations[language], key) ?? lookup(translations.en, key) ?? key;
-  return vars ? raw.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m)) : raw;
+  return vars ? raw.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? (vars[name] == null ? "—" : String(vars[name])) : m)) : raw;
 }
 
 /** Current language for code that runs outside React (axios interceptors, query functions). */
@@ -59,7 +59,7 @@ interface LanguageContextType {
   /** Translate a value that comes from the database: a subject, class, section, status, role, month... */
   te: (kind: EntityKind, value: string | null | undefined) => string;
   /** Locale-aware date / number formatting (Latin digits in both languages, as the school's books use). */
-  fmtDate: (value: string | number | Date, opts?: Intl.DateTimeFormatOptions) => string;
+  fmtDate: (value: string | number | Date | null | undefined, opts?: Intl.DateTimeFormatOptions) => string;
   fmtNumber: (value: number, opts?: Intl.NumberFormatOptions) => string;
   dir: "ltr" | "rtl";
 }
@@ -81,6 +81,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dir = dir;
     document.documentElement.lang = language;
+    document.title = translate(language, "landing.title");  // the browser tab too
   }, [language, dir]);
 
   const value = useMemo<LanguageContextType>(
@@ -91,6 +92,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       t: (key, vars) => translate(language, key, vars),
       te: (kind, v) => entityLabel(language, kind, v),
       fmtDate: (v, opts) => {
+        if (v == null || v === "") return "—";
         const d = v instanceof Date ? v : new Date(v);
         return Number.isNaN(d.getTime()) ? String(v) : d.toLocaleDateString(locale, opts ?? { day: "numeric", month: "short", year: "numeric" });
       },

@@ -31,7 +31,7 @@ const components: Components = {
  * rendered (react-markdown escapes it), so model output can't inject markup. */
 export default function Markdown({ children }: { children: string }) {
   return (
-    <div className="copilot-md text-sm text-ink">
+    <div className="copilot-md text-sm text-ink" data-no-translate>
       <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>
         {children}
       </ReactMarkdown>

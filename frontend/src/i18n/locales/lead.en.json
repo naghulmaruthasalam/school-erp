@@ -108,7 +108,9 @@
     "thinking": "Thinking...",
     "description": "Description / Instructions",
     "upload": "Upload Files",
-    "fileTypes": "PDF, DOC, PPT, Excel, Images"
+    "fileTypes": "PDF, DOC, PPT, Excel, Images",
+    "titleHint": "e.g. Algebra worksheet",
+    "assignedDate": "Assigned Date"
   },
   "teacherCopilot": {
     "pickChapter": "Please select a chapter",
@@ -164,6 +166,10 @@
       "noNotes": "No notes have been added to this chapter yet.",
       "video": "Video lesson",
       "materials": "Study materials"
+    },
+    "theme": {
+      "toLight": "Switch to light mode",
+      "toDark": "Switch to dark mode"
     }
   }
 }

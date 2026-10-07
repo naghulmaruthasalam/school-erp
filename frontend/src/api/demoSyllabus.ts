@@ -1,5 +1,6 @@
 // DEMO BUILD ONLY. Class -> subject -> chapter data for the syllabus browser, built on the same ids the Copilot demo uses.
 import { CAPTURE } from "../copilot/demo/capture";
+import { DEMO_AR } from "./demoTranslations";
 import { currentLanguage } from "../i18n/LanguageContext";
 import { getDemoResponse } from "./demoData";
 
@@ -111,6 +112,10 @@ export function getDemoSyllabusResponse(url: string, params?: Record<string, unk
 
 export function postDemoResponse(url: string, data: unknown, method = "post"): unknown | null {
   const clean = url.replace(/\?.*$/, "");
+  if (clean.endsWith("/i18n/translate") && data && typeof data === "object") {
+    const texts = ((data as { texts?: string[] }).texts ?? []);
+    return { available: true, translations: Object.fromEntries(texts.filter((t) => DEMO_AR[t.trim()]).map((t) => [t, DEMO_AR[t.trim()]])) };
+  }
   if (method === "post" && clean.endsWith("/uploads")) return { id: `demo-doc-${Date.now()}`, filename: "my-answers.jpg" };
   const patch = clean.match(/\/homework\/submissions\/demo-sub-([\w-]+)$/);
   if (patch) {

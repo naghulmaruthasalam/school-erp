@@ -201,8 +201,8 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
 
             <div className="flex items-center gap-2 md:gap-3">
               <div className="lg-seg">
-                <button aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
-                <button aria-pressed={language === "ar"} onClick={() => setLanguage("ar")}>عربي</button>
+                <button aria-pressed={language === "en"} onClick={() => setLanguage("en")}>{t("common.english")}</button>
+                <button aria-pressed={language === "ar"} onClick={() => setLanguage("ar")}>{t("common.arabic")}</button>
               </div>
 
               <NotificationBell />
