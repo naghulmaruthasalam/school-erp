@@ -59,7 +59,7 @@ async def generate(
     try:
         response = await asyncio.to_thread(
             client.models.generate_content,
-            model=settings.gemini_model_name or "gemini-2.0-flash",
+            model=settings.gemini_model_name or "gemini-3.5-flash-lite",
             contents=user_prompt,
             config=types.GenerateContentConfig(**config_kwargs),
         )
@@ -85,7 +85,7 @@ async def generate_vision(
     try:
         response = await asyncio.to_thread(
             client.models.generate_content,
-            model=settings.gemini_model_name or "gemini-2.0-flash",
+            model=settings.gemini_model_name or "gemini-3.5-flash-lite",
             contents=parts,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,

@@ -7,10 +7,11 @@ import { getTeacherSyllabus, createTeacherSyllabus, updateTeacherSyllabus, uploa
 import type { SyllabusChapter } from "./syllabusApi";
 
 interface ChapterForm {
-  id?: string;
   name: string;
   description: string;
   order: number;
+  video_url?: string;
+  duration_minutes?: number;
 }
 
 export default function SyllabusForm() {
@@ -45,19 +46,20 @@ export default function SyllabusForm() {
     const syl = syllabusQuery.data;
     setForm({
       title: syl.title,
-      description: syl.description,
+      description: syl.description || "",
       academic_year_id: syl.academic_year_id,
       class_id: syl.class_id,
       subject_id: syl.subject_id,
       status: syl.status,
     });
     setChapters(syl.chapters.map((c: SyllabusChapter) => ({
-      id: c.id,
       name: c.name,
-      description: c.description,
+      description: c.description || "",
       order: c.order,
+      video_url: c.video_url,
+      duration_minutes: c.duration_minutes,
     })));
-    setDocuments(syl.documents || []);
+    setDocuments((syl.document_ids || []).map((id: string) => ({ id, filename: `Document ${id.slice(-6)}` })));
   }
 
   const saveMutation = useMutation({
@@ -84,7 +86,7 @@ export default function SyllabusForm() {
   });
 
   const addChapter = () => {
-    setChapters([...chapters, { name: "", description: "", order: chapters.length + 1 }]);
+    setChapters([...chapters, { name: "", description: "", order: chapters.length + 1, video_url: "", duration_minutes: 0 }]);
   };
 
   const updateChapter = (index: number, field: keyof ChapterForm, value: string | number) => {
@@ -238,6 +240,23 @@ export default function SyllabusForm() {
                         value={ch.description}
                         onChange={(e) => updateChapter(idx, "description", e.target.value)}
                         placeholder="Brief description..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Video URL (Optional)</Label>
+                      <Input
+                        value={ch.video_url || ""}
+                        onChange={(e) => updateChapter(idx, "video_url", e.target.value)}
+                        placeholder="https://youtube.com/..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Duration (minutes)</Label>
+                      <Input
+                        type="number"
+                        value={ch.duration_minutes || ""}
+                        onChange={(e) => updateChapter(idx, "duration_minutes", parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 30"
                       />
                     </div>
                   </div>

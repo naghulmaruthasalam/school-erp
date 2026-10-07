@@ -190,3 +190,72 @@ async def api_quick_feedback(
         raise HTTPException(status_code=503, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/submissions/{submission_id}/feedback")
+async def get_submission_feedback(
+    submission_id: str,
+    current: CurrentUser = Depends(require_tenant_user),
+) -> dict[str, Any]:
+    """Get AI feedback for a student's own homework submission."""
+    from app.models.homework_validation import HomeworkValidation
+
+    submission = await homework_service.get_submission(current, submission_id)
+
+    # Students can only view their own feedback
+    if current.role == Role.STUDENT and submission.student_id != current.user.student_id:
+        raise HTTPException(status_code=403, detail="Not your submission")
+
+    # Check if validation exists
+    validation = await HomeworkValidation.find_one({"submission_id": submission_id})
+
+    if not validation:
+        # Auto-validate if not already done
+        try:
+            homework = await homework_service.get_homework(current, submission.homework_id)
+            questions = [{"question": homework.description or homework.title, "marks": 10}]
+            # Use remarks or indicate file submission
+            answer_text = submission.remarks or ("File submitted" if submission.attachment_document_ids else "No answer provided")
+            student_answers = [answer_text]
+
+            result = await validate_text_homework(
+                homework_id=submission.homework_id,
+                student_id=submission.student_id,
+                homework_title=homework.title,
+                homework_description=homework.description or "",
+                questions=questions,
+                student_answers=student_answers,
+            )
+
+            # Store validation result
+            validation = HomeworkValidation(
+                school_id=current.school_id,
+                homework_id=submission.homework_id,
+                student_id=submission.student_id,
+                submission_id=submission_id,
+                total_score=result.total_score,
+                max_score=result.max_score,
+                percentage=result.percentage,
+                grade=result.grade,
+                overall_feedback=result.overall_feedback,
+                strengths=result.strengths,
+                areas_to_improve=result.areas_to_improve,
+                questions=[q.model_dump() for q in result.questions],
+            )
+            await validation.insert()
+
+        except (GeminiNotConfigured, GeminiError) as e:
+            return {"status": "pending", "message": "AI feedback is being processed"}
+
+    return {
+        "status": "ready",
+        "total_score": validation.total_score,
+        "max_score": validation.max_score,
+        "percentage": validation.percentage,
+        "grade": validation.grade,
+        "overall_feedback": validation.overall_feedback,
+        "strengths": validation.strengths,
+        "areas_to_improve": validation.areas_to_improve,
+        "questions": validation.questions,
+        "validated_at": validation.validated_at.isoformat() if validation.validated_at else None,
+    }

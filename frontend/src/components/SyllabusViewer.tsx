@@ -4,10 +4,11 @@ import { Card, Spinner, Badge } from "./ui";
 import { BookOpen, FileText, ChevronDown, Download, GraduationCap, Layers, Video, PlayCircle } from "lucide-react";
 
 interface Chapter {
-  id: string;
   name: string;
   description?: string;
   order: number;
+  video_url?: string;
+  duration_minutes?: number;
 }
 
 interface Document {
@@ -144,13 +145,15 @@ export function SyllabusViewer({
                   </h4>
                   {syl.chapters && syl.chapters.length > 0 ? (
                     <div className="space-y-2">
-                      {syl.chapters.sort((a, b) => a.order - b.order).map((ch, idx) => (
+                      {syl.chapters.sort((a, b) => a.order - b.order).map((ch, idx) => {
+                        const chapterKey = `${syl.id}-ch-${idx}`;
+                        return (
                         <div
-                          key={ch.id}
+                          key={chapterKey}
                           className="rounded-xl overflow-hidden transition-all duration-200 bg-surface-3 dark:bg-[#2D1B4E]/50 hover:bg-[#EDE8FF] dark:hover:bg-surface-3 group"
                         >
                           <button
-                            onClick={() => toggleChapter(ch.id)}
+                            onClick={() => toggleChapter(chapterKey)}
                             className="w-full p-4 flex items-center justify-between text-left"
                           >
                             <div className="flex items-center gap-3">
@@ -159,21 +162,38 @@ export function SyllabusViewer({
                               </div>
                               <span className="font-medium text-ink dark:text-white">{ch.name}</span>
                             </div>
-                            {ch.description && (
+                            {(ch.description || ch.video_url) && (
                               <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                                expandedChapters.has(ch.id) ? "bg-violet-500 text-white rotate-180" : "bg-surface text-ink-3"
+                                expandedChapters.has(chapterKey) ? "bg-violet-500 text-white rotate-180" : "bg-surface text-ink-3"
                               }`}>
                                 <ChevronDown size={14} />
                               </div>
                             )}
                           </button>
-                          {ch.description && expandedChapters.has(ch.id) && (
-                            <div className="px-4 pb-4 pt-0 pl-[68px] text-sm text-ink-3 animate-page-enter">
-                              {ch.description}
+                          {expandedChapters.has(chapterKey) && (ch.description || ch.video_url) && (
+                            <div className="px-4 pb-4 pt-0 pl-[68px] animate-page-enter space-y-3">
+                              {ch.description && (
+                                <p className="text-sm text-ink-3">{ch.description}</p>
+                              )}
+                              {ch.video_url && (
+                                <a
+                                  href={ch.video_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 hover:border-pink-500/40 hover:shadow-lg hover:shadow-pink-500/10 transition-all text-sm font-medium text-pink-700 dark:text-pink-400"
+                                >
+                                  <PlayCircle size={16} />
+                                  Watch Video Lesson
+                                  {ch.duration_minutes && (
+                                    <span className="text-xs text-pink-500/70">({ch.duration_minutes} min)</span>
+                                  )}
+                                </a>
+                              )}
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-ink-3 italic">No chapters defined yet.</p>

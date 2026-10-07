@@ -122,25 +122,56 @@ async def generate_homework(
     grade: str,
     topic: str,
     difficulty: str = "medium",
+    chapter_content: str | None = None,
+    language: str = "english",
 ) -> str:
-    """Generate homework content using Gemini AI."""
+    """Generate homework content using Gemini AI, optionally based on chapter content."""
     from app.ai.gemini_client import get_model
+
+    content_context = ""
+    if chapter_content:
+        content_context = f"""
+Use the following chapter content as the source material for generating questions:
+
+--- CHAPTER CONTENT ---
+{chapter_content[:8000]}
+--- END CHAPTER CONTENT ---
+
+Generate homework questions STRICTLY based on the above chapter content. Ensure all questions are directly related to the topics, concepts, and examples covered in this chapter.
+"""
+
+    lang_instruction = ""
+    if language == "arabic":
+        lang_instruction = "Generate the entire homework in Arabic (العربية). All text, instructions, and questions should be in Arabic."
+    else:
+        lang_instruction = "Generate the homework in English."
 
     prompt = f"""Generate a homework assignment for:
 - Subject: {subject}
 - Grade/Class: {grade}
-- Topic: {topic}
+- Chapter/Topic: {topic}
 - Difficulty: {difficulty}
 
-Please provide:
-1. A clear title
-2. Instructions for students
-3. 5-10 questions or tasks (mix of types: multiple choice, short answer, problem-solving)
-4. Expected time to complete
-5. Any resources students might need
+{lang_instruction}
 
-Format the response in a clear, structured way that teachers can use directly."""
+{content_context}
 
-    model = get_model(system_instruction="You are an expert teacher assistant that creates engaging, age-appropriate homework assignments.")
+Please provide a well-structured homework with:
+1. **Subject:** {subject}
+2. **Grade/Class:** {grade}
+3. **Chapter:** {topic}
+4. **Difficulty:** {difficulty}
+5. **Estimated Time to Complete:** (provide estimate)
+6. **Resources Needed:** (list any resources)
+
+### Student Instructions:
+(Write clear instructions for students)
+
+### Homework Questions:
+(Provide 5-10 questions organized by section/type. Use proper formatting with numbered lists.)
+
+Format the response in a clean, professional way suitable for printing."""
+
+    model = get_model(system_instruction="You are an expert teacher assistant that creates engaging, age-appropriate homework assignments. Format your output with proper markdown headers and lists for professional presentation.")
     response = model.generate_content(prompt)
     return response.text

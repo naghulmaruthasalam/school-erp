@@ -329,7 +329,7 @@ export default function ForgotPasswordPage() {
 
         <div className="mt-8 flex items-center justify-center gap-3 text-ink-3">
           <Logo size={24} showWordmark={false} />
-          <span className="text-xs">Cogniitec AI School ERP</span>
+          <span className="text-xs">مدرسة العاصمة الخاصة</span>
         </div>
       </div>
     </div>

@@ -101,10 +101,10 @@ export default function DashboardLayout({ navItems, navGroups }: { navItems?: Na
         <div className="px-4 pb-3 pt-5 md:px-3 lg:px-4">
           <div className="flex items-center gap-3 md:justify-center lg:justify-start">
             <div className="glass relative grid h-11 w-11 shrink-0 place-items-center !rounded-[15px]">
-              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Cognitec" className="h-7 w-7 object-contain" />
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Capital Private School" className="h-7 w-7 object-contain" />
             </div>
             <div className="min-w-0 md:hidden lg:block">
-              <p className="text-[14px] font-semibold leading-[1.15] tracking-tight text-ink">Cognitec AI<br />School ERP</p>
+              <p className="text-[14px] font-semibold leading-[1.15] tracking-tight text-ink">Capital Private School</p>
               <p className="truncate text-[11px] text-ink-3">{ROLE_TAGLINE[userRole]}</p>
             </div>
           </div>

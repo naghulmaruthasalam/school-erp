@@ -2,17 +2,13 @@ import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
 
 export interface SyllabusChapter {
-  id: string;
-  syllabus_id: string;
   name: string;
-  description: string;
+  description?: string;
   order: number;
+  video_url?: string;
+  duration_minutes?: number;
 }
 
-export interface SyllabusDocument {
-  id: string;
-  filename: string;
-}
 
 export interface Syllabus {
   id: string;
@@ -21,11 +17,11 @@ export interface Syllabus {
   class_id: string;
   subject_id: string;
   title: string;
-  description: string;
+  description?: string;
   status: "DRAFT" | "PUBLISHED";
   chapters: SyllabusChapter[];
-  chapters_count: number;
-  documents: SyllabusDocument[];
+  document_ids: string[];
+  created_by: string;
   created_at: string;
   updated_at: string;
 }
@@ -46,14 +42,16 @@ export interface SyllabusCreateRequest {
   title: string;
   description?: string;
   status?: "DRAFT" | "PUBLISHED";
-  chapters?: { name: string; description?: string; order: number }[];
+  chapters?: { name: string; description?: string; order: number; video_url?: string; duration_minutes?: number }[];
+  document_ids?: string[];
 }
 
 export interface SyllabusUpdateRequest {
   title?: string;
   description?: string;
   status?: "DRAFT" | "PUBLISHED";
-  chapters?: { id?: string; name: string; description?: string; order: number }[];
+  chapters?: { name: string; description?: string; order: number; video_url?: string; duration_minutes?: number }[];
+  document_ids?: string[];
 }
 
 export async function listSyllabus(params: SyllabusListParams = {}): Promise<PageResponse<Syllabus>> {

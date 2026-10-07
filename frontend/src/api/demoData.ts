@@ -22,7 +22,7 @@ export const DEMO_DATA: Record<string, unknown> = {
       full_name: "Aarav Sharma",
       class_id: "c1",
       section_id: "s1",
-      class_name: "Class 10",
+      class_name: "Class 6",
       section_name: "A",
       roll_no: 15,
       date_of_birth: "2010-05-15",
@@ -92,19 +92,19 @@ export const DEMO_DATA: Record<string, unknown> = {
   "/students/me": {
     id: "demo-student",
     admission_no: "DEMO-STU-001",
-    first_name: "Demo",
-    last_name: "Student",
-    full_name: "Demo Student",
-    class_id: "c1",
-    section_id: "s1",
-    class_name: "Class 10",
+    first_name: "Aarav",
+    last_name: "Patel",
+    full_name: "Aarav Patel",
+    class_id: "c6",
+    section_id: "s6",
+    class_name: "Class 6",
     section_name: "A",
     roll_no: 15,
-    date_of_birth: "2008-05-15",
+    date_of_birth: "2010-05-15",
     gender: "male",
     phone: "9876543210",
-    email: "demo.student@school.com",
-    address: "123 Demo Street, Demo City",
+    email: "aarav.patel@demo.capitalschool.om",
+    address: "456 Student Lane, Demo City",
     photo_url: null,
   },
 
@@ -132,16 +132,35 @@ export const DEMO_DATA: Record<string, unknown> = {
     { percentage_present: 92.5, total_days: 45, counts: { PRESENT: 42, ABSENT: 3, LATE: 0 } },
   ],
 
-  // Child attendance for parent
+  // Child attendance for parent - September & October 2026
   "/attendance/children": {
     items: [
-      { id: "a1", date: "2026-09-30", status: "PRESENT", marked_at: "2026-09-30T08:30:00", student_id: "child1" },
-      { id: "a2", date: "2026-09-29", status: "PRESENT", marked_at: "2026-09-29T08:25:00", student_id: "child1" },
-      { id: "a3", date: "2026-09-28", status: "LATE", marked_at: "2026-09-28T09:15:00", student_id: "child1" },
+      // October 2026
+      { id: "a1", date: "2026-10-07", status: "PRESENT", marked_at: "2026-10-07T08:25:00", student_id: "child1" },
+      { id: "a2", date: "2026-10-06", status: "PRESENT", marked_at: "2026-10-06T08:30:00", student_id: "child1" },
+      { id: "a3", date: "2026-10-05", status: "PRESENT", marked_at: "2026-10-05T08:20:00", student_id: "child1" },
+      { id: "a4", date: "2026-10-04", status: "LATE", marked_at: "2026-10-04T09:10:00", student_id: "child1" },
+      { id: "a5", date: "2026-10-03", status: "PRESENT", marked_at: "2026-10-03T08:28:00", student_id: "child1" },
+      { id: "a6", date: "2026-10-02", status: "PRESENT", marked_at: "2026-10-02T08:22:00", student_id: "child1" },
+      { id: "a7", date: "2026-10-01", status: "PRESENT", marked_at: "2026-10-01T08:30:00", student_id: "child1" },
+      // September 2026
+      { id: "a8", date: "2026-09-30", status: "PRESENT", marked_at: "2026-09-30T08:30:00", student_id: "child1" },
+      { id: "a9", date: "2026-09-29", status: "PRESENT", marked_at: "2026-09-29T08:25:00", student_id: "child1" },
+      { id: "a10", date: "2026-09-28", status: "LATE", marked_at: "2026-09-28T09:15:00", student_id: "child1" },
+      { id: "a11", date: "2026-09-27", status: "PRESENT", marked_at: "2026-09-27T08:20:00", student_id: "child1" },
+      { id: "a12", date: "2026-09-26", status: "ABSENT", marked_at: null, student_id: "child1" },
+      { id: "a13", date: "2026-09-25", status: "PRESENT", marked_at: "2026-09-25T08:30:00", student_id: "child1" },
+      { id: "a14", date: "2026-09-24", status: "PRESENT", marked_at: "2026-09-24T08:28:00", student_id: "child1" },
+      { id: "a15", date: "2026-09-23", status: "PRESENT", marked_at: "2026-09-23T08:22:00", student_id: "child1" },
+      { id: "a16", date: "2026-09-22", status: "PRESENT", marked_at: "2026-09-22T08:25:00", student_id: "child1" },
+      { id: "a17", date: "2026-09-21", status: "PRESENT", marked_at: "2026-09-21T08:30:00", student_id: "child1" },
+      { id: "a18", date: "2026-09-20", status: "PRESENT", marked_at: "2026-09-20T08:20:00", student_id: "child1" },
+      { id: "a19", date: "2026-09-19", status: "LATE", marked_at: "2026-09-19T09:05:00", student_id: "child1" },
+      { id: "a20", date: "2026-09-18", status: "PRESENT", marked_at: "2026-09-18T08:25:00", student_id: "child1" },
     ],
-    total: 45,
+    total: 52,
     page: 1,
-    page_size: 10,
+    page_size: 20,
   },
 
   // Attendance history for student
@@ -496,6 +515,20 @@ export const DEMO_DATA: Record<string, unknown> = {
     page_size: 10,
   },
 
+  // Circulars
+  "/circulars": {
+    items: [
+      { id: "c1", title: "Annual Day Celebration", content: "We are pleased to announce that our Annual Day will be celebrated on November 20th, 2026. Parents are cordially invited to attend. Programme starts at 4:00 PM.", circular_type: "GENERAL", priority: "HIGH", created_by_name: "Principal", created_at: "2026-10-05T10:00:00", attachment_url: null },
+      { id: "c2", title: "Winter Uniform Notice", content: "Students are advised to switch to winter uniform from October 15th, 2026. Ensure proper school dress code is followed.", circular_type: "UNIFORM", priority: "NORMAL", created_by_name: "Admin Office", created_at: "2026-10-03T09:00:00", attachment_url: null },
+      { id: "c3", title: "Parent-Teacher Meeting", content: "PTM for all classes will be held on October 25th, 2026. Timing: 9:00 AM to 1:00 PM. All parents are requested to attend.", circular_type: "MEETING", priority: "HIGH", created_by_name: "Principal", created_at: "2026-10-01T11:00:00", attachment_url: null },
+      { id: "c4", title: "School Bus Route Change", content: "Due to road construction, Bus Route 5 will be modified from October 10th. New pickup timings will be shared via SMS.", circular_type: "TRANSPORT", priority: "NORMAL", created_by_name: "Transport Department", created_at: "2026-09-28T14:00:00", attachment_url: null },
+      { id: "c5", title: "Health Check-up Camp", content: "Annual health check-up camp will be conducted for all students from October 8th to 10th. Please ensure students have had breakfast before coming to school.", circular_type: "HEALTH", priority: "NORMAL", created_by_name: "Health Department", created_at: "2026-09-25T10:00:00", attachment_url: null },
+    ],
+    total: 5,
+    page: 1,
+    page_size: 10,
+  },
+
   // Classes
   "/classes": {
     items: [
@@ -525,18 +558,18 @@ export const DEMO_DATA: Record<string, unknown> = {
         id: "syl1",
         school_id: "demo-school",
         academic_year_id: "ay1",
-        class_id: "c3",
+        class_id: "c6",
         subject_id: "sub6",
-        title: "Social Studies - Class 6 Paper 1",
-        description: "Class 6 Social Studies examination paper covering History, Geography, and Civics",
+        title: "Social Studies - Grade 6",
+        description: "Grade 6 Social Studies curriculum covering History, Geography, and Civics",
         status: "PUBLISHED",
         chapters: [
-          { id: "ch1", name: "History - Ancient Civilizations", description: "Indus Valley, Mesopotamia, Egypt", order: 1 },
-          { id: "ch2", name: "Geography - The Earth", description: "Continents, oceans, climate zones", order: 2 },
-          { id: "ch3", name: "Civics - Local Government", description: "Panchayat, Municipality, roles", order: 3 },
+          { id: "ch1", name: "Chapter 1: Ancient Civilizations", description: "Indus Valley, Mesopotamia, Egypt - Understanding early human societies", order: 1, video_url: "https://www.youtube.com/watch?v=F2qSfDDPOYY", duration_minutes: 25 },
+          { id: "ch2", name: "Chapter 2: Geography - The Earth", description: "Continents, oceans, climate zones", order: 2, video_url: "https://www.youtube.com/watch?v=x4Ay7MgrPlk", duration_minutes: 20 },
+          { id: "ch3", name: "Chapter 3: Civics - Local Government", description: "Understanding local governance and civic responsibilities", order: 3, video_url: "https://www.youtube.com/watch?v=SByX4uF3s-o", duration_minutes: 18 },
         ],
         chapters_count: 3,
-        documents: [{ id: "doc1", filename: "cls6_Social_P1.pdf" }],
+        documents: [{ id: "doc1", filename: "Grade6_Social_Studies.pdf" }],
         created_by: "admin",
         created_at: "2026-04-01T10:00:00",
         updated_at: "2026-04-01T10:00:00",
@@ -545,19 +578,19 @@ export const DEMO_DATA: Record<string, unknown> = {
         id: "syl2",
         school_id: "demo-school",
         academic_year_id: "ay1",
-        class_id: "c3",
+        class_id: "c6",
         subject_id: "sub1",
-        title: "Mathematics - Class 6 Hearing Paper 2",
-        description: "Class 6 Mathematics special examination paper for hearing impaired students",
+        title: "Mathematics - Grade 6",
+        description: "Grade 6 Mathematics curriculum covering Numbers, Fractions, and Geometry",
         status: "PUBLISHED",
         chapters: [
-          { id: "ch4", name: "Numbers and Operations", description: "Whole numbers, integers, basic operations", order: 1 },
-          { id: "ch5", name: "Fractions and Decimals", description: "Operations with fractions and decimals", order: 2 },
-          { id: "ch6", name: "Basic Geometry", description: "Lines, angles, shapes", order: 3 },
-          { id: "ch7", name: "Mensuration", description: "Perimeter and area of basic shapes", order: 4 },
+          { id: "ch4", name: "Chapter 1: Numbers and Operations", description: "Whole numbers, integers, basic operations", order: 1, video_url: "https://www.youtube.com/watch?v=JnpqlXN9Whw", duration_minutes: 30 },
+          { id: "ch5", name: "Chapter 2: Fractions and Decimals", description: "Operations with fractions and decimals", order: 2, video_url: "https://www.youtube.com/watch?v=GvLIOFKeqUI", duration_minutes: 28 },
+          { id: "ch6", name: "Chapter 3: Basic Geometry", description: "Lines, angles, shapes", order: 3, video_url: "https://www.youtube.com/watch?v=IL3UCuXrUzE", duration_minutes: 25 },
+          { id: "ch7", name: "Chapter 4: Mensuration", description: "Perimeter and area of basic shapes", order: 4, video_url: "https://www.youtube.com/watch?v=AUqeb9Z3y3k", duration_minutes: 22 },
         ],
         chapters_count: 4,
-        documents: [{ id: "doc2", filename: "cls6_Math_HearingP2.pdf" }],
+        documents: [{ id: "doc2", filename: "Grade6_Mathematics.pdf" }],
         created_by: "admin",
         created_at: "2026-04-01T10:00:00",
         updated_at: "2026-04-01T10:00:00",
@@ -566,19 +599,19 @@ export const DEMO_DATA: Record<string, unknown> = {
         id: "syl3",
         school_id: "demo-school",
         academic_year_id: "ay1",
-        class_id: "c4",
-        subject_id: "sub1",
-        title: "Mathematics - Class 1 Nashat Paper 2",
-        description: "Class 1 Mathematics foundational paper covering basic numeracy",
+        class_id: "c6",
+        subject_id: "sub2",
+        title: "English - Grade 6",
+        description: "Grade 6 English Language curriculum covering Reading, Writing, Grammar and Literature",
         status: "PUBLISHED",
         chapters: [
-          { id: "ch8", name: "Counting 1-100", description: "Number recognition and counting", order: 1 },
-          { id: "ch9", name: "Addition", description: "Single digit addition", order: 2 },
-          { id: "ch10", name: "Subtraction", description: "Single digit subtraction", order: 3 },
-          { id: "ch11", name: "Shapes", description: "Basic 2D shapes - circle, square, triangle", order: 4 },
+          { id: "ch21", name: "Chapter 1: Reading Comprehension", description: "Understanding texts, main ideas, inference skills", order: 1, video_url: "https://www.youtube.com/watch?v=Xr4V3dNGqOI", duration_minutes: 25 },
+          { id: "ch22", name: "Chapter 2: Grammar Essentials", description: "Parts of speech, tenses, sentence structure", order: 2, video_url: "https://www.youtube.com/watch?v=E0XJYOVqxXA", duration_minutes: 30 },
+          { id: "ch23", name: "Chapter 3: Creative Writing", description: "Essays, stories, descriptive writing", order: 3, video_url: "https://www.youtube.com/watch?v=RSoRzTtwgP4", duration_minutes: 28 },
+          { id: "ch24", name: "Chapter 4: Poetry and Literature", description: "Understanding poems, literary devices", order: 4, video_url: "https://www.youtube.com/watch?v=Bk0k1hTNlrk", duration_minutes: 22 },
         ],
         chapters_count: 4,
-        documents: [{ id: "doc3", filename: "cls1_Math_Nashat_p2.pdf" }],
+        documents: [{ id: "doc4", filename: "Grade6_English.pdf" }],
         created_by: "admin",
         created_at: "2026-04-01T10:00:00",
         updated_at: "2026-04-01T10:00:00",
@@ -587,20 +620,19 @@ export const DEMO_DATA: Record<string, unknown> = {
         id: "syl4",
         school_id: "demo-school",
         academic_year_id: "ay1",
-        class_id: "c1",
-        subject_id: "sub1",
-        title: "Mathematics - Class 10",
-        description: "Complete syllabus for Class 10 Mathematics including Algebra, Geometry, and Trigonometry",
+        class_id: "c6",
+        subject_id: "sub7",
+        title: "اللغة العربية - الصف السادس (Arabic - Grade 6)",
+        description: "منهج اللغة العربية للصف السادس - القراءة والكتابة والنحو",
         status: "PUBLISHED",
         chapters: [
-          { id: "ch12", name: "Real Numbers", description: "Euclid's division lemma, Fundamental Theorem of Arithmetic", order: 1 },
-          { id: "ch13", name: "Polynomials", description: "Zeros of polynomials, relationship between zeros and coefficients", order: 2 },
-          { id: "ch14", name: "Quadratic Equations", description: "Solutions, nature of roots, applications", order: 3 },
-          { id: "ch15", name: "Arithmetic Progressions", description: "nth term, sum of n terms, applications", order: 4 },
-          { id: "ch16", name: "Triangles", description: "Similarity, Pythagoras theorem, applications", order: 5 },
+          { id: "ch25", name: "الوحدة 1: مهارات القراءة", description: "فهم النصوص والأفكار الرئيسية", order: 1, video_url: "https://www.youtube.com/watch?v=HEVCr6y0J5E", duration_minutes: 25 },
+          { id: "ch26", name: "الوحدة 2: قواعد النحو", description: "الأسماء والأفعال والحروف", order: 2, video_url: "https://www.youtube.com/watch?v=PKwuQ5UPYyw", duration_minutes: 30 },
+          { id: "ch27", name: "الوحدة 3: التعبير الكتابي", description: "كتابة المقالات والقصص", order: 3, video_url: "https://www.youtube.com/watch?v=YYH-F7MPQWI", duration_minutes: 28 },
+          { id: "ch28", name: "الوحدة 4: الأدب العربي", description: "الشعر والنثر والأساليب الأدبية", order: 4, video_url: "https://www.youtube.com/watch?v=wMYwXvCGZd4", duration_minutes: 26 },
         ],
-        chapters_count: 5,
-        documents: [],
+        chapters_count: 4,
+        documents: [{ id: "doc5", filename: "Grade6_Arabic.pdf" }],
         created_by: "admin",
         created_at: "2026-04-01T10:00:00",
         updated_at: "2026-04-01T10:00:00",
@@ -609,25 +641,65 @@ export const DEMO_DATA: Record<string, unknown> = {
         id: "syl5",
         school_id: "demo-school",
         academic_year_id: "ay1",
-        class_id: "c1",
+        class_id: "c6",
         subject_id: "sub3",
-        title: "Physics - Class 10",
-        description: "Complete syllabus for Class 10 Physics covering Light, Electricity, and Magnetism",
+        title: "Science - Grade 6",
+        description: "Grade 6 Science curriculum covering Physics, Chemistry and Biology basics",
         status: "PUBLISHED",
         chapters: [
-          { id: "ch17", name: "Light - Reflection and Refraction", description: "Laws of reflection, mirror formula, refraction", order: 1 },
-          { id: "ch18", name: "Human Eye and Colourful World", description: "Structure of eye, defects of vision, dispersion", order: 2 },
-          { id: "ch19", name: "Electricity", description: "Electric current, Ohm's law, resistance, power", order: 3 },
-          { id: "ch20", name: "Magnetic Effects of Electric Current", description: "Magnetic field, electromagnets, electric motor", order: 4 },
+          { id: "ch29", name: "Chapter 1: Living Things", description: "Cells, organisms, ecosystems", order: 1, video_url: "https://www.youtube.com/watch?v=URUJD5NEXC8", duration_minutes: 30 },
+          { id: "ch30", name: "Chapter 2: Matter and Materials", description: "States of matter, properties, changes", order: 2, video_url: "https://www.youtube.com/watch?v=btGPcEDvMvA", duration_minutes: 25 },
+          { id: "ch31", name: "Chapter 3: Forces and Motion", description: "Types of forces, simple machines", order: 3, video_url: "https://www.youtube.com/watch?v=HfY88LUF0Dw", duration_minutes: 28 },
+          { id: "ch32", name: "Chapter 4: Energy", description: "Forms of energy, energy transfer", order: 4, video_url: "https://www.youtube.com/watch?v=fHztd6k5ZXY", duration_minutes: 26 },
         ],
         chapters_count: 4,
+        documents: [{ id: "doc6", filename: "Grade6_Science.pdf" }],
+        created_by: "admin",
+        created_at: "2026-04-01T10:00:00",
+        updated_at: "2026-04-01T10:00:00",
+      },
+      // Grade 10 syllabi for teachers to see other grades
+      {
+        id: "syl6",
+        school_id: "demo-school",
+        academic_year_id: "ay1",
+        class_id: "c1",
+        subject_id: "sub1",
+        title: "Mathematics - Grade 10",
+        description: "Grade 10 Mathematics covering Algebra, Geometry, and Trigonometry",
+        status: "PUBLISHED",
+        chapters: [
+          { id: "ch33", name: "Chapter 1: Real Numbers", description: "Euclid's division lemma, Fundamental Theorem of Arithmetic", order: 1, video_url: "https://www.youtube.com/watch?v=JnpqlXN9Whw", duration_minutes: 45 },
+          { id: "ch34", name: "Chapter 2: Polynomials", description: "Zeros of polynomials, relationship between zeros and coefficients", order: 2, video_url: "https://www.youtube.com/watch?v=GvLIOFKeqUI", duration_minutes: 50 },
+          { id: "ch35", name: "Chapter 3: Quadratic Equations", description: "Solutions, nature of roots, applications", order: 3, video_url: "https://www.youtube.com/watch?v=IL3UCuXrUzE", duration_minutes: 55 },
+        ],
+        chapters_count: 3,
+        documents: [],
+        created_by: "admin",
+        created_at: "2026-04-01T10:00:00",
+        updated_at: "2026-04-01T10:00:00",
+      },
+      {
+        id: "syl7",
+        school_id: "demo-school",
+        academic_year_id: "ay1",
+        class_id: "c2",
+        subject_id: "sub2",
+        title: "English - Grade 9",
+        description: "Grade 9 English Language and Literature",
+        status: "PUBLISHED",
+        chapters: [
+          { id: "ch36", name: "Chapter 1: Prose - The Lost Child", description: "Understanding narrative prose", order: 1, video_url: "https://www.youtube.com/watch?v=Xr4V3dNGqOI", duration_minutes: 30 },
+          { id: "ch37", name: "Chapter 2: Poetry Analysis", description: "Understanding poetic devices and themes", order: 2, video_url: "https://www.youtube.com/watch?v=E0XJYOVqxXA", duration_minutes: 35 },
+        ],
+        chapters_count: 2,
         documents: [],
         created_by: "admin",
         created_at: "2026-04-01T10:00:00",
         updated_at: "2026-04-01T10:00:00",
       },
     ],
-    total: 5,
+    total: 7,
     page: 1,
     page_size: 10,
   },
@@ -636,30 +708,32 @@ export const DEMO_DATA: Record<string, unknown> = {
   "/academics/subjects": [
     { id: "sub1", name: "Mathematics", code: "MATH" },
     { id: "sub2", name: "English", code: "ENG" },
-    { id: "sub3", name: "Physics", code: "PHY" },
+    { id: "sub3", name: "Science", code: "SCI" },
     { id: "sub4", name: "Chemistry", code: "CHEM" },
-    { id: "sub5", name: "Hindi", code: "HIN" },
+    { id: "sub5", name: "Islamic Studies", code: "ISL" },
     { id: "sub6", name: "Social Studies", code: "SST" },
-    { id: "sub7", name: "Computer Science", code: "CS" },
+    { id: "sub7", name: "Arabic / اللغة العربية", code: "ARB" },
+    { id: "sub8", name: "Computer Science", code: "CS" },
   ],
 
   // Section (linked to classes for attendance/homework)
   "/academics/sections": [
+    { id: "s6", name: "A", class_id: "c6", room_no: "106" },
     { id: "s1", name: "A", class_id: "c1", room_no: "101" },
     { id: "s2", name: "B", class_id: "c1", room_no: "102" },
     { id: "s3", name: "C", class_id: "c1", room_no: "103" },
     { id: "s4", name: "A", class_id: "c2", room_no: "201" },
     { id: "s5", name: "B", class_id: "c2", room_no: "202" },
-    { id: "s6", name: "A", class_id: "c3", room_no: "301" },
     { id: "s7", name: "A", class_id: "c4", room_no: "401" },
   ],
 
   // Class
   "/academics/classes": [
-    { id: "c1", name: "Class 10", academic_year_id: "ay1", order: 10 },
-    { id: "c2", name: "Class 9", academic_year_id: "ay1", order: 9 },
-    { id: "c3", name: "Class 6", academic_year_id: "ay1", order: 6 },
-    { id: "c4", name: "Class 1", academic_year_id: "ay1", order: 1 },
+    { id: "c6", name: "Grade 6", academic_year_id: "ay1", order: 6 },
+    { id: "c1", name: "Grade 10", academic_year_id: "ay1", order: 10 },
+    { id: "c2", name: "Grade 9", academic_year_id: "ay1", order: 9 },
+    { id: "c3", name: "Grade 8", academic_year_id: "ay1", order: 8 },
+    { id: "c4", name: "Grade 7", academic_year_id: "ay1", order: 7 },
   ],
   // ---- Additional demo endpoints so every admin / platform screen renders ----
   "/payments": {
@@ -789,11 +863,37 @@ export function getDemoResponse(url: string): unknown | null {
     const item = syllabusList.items.find(s => s.id === syllabusMatch[1]);
     if (item) return item;
   }
-  if (cleanUrl.endsWith("/syllabus") || cleanUrl.includes("/syllabus?")) return DEMO_DATA["/syllabus"];
+  if (cleanUrl.endsWith("/syllabus") || cleanUrl.includes("/syllabus?")) {
+    const syllabusList = DEMO_DATA["/syllabus"] as { items: Array<{ id: string; class_id: string; status: string }> };
+    // If request includes status=PUBLISHED (student/parent view), filter by their grade
+    // Teachers see all syllabus (no status filter in their request)
+    if (cleanUrl.includes("status=PUBLISHED")) {
+      const demoStudentClassId = "c6";
+      const filteredItems = syllabusList.items.filter(s => s.class_id === demoStudentClassId && s.status === "PUBLISHED");
+      return { ...syllabusList, items: filteredItems, total: filteredItems.length };
+    }
+    // For teachers - return all items (optionally filter by class_id/subject_id if provided)
+    let items = [...syllabusList.items];
+    const classMatch = cleanUrl.match(/class_id=([^&]+)/);
+    const subjectMatch = cleanUrl.match(/subject_id=([^&]+)/);
+    if (classMatch) items = items.filter(s => s.class_id === classMatch[1]);
+    if (subjectMatch) items = items.filter(s => (s as any).subject_id === subjectMatch[1]);
+    return { ...syllabusList, items, total: items.length };
+  }
   if (cleanUrl.endsWith("/academics/years")) return DEMO_DATA["/academics/years"];
   if (cleanUrl.endsWith("/academics/subjects")) return DEMO_DATA["/academics/subjects"];
   if (cleanUrl.includes("/academics/timetable")) return DEMO_DATA["/academics/timetable"];
+  if (cleanUrl.includes("/academics/sections/")) {
+    const sections = DEMO_DATA["/academics/sections"] as Array<{ id: string }>;
+    const sectionId = cleanUrl.split("/academics/sections/")[1];
+    return sections.find(s => s.id === sectionId) || sections[0];
+  }
   if (cleanUrl.includes("/academics/sections")) return DEMO_DATA["/academics/sections"];
+  if (cleanUrl.includes("/academics/classes/")) {
+    const classes = DEMO_DATA["/academics/classes"] as Array<{ id: string }>;
+    const classId = cleanUrl.split("/academics/classes/")[1];
+    return classes.find(c => c.id === classId) || { id: classId, name: "Class 6", academic_year_id: "ay1", order: 6 };
+  }
   if (cleanUrl.includes("/academics/classes")) return DEMO_DATA["/academics/classes"];
 
   // Pattern matches

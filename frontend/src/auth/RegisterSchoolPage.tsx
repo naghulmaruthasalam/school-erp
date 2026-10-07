@@ -117,7 +117,7 @@ export default function RegisterSchoolPage() {
                     🏫
                   </div>
                   <h1 className="text-2xl font-semibold tracking-tight text-ink">Register Your School</h1>
-                  <p className="text-ink-3 text-sm mt-1">Set up your school on Cogniitec in under a minute</p>
+                  <p className="text-ink-3 text-sm mt-1">Set up your school in under a minute</p>
                 </div>
 
                 <form className="space-y-5" onSubmit={handleSubmit}>
@@ -349,7 +349,7 @@ export default function RegisterSchoolPage() {
 
         <div className="mt-8 flex items-center justify-center gap-3 text-ink-3">
           <Logo size={24} showWordmark={false} />
-          <span className="text-xs">Cogniitec AI School ERP</span>
+          <span className="text-xs">مدرسة العاصمة الخاصة</span>
         </div>
       </div>
     </div>

@@ -102,7 +102,7 @@ export const ROLE_THEMES: Record<Role, RoleTheme> = {
   SUPER_ADMIN: {
     role: "SUPER_ADMIN",
     label: "Platform Admin",
-    tagline: "Manage every school on the Cogniitec platform.",
+    tagline: "Manage every school on the platform.",
     loginPath: "/login/super-admin",
     from: "from-purple-800",
     to: "to-violet-950",

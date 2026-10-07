@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () =>
         set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false, isDemo: false }),
     }),
-    { name: "cogniitec-auth" },
+    { name: "capital-school-auth" },
   ),
 );
 

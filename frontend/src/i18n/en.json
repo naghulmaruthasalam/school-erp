@@ -20,16 +20,16 @@
     "selectLanguage": "Select Language"
   },
   "landing": {
-    "title": "Cogniitec AI",
-    "subtitle": "School ERP",
+    "title": "Capital Private School",
+    "subtitle": "مدرسة العاصمة الخاصة",
     "tagline": "Next-Generation School Management System",
     "description": "Transform your school operations with intelligent automation, real-time analytics, and seamless communication — all powered by cutting-edge AI.",
     "selectRole": "Select Your Role to Continue",
     "newSchool": "New school? Get started in minutes",
     "registerSchool": "Register Your School",
-    "poweredBy": "Powered by Cogniitec AI",
+    "poweredBy": "Powered by AI",
     "motto": "Learn Today, Build Tomorrow",
-    "whyChoose": "Why Choose Cogniitec?",
+    "whyChoose": "Why Choose Capital Private School?",
     "whyChooseDesc": "Built for modern schools with cutting-edge technology and AI-powered automation"
   },
   "roles": {
@@ -247,6 +247,61 @@
     "exitDemo": "Exit Demo",
     "demoMode": "Demo Mode",
     "exploreWithSampleData": "Explore with sample data (read-only)"
+  },
+  "fees": {
+    "title": "Fee Management",
+    "subtitle": "View and manage fee payments",
+    "totalDue": "Total Due",
+    "totalPaid": "Total Paid",
+    "pending": "Pending",
+    "payNow": "Pay Now",
+    "downloadReceipt": "Download Receipt",
+    "paymentHistory": "Payment History",
+    "invoiceNo": "Invoice No",
+    "amount": "Amount",
+    "status": "Status",
+    "dueDate": "Due Date",
+    "paid": "Paid",
+    "partiallyPaid": "Partially Paid",
+    "overdue": "Overdue"
+  },
+  "circulars": {
+    "title": "Circulars & Notices",
+    "subtitle": "School announcements and important notices",
+    "noCirculars": "No circulars available",
+    "viewMore": "View More",
+    "general": "General",
+    "uniform": "Uniform",
+    "meeting": "Meeting",
+    "transport": "Transport",
+    "health": "Health"
+  },
+  "exams": {
+    "title": "Examinations",
+    "subtitle": "View exam schedules and results",
+    "upcoming": "Upcoming Exams",
+    "completed": "Completed Exams",
+    "results": "Results",
+    "viewResults": "View Results",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "examType": "Exam Type",
+    "totalMarks": "Total Marks",
+    "marksObtained": "Marks Obtained",
+    "grade": "Grade",
+    "rank": "Rank",
+    "percentage": "Percentage"
+  },
+  "timetable": {
+    "title": "Timetable",
+    "subtitle": "View your class schedule",
+    "today": "Today",
+    "weekly": "Weekly View",
+    "period": "Period",
+    "subject": "Subject",
+    "teacher": "Teacher",
+    "room": "Room",
+    "noClasses": "No classes scheduled"
   },
   "login": {
     "backToRoles": "Back to roles",

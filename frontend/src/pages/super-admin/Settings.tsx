@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Button, Card, Input, Label, Select } from "../../components/ui";
 
 export default function Settings() {
-  const [platformName, setPlatformName] = useState("Cogniitec AI School ERP");
-  const [supportEmail, setSupportEmail] = useState("support@cogniitec.com");
-  const [supportPhone, setSupportPhone] = useState("+91 98765 43210");
+  const [platformName, setPlatformName] = useState("Capital Private School");
+  const [supportEmail, setSupportEmail] = useState("info@capitalschool.om");
+  const [supportPhone, setSupportPhone] = useState("+968 9980 1655");
   const [sessionTimeout, setSessionTimeout] = useState("30");
   const [saved, setSaved] = useState(false);
 

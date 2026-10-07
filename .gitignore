@@ -1,45 +1,42 @@
-# Environment / secrets
+# --- Secrets and local configuration (never commit) ---
 .env
 .env.*
 !.env.example
-credentials/
-*.service-account.json
-service-account*.json
-google-credentials*.json
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*credentials*.json
+.aws/
+.claude/settings.local.json
 
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-.venv*/
-venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
+# --- Local data ---
+uploads/
+**/uploads/
+*.sqlite3
+*.db
 
-# Node / frontend
+# --- Dependencies and build output ---
 node_modules/
 **/node_modules/
-frontend/dist/
-frontend/build/
-.vite/
+venv/
+.venv/
+.venv*/
+**/.venv*/
+env/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+build/
+coverage/
 
-# IDE
+# --- Editors / OS ---
 .idea/
 .vscode/
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Uploads / local storage
-backend/uploads/
-
-# Temp files
-*.zip
-*.ndjson
-skillorea_ref/

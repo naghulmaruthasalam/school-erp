@@ -55,21 +55,23 @@ async def list_chapters(
     subject: str,
     current: CurrentUser = Depends(require_tenant_user),
 ) -> dict[str, Any]:
-    """Get list of chapters/units for a grade and subject."""
+    """Get list of chapters/units for a grade and subject (deduplicated)."""
     units = await CurriculumUnit.find(
         CurriculumUnit.grade == grade,
         CurriculumUnit.subject == subject,
     ).sort(CurriculumUnit.unit_number).to_list()
 
-    chapters = [
-        {
-            "unit_number": u.unit_number,
-            "title_en": u.unit_title_en,
-            "title_ar": u.unit_title_ar,
-            "total_pages": u.total_pages,
-        }
-        for u in units
-    ]
+    seen = set()
+    chapters = []
+    for u in units:
+        if u.unit_number not in seen:
+            seen.add(u.unit_number)
+            chapters.append({
+                "unit_number": u.unit_number,
+                "title_en": u.unit_title_en,
+                "title_ar": u.unit_title_ar,
+                "total_pages": u.total_pages,
+            })
     return {"chapters": chapters, "total": len(chapters)}
 
 

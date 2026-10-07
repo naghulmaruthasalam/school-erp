@@ -1,10 +1,12 @@
-"""Local chatbot service that works with school data without external AI APIs."""
+"""Chatbot service that uses Gemini AI with school data context."""
+import logging
 import re
 from datetime import date, datetime
 from typing import Any
 
 from app.core.deps import CurrentUser
 from app.core.enums import Role
+from app.core.config import get_settings
 from app.models.academic import AcademicYear, Class, Section, Subject, TimetableSlot
 from app.models.attendance import StudentAttendance
 from app.models.fee import Invoice
@@ -13,6 +15,10 @@ from app.models.notification import Notification
 from app.models.student import Student
 from app.models.teacher import Teacher
 from app.models.leave import LeaveRequest
+from app.models.guardian import Guardian
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
 
 SUPPORT_PHONE = "+91 98765 43210"
 SUPPORT_EMAIL = "support@cogniitec.com"
@@ -21,9 +27,9 @@ SUPPORT_MESSAGE = f"\n\nFor technical issues or further clarification, please co
 
 async def get_school_stats(school_id: str) -> dict[str, Any]:
     """Get basic school statistics."""
-    total_students = await Student.find(Student.school_id == school_id).count()
-    total_teachers = await Teacher.find(Teacher.school_id == school_id).count()
-    total_classes = await Class.find(Class.school_id == school_id).count()
+    total_students = await Student.find({"school_id": school_id}).count()
+    total_teachers = await Teacher.find({"school_id": school_id}).count()
+    total_classes = await Class.find({"school_id": school_id}).count()
     return {
         "total_students": total_students,
         "total_teachers": total_teachers,
@@ -35,7 +41,7 @@ async def get_student_info(current: CurrentUser) -> dict[str, Any] | None:
     """Get current student's information."""
     if current.role != Role.STUDENT:
         return None
-    student = await Student.find_one(Student.user_id == str(current.user.id))
+    student = await Student.find_one({"user_id": str(current.user.id)})
     if not student:
         return None
     return {
@@ -48,14 +54,14 @@ async def get_student_info(current: CurrentUser) -> dict[str, Any] | None:
 
 async def get_student_attendance(current: CurrentUser, days: int = 30) -> dict[str, Any]:
     """Get student's attendance summary."""
-    student = await Student.find_one(Student.user_id == str(current.user.id))
+    student = await Student.find_one({"user_id": str(current.user.id)})
     if not student:
         return {"error": "Student not found"}
 
-    records = await StudentAttendance.find(
-        StudentAttendance.student_id == str(student.id),
-        StudentAttendance.school_id == current.school_id,
-    ).to_list()
+    records = await StudentAttendance.find({
+        "student_id": str(student.id),
+        "school_id": current.school_id,
+    }).to_list()
 
     total = len(records)
     present = sum(1 for r in records if r.status.value == "PRESENT")
@@ -71,14 +77,14 @@ async def get_student_attendance(current: CurrentUser, days: int = 30) -> dict[s
 
 async def get_student_fees(current: CurrentUser) -> dict[str, Any]:
     """Get student's fee status."""
-    student = await Student.find_one(Student.user_id == str(current.user.id))
+    student = await Student.find_one({"user_id": str(current.user.id)})
     if not student:
         return {"error": "Student not found"}
 
-    invoices = await Invoice.find(
-        Invoice.student_id == str(student.id),
-        Invoice.school_id == current.school_id,
-    ).to_list()
+    invoices = await Invoice.find({
+        "student_id": str(student.id),
+        "school_id": current.school_id,
+    }).to_list()
 
     total_due = sum(i.total_amount for i in invoices)
     total_paid = sum(i.paid_amount for i in invoices)
@@ -94,15 +100,15 @@ async def get_student_fees(current: CurrentUser) -> dict[str, Any]:
 
 async def get_pending_homework(current: CurrentUser) -> list[dict]:
     """Get pending homework for student."""
-    student = await Student.find_one(Student.user_id == str(current.user.id))
+    student = await Student.find_one({"user_id": str(current.user.id)})
     if not student:
         return []
 
-    homework = await Homework.find(
-        Homework.section_id == student.section_id,
-        Homework.school_id == current.school_id,
-        Homework.due_date >= date.today(),
-    ).to_list()
+    homework = await Homework.find({
+        "section_id": student.section_id,
+        "school_id": current.school_id,
+        "due_date": {"$gte": date.today()},
+    }).to_list()
 
     return [
         {"title": h.title, "subject_id": h.subject_id, "due_date": h.due_date.isoformat()}
@@ -125,14 +131,14 @@ async def get_recent_notifications(school_id: str, limit: int = 3) -> list[dict]
 
 async def get_teacher_classes(current: CurrentUser) -> dict[str, Any]:
     """Get teacher's assigned classes."""
-    teacher = await Teacher.find_one(Teacher.user_id == str(current.user.id))
+    teacher = await Teacher.find_one({"user_id": str(current.user.id)})
     if not teacher:
         return {"error": "Teacher not found"}
 
-    slots = await TimetableSlot.find(
-        TimetableSlot.teacher_id == str(teacher.id),
-        TimetableSlot.school_id == current.school_id,
-    ).to_list()
+    slots = await TimetableSlot.find({
+        "teacher_id": str(teacher.id),
+        "school_id": current.school_id,
+    }).to_list()
 
     return {
         "total_periods": len(slots),
@@ -144,10 +150,10 @@ async def get_leave_status(current: CurrentUser) -> dict[str, Any]:
     """Get leave request status."""
     user_id = str(current.user.id)
 
-    leaves = await LeaveRequest.find(
-        LeaveRequest.user_id == user_id,
-        LeaveRequest.school_id == current.school_id,
-    ).to_list()
+    leaves = await LeaveRequest.find({
+        "user_id": user_id,
+        "school_id": current.school_id,
+    }).to_list()
 
     pending = sum(1 for l in leaves if l.status.value == "PENDING")
     approved = sum(1 for l in leaves if l.status.value == "APPROVED")
@@ -295,8 +301,117 @@ What would you like to know?"""
 How can I help you today?"""
 
 
+async def get_parent_children(current: CurrentUser) -> list[dict]:
+    """Get parent's children information."""
+    guardian = await Guardian.find_one({"user_id": str(current.user.id)})
+    if not guardian:
+        return []
+
+    children = []
+    for student_id in guardian.student_ids or []:
+        student = await Student.get(student_id)
+        if student:
+            attendance_records = await StudentAttendance.find({
+                "student_id": str(student.id),
+                "school_id": current.school_id,
+            }).to_list()
+            total = len(attendance_records)
+            present = sum(1 for r in attendance_records if r.status.value == "PRESENT")
+
+            invoices = await Invoice.find({
+                "student_id": str(student.id),
+                "school_id": current.school_id,
+            }).to_list()
+            total_due = sum(i.total_amount for i in invoices)
+            total_paid = sum(i.paid_amount for i in invoices)
+
+            children.append({
+                "name": f"{student.first_name} {student.last_name}",
+                "admission_no": student.admission_no,
+                "class_id": student.class_id,
+                "attendance_percentage": round((present / total * 100), 1) if total > 0 else 0,
+                "fees_paid": total_paid,
+                "fees_pending": total_due - total_paid,
+            })
+    return children
+
+
+async def build_user_context(current: CurrentUser) -> str:
+    """Build context string with user-specific data for AI."""
+    role = current.role
+    context_parts = [f"User: {current.user.full_name}", f"Role: {role.value}"]
+
+    if role == Role.STUDENT:
+        student = await Student.find_one({"user_id": str(current.user.id)})
+        if student:
+            context_parts.append(f"Student ID: {student.admission_no}")
+            attendance = await get_student_attendance(current)
+            context_parts.append(f"Attendance: {attendance.get('percentage', 0)}% ({attendance.get('present', 0)}/{attendance.get('total_days', 0)} days)")
+            fees = await get_student_fees(current)
+            context_parts.append(f"Fees: ₹{fees.get('pending', 0):,.0f} pending out of ₹{fees.get('total_due', 0):,.0f}")
+            homework = await get_pending_homework(current)
+            context_parts.append(f"Pending Homework: {len(homework)} assignments")
+
+    elif role == Role.PARENT:
+        children = await get_parent_children(current)
+        for child in children:
+            context_parts.append(f"Child: {child['name']} ({child['admission_no']}) - Attendance: {child['attendance_percentage']}%, Fees Pending: ₹{child['fees_pending']:,.0f}")
+
+    elif role == Role.TEACHER:
+        classes = await get_teacher_classes(current)
+        context_parts.append(f"Assigned: {classes.get('unique_sections', 0)} sections, {classes.get('total_periods', 0)} periods/week")
+
+    return "\n".join(context_parts)
+
+
+async def process_with_gemini(current: CurrentUser, message: str, context: str) -> str | None:
+    """Try to process message with Gemini AI. Returns None if Gemini is not available."""
+    if not settings.gemini_api_key:
+        return None
+
+    try:
+        from app.ai.gemini_client import get_model
+
+        role_instructions = {
+            Role.STUDENT: "You are a helpful school assistant for a student. Answer questions about their attendance, homework, fees, timetable, and exams based on the context provided.",
+            Role.PARENT: "You are a helpful school assistant for a parent. Answer questions about their children's attendance, homework, fees, and school activities based on the context provided.",
+            Role.TEACHER: "You are a helpful school assistant for a teacher. Help with class management, attendance, homework assignments, and teaching resources.",
+            Role.PRINCIPAL: "You are a helpful school assistant for a principal. Provide school-wide statistics, staff management, and administrative insights.",
+            Role.SCHOOL_ADMIN: "You are a helpful school assistant for a school administrator. Help with student/teacher management, fees, and school operations.",
+            Role.SUPER_ADMIN: "You are a platform assistant for the super administrator. Help with platform-level operations and school management.",
+        }
+
+        system_prompt = f"""{role_instructions.get(current.role, 'You are a helpful school assistant.')}
+
+Current User Context:
+{context}
+
+Rules:
+- Be concise and professional
+- Use the context data to answer questions accurately
+- If you don't have specific data, say so clearly
+- Format responses with emojis for better readability
+- Always be helpful and supportive"""
+
+        model = get_model(system_instruction=system_prompt)
+        response = model.generate_content(message)
+        return response.text + SUPPORT_MESSAGE
+    except Exception as e:
+        logger.warning(f"Gemini processing failed: {e}")
+        return None
+
+
 async def process_chat(current: CurrentUser, message: str) -> str:
     """Process chat message and return response."""
+    # Build user context first
+    context = await build_user_context(current)
+
+    # Try Gemini first for intelligent responses
+    gemini_response = await process_with_gemini(current, message, context)
+    if gemini_response:
+        return gemini_response
+
+    # Fall back to keyword-based responses
     intent = match_intent(message)
     school_id = current.school_id
     role = current.role

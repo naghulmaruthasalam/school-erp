@@ -7,7 +7,6 @@ export {
   getSyllabusDocumentUrl,
   type Syllabus,
   type SyllabusChapter,
-  type SyllabusDocument,
   type SyllabusListParams,
   type SyllabusCreateRequest,
   type SyllabusUpdateRequest,

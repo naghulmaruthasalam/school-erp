@@ -8,7 +8,7 @@ export default function Logo({ size = 32, showWordmark = true, className = "", d
       {!imageFailed ? (
         <img
           src={`${import.meta.env.BASE_URL}logo.png`}
-          alt="Cogniitec"
+          alt="Capital Private School"
           style={{ height: size, width: "auto" }}
           className="object-contain"
           onError={() => setImageFailed(true)}
@@ -16,15 +16,15 @@ export default function Logo({ size = 32, showWordmark = true, className = "", d
       ) : (
         <div
           style={{ height: size, width: size }}
-          className="flex items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent-2 text-white font-bold shadow-lg shadow-accent/30"
+          className="flex items-center justify-center rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 text-white font-bold shadow-lg shadow-emerald-500/30"
         >
           <span style={{ fontSize: size * 0.5 }}>C</span>
         </div>
       )}
       {showWordmark && (
         <div>
-          <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-ink'}`}>Cogniitec</span>
-          <span className={`text-xs block ${dark ? 'text-ink-2' : 'text-ink-3'}`}>School ERP System</span>
+          <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-ink'}`}>Capital Private School</span>
+          <span className={`text-xs block ${dark ? 'text-ink-2' : 'text-ink-3'}`}>مدرسة العاصمة الخاصة</span>
         </div>
       )}
     </div>

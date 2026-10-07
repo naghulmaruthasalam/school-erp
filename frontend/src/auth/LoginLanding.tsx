@@ -115,7 +115,7 @@ export default function LoginLanding() {
             <h1 className="mb-4 text-4xl font-semibold leading-[1.1] tracking-tight text-ink xl:text-[3.4rem]">
               {ar ? "مرحباً بك في" : "Welcome to"}
               <br />
-              <span className="text-gradient">Cogniitec AI</span>
+              <span className="text-gradient">Capital Private School</span>
             </h1>
 
             <p className="mb-9 text-lg text-ink-3">
@@ -143,7 +143,7 @@ export default function LoginLanding() {
           <div className="relative z-10 flex items-center gap-2 text-ink-3">
             <CheckCircle2 className="h-4 w-4" />
             <span className="text-xs">
-              © {new Date().getFullYear()} Cogniitec Technologies Pvt. Ltd.
+              © {new Date().getFullYear()} Capital Private School, Muscat
             </span>
           </div>
         </div>
@@ -217,7 +217,7 @@ export default function LoginLanding() {
             <Link to="/help" className="text-ink-3 transition-colors hover:text-accent-fg">Help Center</Link>
           </div>
           <p className="mt-3 text-center text-xs text-ink-3 lg:hidden">
-            © {new Date().getFullYear()} Cogniitec Technologies Pvt. Ltd.
+            © {new Date().getFullYear()} Capital Private School, Muscat
           </p>
         </div>
       </div>

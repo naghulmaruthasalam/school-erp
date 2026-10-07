@@ -7,9 +7,10 @@ import { sectionLabel, useClasses, useMySectionIds, useOwnTeacherId, useSections
 import type { HomeworkCreateRequest } from "./types";
 import {
   Sparkles, Send, FileUp, X, Bot, Wand2, Copy, Check, Loader2,
-  MessageCircle, BookOpen, Calendar, Clock, GraduationCap
+  MessageCircle, BookOpen, Calendar, Clock, GraduationCap, Languages
 } from "lucide-react";
 import { api } from "../../api/client";
+import { MarkdownRenderer } from "../../components/MarkdownRenderer";
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -35,14 +36,46 @@ export default function TeacherHomework() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCopilot, setShowCopilot] = useState(false);
-  const [aiTopic, setAiTopic] = useState("");
+  const [aiGrade, setAiGrade] = useState<number | null>(null);
+  const [aiSubject, setAiSubject] = useState("");
+  const [aiChapter, setAiChapter] = useState<number | null>(null);
   const [aiDifficulty, setAiDifficulty] = useState("medium");
+  const [aiLanguage, setAiLanguage] = useState<"english" | "arabic">("english");
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatting, setIsChatting] = useState(false);
+
+  // Curriculum data for AI Generator
+  const { data: curriculumGrades } = useQuery({
+    queryKey: ["curriculum", "grades"],
+    queryFn: async () => {
+      const { data } = await api.get<{ grades: number[] }>("/curriculum/grades");
+      return data.grades;
+    },
+  });
+
+  const { data: curriculumSubjects } = useQuery({
+    queryKey: ["curriculum", "subjects", aiGrade],
+    queryFn: async () => {
+      const { data } = await api.get<{ subjects: string[] }>(`/curriculum/subjects?grade=${aiGrade}`);
+      return data.subjects;
+    },
+    enabled: !!aiGrade,
+  });
+
+  const { data: curriculumChapters } = useQuery({
+    queryKey: ["curriculum", "chapters", aiGrade, aiSubject],
+    queryFn: async () => {
+      const { data } = await api.get<{ chapters: { unit_number: number; title_en: string }[] }>(
+        `/curriculum/chapters?grade=${aiGrade}&subject=${encodeURIComponent(aiSubject)}`
+      );
+      return data.chapters;
+    },
+    enabled: !!aiGrade && !!aiSubject,
+  });
 
   const homeworkQuery = useQuery({
     queryKey: ["teacher", "homework"],
@@ -92,15 +125,21 @@ export default function TeacherHomework() {
   }
 
   async function generateHomework() {
-    if (!form.subject_id || !aiTopic) return;
+    if (!aiGrade || !aiSubject || !aiChapter) return;
     setIsGenerating(true);
     try {
-      const subjectName = subjects?.find((s) => s.id === form.subject_id)?.name || "General";
-      const section = sections?.find((s) => s.id === form.section_id);
-      const cls = section ? classes?.find((c) => c.id === section.class_id) : null;
-      const gradeName = cls?.name || "Class";
+      const { data: contentData } = await api.get(
+        `/curriculum/content?grade=${aiGrade}&subject=${encodeURIComponent(aiSubject)}&unit_number=${aiChapter}`
+      );
+      const chapterTitle = curriculumChapters?.find(c => c.unit_number === aiChapter)?.title_en || `Chapter ${aiChapter}`;
+
       const response = await api.post("/ai/generate-homework", {
-        subject: subjectName, grade: gradeName, topic: aiTopic, difficulty: aiDifficulty,
+        subject: aiSubject,
+        grade: `Class ${aiGrade}`,
+        topic: chapterTitle,
+        difficulty: aiDifficulty,
+        chapter_content: contentData.full_text || "",
+        language: aiLanguage,
       });
       setGeneratedContent(response.data.content);
     } catch (error) {
@@ -111,7 +150,8 @@ export default function TeacherHomework() {
 
   function useGeneratedContent() {
     if (generatedContent) {
-      setForm((f) => ({ ...f, description: generatedContent, title: f.title || `${aiTopic} Assignment` }));
+      const chapterTitle = curriculumChapters?.find(c => c.unit_number === aiChapter)?.title_en || `Chapter ${aiChapter}`;
+      setForm((f) => ({ ...f, description: generatedContent, title: f.title || `${chapterTitle} Assignment` }));
       setShowCopilot(false);
     }
   }
@@ -297,9 +337,28 @@ export default function TeacherHomework() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Topic / Chapter</label>
-                  <input type="text" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)}
-                    className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" placeholder="e.g. Quadratic Equations" />
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Grade</label>
+                  <select value={aiGrade ?? ""} onChange={(e) => { setAiGrade(e.target.value ? Number(e.target.value) : null); setAiSubject(""); setAiChapter(null); }}
+                    className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm">
+                    <option value="">Select Grade</option>
+                    {curriculumGrades?.map((g) => <option key={g} value={g}>Class {g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Subject</label>
+                  <select value={aiSubject} onChange={(e) => { setAiSubject(e.target.value); setAiChapter(null); }}
+                    className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" disabled={!aiGrade}>
+                    <option value="">Select Subject</option>
+                    {curriculumSubjects?.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2">Chapter</label>
+                  <select value={aiChapter ?? ""} onChange={(e) => setAiChapter(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm" disabled={!aiSubject}>
+                    <option value="">Select Chapter</option>
+                    {curriculumChapters?.map((c) => <option key={c.unit_number} value={c.unit_number}>{c.unit_number}. {c.title_en}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink dark:text-white mb-2">Difficulty Level</label>
@@ -310,7 +369,22 @@ export default function TeacherHomework() {
                     <option value="hard">Hard</option>
                   </select>
                 </div>
-                <Button onClick={generateHomework} disabled={isGenerating || !form.subject_id || !aiTopic} className="w-full" glow>
+                <div>
+                  <label className="block text-sm font-medium text-ink dark:text-white mb-2 flex items-center gap-2">
+                    <Languages className="w-4 h-4" /> Language
+                  </label>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setAiLanguage("english")}
+                      className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                        aiLanguage === "english" ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white" : "bg-surface-3 text-ink-2 hover:bg-surface-2"
+                      }`}>English</button>
+                    <button type="button" onClick={() => setAiLanguage("arabic")}
+                      className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                        aiLanguage === "arabic" ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white" : "bg-surface-3 text-ink-2 hover:bg-surface-2"
+                      }`}>العربية</button>
+                  </div>
+                </div>
+                <Button onClick={generateHomework} disabled={isGenerating || !aiGrade || !aiSubject || !aiChapter} className="w-full" glow>
                   {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Homework</>}
                 </Button>
 
@@ -323,8 +397,8 @@ export default function TeacherHomework() {
                         {copied ? "Copied" : "Copy"}
                       </button>
                     </div>
-                    <div className="max-h-64 overflow-y-auto p-4 bg-surface-3 rounded-xl text-sm text-ink dark:text-white whitespace-pre-wrap">
-                      {generatedContent}
+                    <div className={`max-h-80 overflow-y-auto p-4 bg-white dark:bg-surface-2 rounded-xl border border-line ${aiLanguage === "arabic" ? "text-right" : ""}`} dir={aiLanguage === "arabic" ? "rtl" : "ltr"}>
+                      <MarkdownRenderer content={generatedContent} />
                     </div>
                     <Button onClick={useGeneratedContent} variant="secondary" className="w-full mt-3">Use This Content</Button>
                   </div>

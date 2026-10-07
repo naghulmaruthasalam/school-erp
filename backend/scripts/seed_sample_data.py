@@ -37,6 +37,7 @@ from app.models.student import Student
 from app.models.teacher import Teacher
 from app.models.guardian import Guardian
 from app.models.academic import AcademicYear, Class, Section, Subject
+from app.models.syllabus import Syllabus, Chapter, SyllabusStatus
 
 
 settings = get_settings()
@@ -61,7 +62,7 @@ async def init_db():
         database=client[settings.mongodb_db_name],
         document_models=[
             User, Tenant, Student, Teacher, Guardian,
-            AcademicYear, Class, Section, Subject
+            AcademicYear, Class, Section, Subject, Syllabus
         ]
     )
     return client
@@ -175,7 +176,7 @@ async def create_academic_structure(school_id: str):
 
     # Classes
     class_ids = {}
-    for order, name in [(10, "Class 10"), (9, "Class 9"), (8, "Class 8")]:
+    for order, name in [(10, "Class 10"), (9, "Class 9"), (8, "Class 8"), (7, "Class 7"), (6, "Class 6")]:
         existing = await Class.find_one(Class.school_id == school_id, Class.name == name)
         if existing:
             class_ids[name] = str(existing.id)
@@ -185,16 +186,16 @@ async def create_academic_structure(school_id: str):
             class_ids[name] = str(cls.id)
             print(f"Created Class: {name}")
 
-    # Sections for Class 10
+    # Sections for Class 6 (student demo class)
     section_id = None
-    existing_section = await Section.find_one(Section.school_id == school_id, Section.class_id == class_ids["Class 10"], Section.name == "A")
+    existing_section = await Section.find_one(Section.school_id == school_id, Section.class_id == class_ids["Class 6"], Section.name == "A")
     if existing_section:
         section_id = str(existing_section.id)
     else:
-        section = Section(school_id=school_id, class_id=class_ids["Class 10"], name="A", room_no="101")
+        section = Section(school_id=school_id, class_id=class_ids["Class 6"], name="A", room_no="106")
         await section.insert()
         section_id = str(section.id)
-        print("Created Section: Class 10-A")
+        print("Created Section: Class 6-A")
 
     # Subjects
     subjects = [
@@ -212,7 +213,7 @@ async def create_academic_structure(school_id: str):
             subject_ids.append(str(subj.id))
             print(f"Created Subject: {name}")
 
-    return year_id, class_ids["Class 10"], section_id, subject_ids
+    return year_id, class_ids["Class 6"], section_id, subject_ids
 
 
 async def create_teacher(school_id: str, class_id: str, subject_ids: list[str]):
@@ -340,6 +341,76 @@ async def create_student_and_parent(school_id: str, year_id: str, class_id: str,
     print(f"Created Parent: {parent_creds['username']} / {parent_creds['password']}")
 
 
+async def create_syllabi(school_id: str, year_id: str, class_id: str, subject_ids: list[str], teacher_id: str):
+    """Create sample syllabi with chapters and videos."""
+    existing = await Syllabus.find_one(Syllabus.school_id == school_id)
+    if existing:
+        print("Syllabi already exist, skipping...")
+        return
+
+    # Mathematics Syllabus
+    math_syllabus = Syllabus(
+        school_id=school_id,
+        academic_year_id=year_id,
+        class_id=class_id,
+        subject_id=subject_ids[0],  # Mathematics
+        title="Mathematics - Class 6",
+        description="Complete mathematics curriculum for Class 6 students covering numbers, algebra, geometry and more.",
+        status=SyllabusStatus.PUBLISHED,
+        chapters=[
+            Chapter(name="Knowing Our Numbers", description="Place values, comparing numbers, estimation", order=1,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=45),
+            Chapter(name="Whole Numbers", description="Properties of whole numbers, patterns", order=2,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=40),
+            Chapter(name="Playing with Numbers", description="Factors, multiples, prime numbers", order=3,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=50),
+            Chapter(name="Basic Geometrical Ideas", description="Points, lines, curves, polygons", order=4,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=35),
+            Chapter(name="Understanding Elementary Shapes", description="Measuring angles, triangles, quadrilaterals", order=5,
+                    duration_minutes=55),
+            Chapter(name="Integers", description="Positive and negative integers, operations", order=6,
+                    duration_minutes=45),
+            Chapter(name="Fractions", description="Types of fractions, operations on fractions", order=7,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=60),
+            Chapter(name="Decimals", description="Decimal numbers, conversion, operations", order=8,
+                    duration_minutes=50),
+        ],
+        document_ids=[],
+        created_by=teacher_id,
+    )
+    await math_syllabus.insert()
+    print("Created Mathematics Syllabus with 8 chapters")
+
+    # English Syllabus
+    english_syllabus = Syllabus(
+        school_id=school_id,
+        academic_year_id=year_id,
+        class_id=class_id,
+        subject_id=subject_ids[1],  # English
+        title="English - Class 6",
+        description="English language and literature curriculum for Class 6.",
+        status=SyllabusStatus.PUBLISHED,
+        chapters=[
+            Chapter(name="Who Did Patrick's Homework?", description="Story comprehension and vocabulary", order=1,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=30),
+            Chapter(name="How the Dog Found Himself a New Master", description="Reading and comprehension", order=2,
+                    duration_minutes=35),
+            Chapter(name="Taro's Reward", description="Story of honesty and hard work", order=3,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=40),
+            Chapter(name="Grammar: Nouns and Pronouns", description="Parts of speech fundamentals", order=4,
+                    duration_minutes=45),
+            Chapter(name="Grammar: Tenses", description="Present, past, and future tenses", order=5,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", duration_minutes=50),
+            Chapter(name="Writing Skills", description="Paragraph and letter writing", order=6,
+                    duration_minutes=40),
+        ],
+        document_ids=[],
+        created_by=teacher_id,
+    )
+    await english_syllabus.insert()
+    print("Created English Syllabus with 6 chapters")
+
+
 async def main():
     print("\n" + "="*60)
     print("COGNIITEC SCHOOL ERP - SAMPLE DATA SEEDER")
@@ -360,10 +431,19 @@ async def main():
         year_id, class_id, section_id, subject_ids = await create_academic_structure(school_id)
 
         # Create teacher
-        await create_teacher(school_id, class_id, subject_ids)
+        teacher_id = await create_teacher(school_id, class_id, subject_ids)
 
         # Create student and parent
         await create_student_and_parent(school_id, year_id, class_id, section_id)
+
+        # Create syllabi with chapters and videos
+        if teacher_id:
+            await create_syllabi(school_id, year_id, class_id, subject_ids, teacher_id)
+        else:
+            # Get existing teacher ID
+            teacher = await Teacher.find_one(Teacher.school_id == school_id)
+            if teacher:
+                await create_syllabi(school_id, year_id, class_id, subject_ids, str(teacher.id))
 
         print("\n" + "="*60)
         print("SAMPLE CREDENTIALS")

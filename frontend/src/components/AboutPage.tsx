@@ -30,7 +30,7 @@ const highlights = [
 export default function AboutPage({ role, features }: AboutPageProps) {
   return (
     <div className="animate-page-enter">
-      <PageHeader title="About" subtitle="Cogniitec AI School ERP System" />
+      <PageHeader title="About" subtitle="Capital Private School - مدرسة العاصمة الخاصة" />
 
       {/* Hero Section */}
       <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-accent via-[#8B5CF6] to-pink-500 p-8">
@@ -55,7 +55,7 @@ export default function AboutPage({ role, features }: AboutPageProps) {
                 Version 1.0.0
               </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Cogniitec AI School ERP</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Capital Private School</h1>
             <p className="text-white/80 max-w-lg">
               A comprehensive, AI-powered school management system designed to streamline educational operations.
             </p>
@@ -119,20 +119,20 @@ export default function AboutPage({ role, features }: AboutPageProps) {
 
           <div className="space-y-6">
             <a
-              href="mailto:support@cogniitec.com"
+              href="tel:+96899801655"
               className="group flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface border border-line hover:border-accent transition-all"
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Mail className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-ink-3">Email Support</p>
-                <p className="text-ink dark:text-white font-semibold">support@cogniitec.com</p>
+                <p className="text-sm font-medium text-ink-3">Phone</p>
+                <p className="text-ink dark:text-white font-semibold">+968 9980 1655</p>
               </div>
             </a>
 
             <a
-              href="https://www.cogniitec.com"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-surface-2 to-white dark:from-surface-2 dark:to-surface border border-line hover:border-accent transition-all"
@@ -141,8 +141,8 @@ export default function AboutPage({ role, features }: AboutPageProps) {
                 <Globe className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-ink-3">Website</p>
-                <p className="text-ink dark:text-white font-semibold">www.cogniitec.com</p>
+                <p className="text-sm font-medium text-ink-3">Location</p>
+                <p className="text-ink dark:text-white font-semibold">Al Maha St, Muscat, Oman</p>
               </div>
             </a>
           </div>
@@ -150,10 +150,10 @@ export default function AboutPage({ role, features }: AboutPageProps) {
           <div className="mt-8 pt-6 border-t border-line">
             <div className="flex items-center justify-between">
               <p className="text-sm text-ink-3">
-                &copy; {new Date().getFullYear()} Cogniitec Technologies
+                &copy; {new Date().getFullYear()} Capital Private School
               </p>
               <div className="flex items-center gap-1 text-sm text-ink-3">
-                Made with <Heart className="w-4 h-4 text-red-500 fill-red-500 animate-pulse" /> in India
+                Al Maha St, Muscat, Oman
               </div>
             </div>
           </div>

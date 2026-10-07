@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     s3_presigned_url_expire_seconds: int = 3600
 
     gemini_api_key: str | None = None
-    gemini_model_name: str = "gemini-2.0-flash"
+    gemini_model_name: str = "gemini-3.5-flash-lite"
 
     # PayU (India) payment gateway.
     # Checkout (classic hosted-checkout hash flow) + Refund v1 (postservice.php,

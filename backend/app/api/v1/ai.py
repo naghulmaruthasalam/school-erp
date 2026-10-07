@@ -20,6 +20,8 @@ class HomeworkGenerateRequest(BaseModel):
     grade: str
     topic: str
     difficulty: str = "medium"
+    chapter_content: str | None = None
+    language: str = "english"
 
 
 class HomeworkGenerateResponse(BaseModel):
@@ -93,6 +95,8 @@ async def generate_homework_content(
             grade=payload.grade,
             topic=payload.topic,
             difficulty=payload.difficulty,
+            chapter_content=payload.chapter_content,
+            language=payload.language,
         )
         return HomeworkGenerateResponse(content=content)
     except Exception as exc:

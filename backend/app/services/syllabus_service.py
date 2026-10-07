@@ -4,7 +4,7 @@ from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.models.base import utcnow
 from app.models.guardian import Guardian
 from app.models.student import Student
-from app.models.syllabus import Chapter, Syllabus
+from app.models.syllabus import Chapter, Syllabus, SyllabusStatus
 from app.schemas.common import PageParams, PageResponse
 from app.schemas.syllabus import (
     ChapterOut,
@@ -13,7 +13,7 @@ from app.schemas.syllabus import (
     SyllabusUpdateRequest,
 )
 
-_STAFF_WRITE_ROLES = (Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL)
+_STAFF_WRITE_ROLES = (Role.TEACHER, Role.SCHOOL_ADMIN, Role.PRINCIPAL, Role.SUPER_ADMIN)
 
 
 def to_syllabus_out(doc: Syllabus) -> SyllabusOut:
@@ -25,7 +25,17 @@ def to_syllabus_out(doc: Syllabus) -> SyllabusOut:
         subject_id=doc.subject_id,
         title=doc.title,
         description=doc.description,
-        chapters=[ChapterOut(name=c.name, description=c.description, order=c.order) for c in doc.chapters],
+        status=doc.status,
+        chapters=[
+            ChapterOut(
+                name=c.name,
+                description=c.description,
+                order=c.order,
+                video_url=c.video_url,
+                duration_minutes=c.duration_minutes,
+            )
+            for c in doc.chapters
+        ],
         document_ids=doc.document_ids,
         created_by=doc.created_by,
         created_at=doc.created_at,
@@ -62,7 +72,17 @@ async def create_syllabus(current: CurrentUser, payload: SyllabusCreateRequest) 
         subject_id=payload.subject_id,
         title=payload.title,
         description=payload.description,
-        chapters=[Chapter(name=c.name, description=c.description, order=c.order) for c in payload.chapters],
+        status=payload.status,
+        chapters=[
+            Chapter(
+                name=c.name,
+                description=c.description,
+                order=c.order,
+                video_url=c.video_url,
+                duration_minutes=c.duration_minutes,
+            )
+            for c in payload.chapters
+        ],
         document_ids=payload.document_ids,
         created_by=str(current.user.id),
     )
@@ -75,39 +95,43 @@ async def list_syllabus(
     class_id: str | None,
     subject_id: str | None,
     academic_year_id: str | None,
+    status: str | None,
     params: PageParams,
 ) -> PageResponse[SyllabusOut]:
-    filters = [Syllabus.school_id == current.school_id]
+    filters: dict = {"school_id": current.school_id}
 
     if current.role == Role.STUDENT:
         student = await _own_student(current)
-        filters.append(Syllabus.class_id == student.class_id)
+        filters["class_id"] = student.class_id
+        filters["status"] = SyllabusStatus.PUBLISHED.value
     elif current.role == Role.PARENT:
         child_ids = await _guardian_student_ids(current)
         children = [c for c in [await Student.get(cid) for cid in child_ids] if c is not None]
-        child_class_ids = {c.class_id for c in children}
+        child_class_ids = list({c.class_id for c in children})
         if not child_class_ids:
             return PageResponse(items=[], total=0, page=params.page, page_size=params.page_size)
         if class_id:
             if class_id not in child_class_ids:
                 raise PermissionDeniedError("Not one of your children's classes")
-            filters.append(Syllabus.class_id == class_id)
+            filters["class_id"] = class_id
         else:
-            from beanie.operators import In
-            filters.append(In(Syllabus.class_id, list(child_class_ids)))
+            filters["class_id"] = {"$in": child_class_ids}
+        filters["status"] = SyllabusStatus.PUBLISHED.value
     elif current.role in _STAFF_WRITE_ROLES:
         if class_id:
-            filters.append(Syllabus.class_id == class_id)
+            filters["class_id"] = class_id
+        if status:
+            filters["status"] = status
     else:
         raise PermissionDeniedError("Not allowed to view syllabus")
 
     if subject_id:
-        filters.append(Syllabus.subject_id == subject_id)
+        filters["subject_id"] = subject_id
     if academic_year_id:
-        filters.append(Syllabus.academic_year_id == academic_year_id)
+        filters["academic_year_id"] = academic_year_id
 
-    total = await Syllabus.find(*filters).count()
-    records = await Syllabus.find(*filters).sort(-Syllabus.created_at).skip(params.skip).limit(params.page_size).to_list()
+    total = await Syllabus.find(filters).count()
+    records = await Syllabus.find(filters).sort(-Syllabus.created_at).skip(params.skip).limit(params.page_size).to_list()
     return PageResponse(
         items=[to_syllabus_out(r) for r in records], total=total, page=params.page, page_size=params.page_size
     )
@@ -138,6 +162,13 @@ async def get_syllabus(current: CurrentUser, syllabus_id: str) -> SyllabusOut:
     return to_syllabus_out(syllabus)
 
 
+async def get_syllabus_model(current: CurrentUser, syllabus_id: str) -> Syllabus:
+    """Get raw syllabus model for internal updates (e.g., video upload)."""
+    if current.role not in _STAFF_WRITE_ROLES:
+        raise PermissionDeniedError("Only teachers or school admins/principals can modify syllabus")
+    return await _get_syllabus_or_404(current, syllabus_id)
+
+
 async def update_syllabus(current: CurrentUser, syllabus_id: str, payload: SyllabusUpdateRequest) -> SyllabusOut:
     if current.role not in _STAFF_WRITE_ROLES:
         raise PermissionDeniedError("Only teachers or school admins/principals can update syllabus")
@@ -146,7 +177,16 @@ async def update_syllabus(current: CurrentUser, syllabus_id: str, payload: Sylla
     data = payload.model_dump(exclude_unset=True)
     for field, value in data.items():
         if field == "chapters" and value is not None:
-            syllabus.chapters = [Chapter(name=c["name"], description=c.get("description"), order=c["order"]) for c in value]
+            syllabus.chapters = [
+                Chapter(
+                    name=c["name"],
+                    description=c.get("description"),
+                    order=c["order"],
+                    video_url=c.get("video_url"),
+                    duration_minutes=c.get("duration_minutes"),
+                )
+                for c in value
+            ]
         else:
             setattr(syllabus, field, value)
     syllabus.updated_at = utcnow()

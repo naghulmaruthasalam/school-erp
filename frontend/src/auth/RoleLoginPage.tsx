@@ -120,7 +120,7 @@ export default function RoleLoginPage() {
             <h1 className="mb-4 text-4xl font-semibold leading-[1.1] tracking-tight text-ink xl:text-[3.4rem]">
               {t("login.welcomeTo")}
               <br />
-              <span className="text-gradient">Cogniitec AI</span>
+              <span className="text-gradient">Capital Private School</span>
             </h1>
 
             <p className="mb-9 text-lg text-ink-3">{theme.tagline}</p>
@@ -321,7 +321,7 @@ export default function RoleLoginPage() {
 
           <div className="mt-10 flex items-center justify-center gap-2 text-ink-3 lg:hidden">
             <Logo size={20} showWordmark={false} />
-            <span className="text-xs font-medium">Cogniitec AI School ERP</span>
+            <span className="text-xs font-medium">مدرسة العاصمة الخاصة</span>
           </div>
         </div>
       </div>

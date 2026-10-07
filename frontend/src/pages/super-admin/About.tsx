@@ -4,14 +4,14 @@ import Logo from "../../components/Logo";
 export default function About() {
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title="About" subtitle="Cogniitec AI School ERP Platform" />
+      <PageHeader title="About" subtitle="Capital Private School - مدرسة العاصمة الخاصة" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <div className="flex items-center gap-4 mb-6">
             <Logo size={64} showWordmark={false} />
             <div>
-              <h2 className="text-xl font-bold text-ink dark:text-white">Cogniitec AI School ERP</h2>
+              <h2 className="text-xl font-bold text-ink dark:text-white">Capital Private School</h2>
               <p className="text-sm text-ink-3">Version 1.0.0 - Platform Edition</p>
             </div>
           </div>
@@ -53,20 +53,20 @@ export default function About() {
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-ink-3">Email</p>
-              <p className="text-ink dark:text-white">platform@cogniitec.com</p>
+              <p className="text-ink dark:text-white">info@capitalschool.om</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-ink-3">Website</p>
-              <p className="text-ink dark:text-white">www.cogniitec.com</p>
+              <p className="text-sm font-medium text-ink-3">Address</p>
+              <p className="text-ink dark:text-white">Al Maha St, Muscat, Oman</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-ink-3">Documentation</p>
-              <p className="text-ink dark:text-white">docs.cogniitec.com</p>
+              <p className="text-sm font-medium text-ink-3">Phone</p>
+              <p className="text-ink dark:text-white">+968 9980 1655</p>
             </div>
           </div>
           <div className="mt-6 pt-4 border-t border-line">
             <p className="text-xs text-ink-3">
-              &copy; {new Date().getFullYear()} Cogniitec Technologies. All rights reserved.
+              &copy; {new Date().getFullYear()} Capital Private School. All rights reserved.
             </p>
           </div>
         </Card>

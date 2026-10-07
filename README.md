@@ -13,14 +13,6 @@ MongoDB (backend) and React + TypeScript (frontend).
 - **Database**: MongoDB, shared cluster with `school_id` tenant scoping on
   every collection.
 
-## Security note
-
-⚠️ This repo's root `.env` originally contained an exposed
-`ANTHROPIC_API_KEY`. Rotate that key and never commit real secrets — the
-`.gitignore` at the repo root excludes `.env*` (except `.env.example`) and
-service-account JSON files, but a key that was already generated should still
-be rotated.
-
 ## Local development
 
 ### 1. MongoDB
@@ -69,6 +61,18 @@ no-op'ing:
 | AI assistants (Gemini via Vertex AI) | `GOOGLE_APPLICATION_CREDENTIALS` (path to a GCP service-account JSON key), `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` |
 | Online fee payments (PayU) | `PAYU_MERCHANT_KEY`, `PAYU_MERCHANT_SALT`, `PAYU_BASE_URL`, plus `BACKEND_BASE_URL` (must be publicly reachable — PayU redirects the browser back to it) |
 | Fee refunds (PayU) | `PAYU_POSTSERVICE_URL` (uses the same key/salt as checkout) |
+
+## Copilot (AI study and teaching assistant)
+
+Student, parent and teacher logins get a Copilot: curriculum-grounded study help, answers about their own school
+data, and role-specific tools (explain it, quiz, study plan, child progress summary, homework ideas, worksheet, lesson plan,
+parent note, question papers from a question bank, and AI grading of scanned answer sheets with PDF reports).
+Principal and admin profiles are built and switch on with `COPILOT_ENABLED_ROLES`. It needs `GEMINI_API_KEY`
+(see `backend/.env.example`). Details, API and how to add roles or tools: [docs/COPILOT.md](docs/COPILOT.md).
+
+The syllabus (class -> subject -> chapter, with topics and notes) lives in the database and drives both the
+Syllabus browser and the Copilot. Load it from the Syllabus page (Import, CSV/JSON) or with
+`python -m scripts.import_syllabus` (see the Copilot doc). Teachers can create homework straight from a chapter.
 
 ## Project layout
 
@@ -151,3 +155,5 @@ this app doesn't currently integrate.
 Explicitly out of scope for v1: library, transport, hostel, inventory, HR &
 payroll, a school knowledge-base/RAG document Q&A layer, and SMS/push
 notification delivery.
+# school-erp
+# school-erp

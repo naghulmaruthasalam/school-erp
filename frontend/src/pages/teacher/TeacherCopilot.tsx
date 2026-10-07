@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, PageHeader, Spinner, Button } from "../../components/ui";
 import { api } from "../../api/client";
-import { BookOpen, FileText, ClipboardList, Sparkles, Wand2, Download, Copy, Check } from "lucide-react";
+import { BookOpen, FileText, ClipboardList, Sparkles, Wand2, Download, Copy, Check, Languages, Printer } from "lucide-react";
+import { DocumentSheet } from "../../components/MarkdownRenderer";
 
 type Tab = "lesson-plan" | "question-paper" | "worksheet";
+type Language = "english" | "arabic";
 
 interface CurriculumOptions {
   grades: number[];
@@ -24,6 +26,7 @@ export default function TeacherCopilot() {
   const [subject, setSubject] = useState("");
   const [chapter, setChapter] = useState("");
   const [chapterId, setChapterId] = useState("");
+  const [language, setLanguage] = useState<Language>("english");
 
   // Question Paper specific
   const [qpMarks, setQpMarks] = useState("100");
@@ -75,7 +78,6 @@ export default function TeacherCopilot() {
     setLoading(true);
     setError(null);
     try {
-      // Get chapter content if we have an ID
       let chapterContent = "";
       if (chapterId) {
         const contentRes = await api.get(`/teacher-copilot/curriculum-content/${chapterId}`);
@@ -87,8 +89,9 @@ export default function TeacherCopilot() {
         chapter_content: chapterContent,
         subject,
         grade: String(grade),
+        language,
       });
-      setResult({ type: "topics", data: res.data });
+      setResult({ type: "topics", data: res.data, language });
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to extract topics");
     } finally {
@@ -116,8 +119,9 @@ export default function TeacherCopilot() {
           short_answer: parseInt(qpShort),
           long_answer: parseInt(qpLong),
         },
+        language,
       });
-      setResult({ type: "question-paper", data: res.data });
+      setResult({ type: "question-paper", data: res.data, language });
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to generate question paper");
     } finally {
@@ -140,13 +144,18 @@ export default function TeacherCopilot() {
         num_questions: parseInt(wsQuestions),
         difficulty: wsDifficulty,
         include_answers: wsIncludeAnswers,
+        language,
       });
-      setResult({ type: "worksheet", data: res.data });
+      setResult({ type: "worksheet", data: res.data, language });
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to generate worksheet");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const copyToClipboard = () => {
@@ -260,6 +269,38 @@ export default function TeacherCopilot() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Language Selection */}
+              <div>
+                <label className="block text-sm font-medium text-ink-2 mb-1.5 flex items-center gap-2">
+                  <Languages className="w-4 h-4" />
+                  Language
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("english")}
+                    className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition-all ${
+                      language === "english"
+                        ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+                        : "bg-white dark:bg-surface border border-line text-ink-2 hover:border-violet-500"
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("arabic")}
+                    className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition-all ${
+                      language === "arabic"
+                        ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+                        : "bg-white dark:bg-surface border border-line text-ink-2 hover:border-violet-500"
+                    }`}
+                  >
+                    العربية
+                  </button>
+                </div>
               </div>
 
               {/* Question Paper specific fields */}
@@ -382,9 +423,9 @@ export default function TeacherCopilot() {
         </div>
 
         {/* Right Panel - Results */}
-        <div className="lg:col-span-3">
-          <Card className="p-6 min-h-[400px]">
-            <div className="flex items-center justify-between mb-4">
+        <div className="lg:col-span-3 print:col-span-5">
+          <Card className="p-6 min-h-[400px] print:shadow-none print:border-none">
+            <div className="flex items-center justify-between mb-4 print:hidden">
               <h3 className="text-lg font-semibold text-ink dark:text-white">Generated Content</h3>
               {result && (
                 <div className="flex gap-2">
@@ -394,6 +435,13 @@ export default function TeacherCopilot() {
                     title="Copy to clipboard"
                   >
                     {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-ink-3" />}
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Print"
+                  >
+                    <Printer className="w-5 h-5 text-ink-3" />
                   </button>
                   <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Download">
                     <Download className="w-5 h-5 text-ink-3" />
@@ -411,45 +459,53 @@ export default function TeacherCopilot() {
                 <p className="text-sm text-ink-4">Select grade, subject, and chapter, then click Generate</p>
               </div>
             ) : (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
+              <div className={result.language === "arabic" ? "text-right" : ""} dir={result.language === "arabic" ? "rtl" : "ltr"}>
                 {result.type === "topics" && result.data.topics && (
-                  <div>
-                    <h4 className="text-violet-600 dark:text-violet-400 mb-3">Extracted Topics</h4>
-                    <ul className="space-y-2">
-                      {result.data.topics.map((topic: string, i: number) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center text-xs font-medium flex-shrink-0">
-                            {i + 1}
-                          </span>
-                          <span>{topic}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <DocumentSheet
+                    title={`${subject} - Lesson Topics`}
+                    subtitle={`Grade ${grade} | ${chapter}`}
+                    metadata={[
+                      { label: "Subject", value: subject },
+                      { label: "Grade", value: `Grade ${grade}` },
+                      { label: "Chapter", value: chapter },
+                      { label: "Language", value: result.language === "arabic" ? "العربية" : "English" },
+                    ]}
+                    content={result.data.topics.map((t: string, i: number) => `${i + 1}. ${t}`).join("\n\n")}
+                    type="lesson-plan"
+                  />
                 )}
 
                 {result.type === "question-paper" && (
-                  <div className="space-y-6">
-                    <div className="text-center border-b pb-4 mb-4">
-                      <h4 className="text-xl font-bold">{subject} - Grade {grade}</h4>
-                      <p className="text-sm text-ink-3">Question Paper | Total Marks: {qpMarks} | Duration: {qpDuration} min</p>
-                    </div>
-                    <pre className="text-sm bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto whitespace-pre-wrap">
-                      {typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2)}
-                    </pre>
-                  </div>
+                  <DocumentSheet
+                    title={`${subject} - Question Paper`}
+                    subtitle={`Grade ${grade} | ${chapter}`}
+                    metadata={[
+                      { label: "Subject", value: subject },
+                      { label: "Grade", value: `Grade ${grade}` },
+                      { label: "Total Marks", value: qpMarks },
+                      { label: "Duration", value: `${qpDuration} minutes` },
+                      { label: "Language", value: result.language === "arabic" ? "العربية" : "English" },
+                    ]}
+                    content={typeof result.data === "string" ? result.data : (result.data.content || result.data.question_paper || JSON.stringify(result.data, null, 2))}
+                    type="question-paper"
+                  />
                 )}
 
                 {result.type === "worksheet" && (
-                  <div className="space-y-6">
-                    <div className="text-center border-b pb-4 mb-4">
-                      <h4 className="text-xl font-bold">{subject} Worksheet - Grade {grade}</h4>
-                      <p className="text-sm text-ink-3">Topic: {chapter} | Difficulty: {wsDifficulty}</p>
-                    </div>
-                    <pre className="text-sm bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto whitespace-pre-wrap">
-                      {typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2)}
-                    </pre>
-                  </div>
+                  <DocumentSheet
+                    title={`${subject} - Worksheet`}
+                    subtitle={`Grade ${grade} | ${chapter}`}
+                    metadata={[
+                      { label: "Subject", value: subject },
+                      { label: "Grade", value: `Grade ${grade}` },
+                      { label: "Topic", value: chapter },
+                      { label: "Difficulty", value: wsDifficulty.charAt(0).toUpperCase() + wsDifficulty.slice(1) },
+                      { label: "Questions", value: wsQuestions },
+                      { label: "Language", value: result.language === "arabic" ? "العربية" : "English" },
+                    ]}
+                    content={typeof result.data === "string" ? result.data : (result.data.content || result.data.worksheet || JSON.stringify(result.data, null, 2))}
+                    type="worksheet"
+                  />
                 )}
               </div>
             )}

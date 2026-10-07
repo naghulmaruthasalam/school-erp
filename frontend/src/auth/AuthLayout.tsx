@@ -43,7 +43,7 @@ export default function AuthLayout({
         </div>
         <div className="mt-5 flex items-center justify-center gap-2 text-ink-3">
           <Logo size={18} showWordmark={false} />
-          <span className="text-xs font-medium">Cogniitec AI School ERP</span>
+          <span className="text-xs font-medium">مدرسة العاصمة الخاصة</span>
         </div>
         {footer && <div className="mt-3 text-center text-sm text-ink-2">{footer}</div>}
       </div>
