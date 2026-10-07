@@ -134,7 +134,7 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-ink">{t("studentHomework.feedback.question", { n: q.question_number })}</span>
                         <Badge tone={q.is_correct ? "green" : q.score > 0 ? "amber" : "red"}>
-                          {fmtNumber(q.score)} / {fmtNumber(q.max_score)}
+                          <span dir="ltr">{fmtNumber(q.score)} / {fmtNumber(q.max_score)}</span>
                         </Badge>
                       </div>
                       {q.student_answer && <p className="mt-1 text-xs text-ink-3" dir="auto">“{q.student_answer}”</p>}
@@ -190,7 +190,7 @@ function AIFeedbackModal({ homeworkId, onClose }: { homeworkId: string; onClose:
 
 function useFormatDate() {
   const { fmtDate } = useLanguage();
-  return (iso: string) => fmtDate(iso);
+  return (iso?: string | null) => (iso ? fmtDate(iso) : "—");
 }
 
 const PAGE_SIZE = 10;
@@ -466,7 +466,7 @@ export default function StudentHomework() {
                 <PendingHomeworkCard
                   key={hw.id}
                   hw={hw}
-                  subjectName={subjects_[hw.subject_id]?.name ?? "—"}
+                  subjectName={subjects_[hw.subject_id]?.name ?? (hw as { subject_name?: string }).subject_name ?? "—"}
                   onSubmitted={() => setFeedbackHomeworkId(hw.id)}
                   studentId={hw.student_id}
                   classId={profile?.class_id}

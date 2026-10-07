@@ -180,9 +180,9 @@ export const DEMO_DATA: Record<string, unknown> = {
 
   // Pending homework for student
   "/homework/pending": [
-    { id: "h1", title: "Algebra Practice Set", subject_name: "Mathematics", due_date: tomorrow, teacher_name: "Dr. Meera Iyer" },
-    { id: "h2", title: "Essay: Climate Change", subject_name: "English", due_date: today, teacher_name: "Sunita Devi" },
-    { id: "h3", title: "Physics Lab Report", subject_name: "Physics", due_date: tomorrow, teacher_name: "Rajesh Verma" },
+    { id: "h1", title: "Algebra Practice Set", subject_name: "Mathematics", subject_id: "sub1", assigned_date: today, due_date: tomorrow, teacher_name: "Dr. Meera Iyer" },
+    { id: "h2", title: "Essay: Climate Change", subject_name: "English", assigned_date: today, due_date: today, teacher_name: "Sunita Devi" },
+    { id: "h3", title: "Physics Lab Report", subject_name: "Physics", subject_id: "sub3", assigned_date: today, due_date: tomorrow, teacher_name: "Rajesh Verma" },
   ],
 
   // Fee invoices for student

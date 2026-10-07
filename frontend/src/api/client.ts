@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
   const { accessToken, isDemo } = authStore.getState();
 
   if (isDemo && (config.method === "post" || config.method === "patch" || config.method === "delete")) {
-    const created = mutateDemoCopilotTools(config.method, config.url || "", config.data) ?? (config.method === "post" ? postDemoResponse(config.url || "", config.data) : null);
+    const created = mutateDemoCopilotTools(config.method, config.url || "", config.data) ?? postDemoResponse(config.url || "", config.data, config.method);
     if (created) return Promise.reject({ __isDemo: true, data: created, config });
   }
   if (isDemo && config.method === "get") {
