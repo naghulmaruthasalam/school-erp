@@ -295,3 +295,37 @@ async def test_each_language_plays_its_own_video_with_fallback(client, library, 
     await again.save()
     _, lang_en_fallback, _ = await video("en")
     assert lang_en_fallback == "ar"
+
+
+@pytest.mark.asyncio
+async def test_school_with_only_skeleton_maths_gets_the_library_notes_and_the_missing_subject(client, school, textbook):
+    """A school that has Class 6 with a Mathematics list of chapter NAMES (no notes) and no Social Studies subject at all:
+    the first student to open the syllabus finds Social Studies with the textbook, and Maths with the textbook notes added."""
+    from app.models.syllabus import Chapter
+    from app.services import curriculum_service
+
+    curriculum_service._last_checked.clear()
+    year = AcademicYear(school_id=SCHOOL, name="2026-27", start_date=dt.date(2026, 6, 1), end_date=dt.date(2027, 3, 31), is_current=True)
+    await year.insert()
+    c6 = Class(school_id=SCHOOL, academic_year_id=str(year.id), name="Class 6", order=6)
+    await c6.insert()
+    maths = Subject(school_id=SCHOOL, name="Mathematics", code="MATH")
+    await maths.insert()
+    await Syllabus(school_id=SCHOOL, academic_year_id=str(year.id), class_id=str(c6.id), subject_id=str(maths.id), title="Mathematics - Class 6",
+                   status="PUBLISHED", created_by="seed",
+                   chapters=[Chapter(name="Knowing Our Numbers", order=1, video_url="https://www.youtube.com/watch?v=abc"), Chapter(name="Whole Numbers", order=2)]).insert()
+    sid = "000000000000000000000d90"
+    await Student(id=PydanticObjectId(sid), school_id=SCHOOL, admission_no="S9", first_name="Priya", last_name="S",
+                  academic_year_id=str(year.id), class_id=str(c6.id), section_id="s1").insert()
+    override_current_user(make_current_user(Role.STUDENT, SCHOOL, user_id="000000000000000000000d91", student_id=sid))
+    tree = (await client.get("/api/v1/syllabus/tree", params={"lang": "en"})).json()
+    cls = next(c for c in tree["classes"] if c["name"] == "Class 6")
+    subjects = {s["name"]: s for s in cls["subjects"]}
+    assert set(subjects) == {"Mathematics", "Social Studies"}  # the missing subject was created from the library
+    ss = subjects["Social Studies"]["chapters"]
+    assert ss and all(ch["has_content"] for ch in ss)
+    maths_chapters = {ch["key"]: ch for ch in subjects["Mathematics"]["chapters"]}
+    assert "Knowing Our Numbers" in maths_chapters and not maths_chapters["Knowing Our Numbers"]["has_content"]  # the school's own chapters are kept
+    assert any(ch["has_content"] for ch in maths_chapters.values())  # ... and the textbook's chapters (with notes) were added
+    assert maths_chapters["Knowing Our Numbers"]["has_video"]  # the existing external video link survives
+    assert await Class.find(Class.school_id == SCHOOL).count() == 3  # the fixture's Class 8 and 9 plus Class 6: no class was invented

@@ -237,7 +237,7 @@ async def import_curriculum(
 async def run_import(
     school_id: str, user_id: str, filename: str, data: bytes, *, dry_run: bool = True,
     create_missing: bool = False, mode: str = "merge", status: SyllabusStatus = SyllabusStatus.PUBLISHED,
-    field_map: dict[str, str] | None = None, rows_override: tuple | None = None,
+    field_map: dict[str, str] | None = None, rows_override: tuple | None = None, create_classes: bool = True,
 ) -> dict:
     """The import itself, with no request context (also used by scripts/import_syllabus.py)."""
     if mode not in ("merge", "replace"):
@@ -250,8 +250,10 @@ async def run_import(
     if year is None:
         raise ValidationAppError("Create an academic year first")
 
-    classes = await Class.find(Class.school_id == school_id, Class.academic_year_id == str(year.id)).to_list()
-    by_class = {class_key(c.name): c for c in classes}
+    # every class of the school (a class can sit in an earlier academic year), the current year's record winning a tie
+    classes = await Class.find(Class.school_id == school_id).to_list()
+    by_class = {class_key(c.name): c for c in classes if c.academic_year_id != str(year.id)}
+    by_class |= {class_key(c.name): c for c in classes if c.academic_year_id == str(year.id)}
     subjects = await Subject.find(Subject.school_id == school_id).to_list()
     by_subject = {subject_key(s.name, s.code): s for s in subjects} | {_norm(s.name): s for s in subjects} | {_norm(s.code): s for s in subjects}
 
@@ -267,7 +269,7 @@ async def run_import(
         class_name, subject_name = group[0].class_name, group[0].subject
         school_class = by_class.get(class_key(class_name))
         if school_class is None:
-            if not create_missing:
+            if not (create_missing and create_classes):
                 report["problems"].append(f"Class '{class_name}' doesn't exist in {year.name} (tick 'create missing classes and subjects')")
                 report["totals"]["skipped_groups"] += 1
                 continue

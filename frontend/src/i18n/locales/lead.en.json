@@ -168,7 +168,8 @@
       "materials": "Study materials",
       "minutes": "{n} min",
       "videoOnlyArabic": "This lesson's video is only available in Arabic for now.",
-      "videoOnlyEnglish": "This lesson's video is only available in English for now."
+      "videoOnlyEnglish": "This lesson's video is only available in English for now.",
+      "openVideo": "Open the video in a new tab"
     },
     "theme": {
       "toLight": "Switch to light mode",

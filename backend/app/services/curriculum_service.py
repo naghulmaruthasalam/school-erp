@@ -89,6 +89,7 @@ async def sync_to_syllabus(
 
     rows = []
     covered: set[tuple[str, str]] = set()
+    school_grades: set[str] = set()
     if only_missing:  # leave class+subject pairs that already have a syllabus (and any edits teachers made) alone
         from app.models.academic import Class, Subject
         from app.models.syllabus import Syllabus
@@ -97,11 +98,17 @@ async def sync_to_syllabus(
         classes = {str(c.id): class_key(c.name) for c in await Class.find(Class.school_id == school_id).to_list()}
         subjects = {str(x.id): subject_key(x.name, x.code) for x in await Subject.find(Subject.school_id == school_id).to_list()}
         for syl in await Syllabus.find(Syllabus.school_id == school_id).to_list():
-            if syl.chapters and syl.class_id in classes and syl.subject_id in subjects:
+            # "covered" = already has textbook notes. A syllabus that is only a list of chapter names (no notes anywhere) is a
+            # skeleton: the library's chapters and notes are added to it, and its own chapters are kept.
+            has_notes = any((c.content or "").strip() or any((t.content or "").strip() for t in c.translations.values()) for c in syl.chapters)
+            if has_notes and syl.class_id in classes and syl.subject_id in subjects:
                 covered.add((classes[syl.class_id], subjects[syl.subject_id]))
+        school_grades = set(classes.values())
     for unit in await load_units(school_id):
         if not unit.grade or (str(unit.grade), subject_key(unit.subject)) in covered:
             continue
+        if only_missing and str(unit.grade) not in school_grades:
+            continue  # automatic loading never invents classes the school doesn't have
         group = {unit_language(unit): unit}
         en, ar = titles(group)
         rows.append(Row(
@@ -112,7 +119,7 @@ async def sync_to_syllabus(
     if not rows:
         return {"dry_run": dry_run, "problems": ["The textbook library is empty."], "syllabi": [], "totals": {}}
     return await run_import(school_id, user_id, "curriculum-library", b"", dry_run=dry_run, create_missing=create_missing, mode=mode,
-                            rows_override=(rows, []))
+                            rows_override=(rows, []), create_classes=not only_missing)
 
 
 _last_checked: dict[str, float] = {}
@@ -130,6 +137,7 @@ async def ensure_synced(school_id: str | None) -> None:
         return
     _last_checked[school_id] = time.monotonic()
     try:
-        await sync_to_syllabus(school_id, "library-sync", dry_run=False, create_missing=False, only_missing=True)
+        # create_missing adds subjects the school lacks (e.g. Social Studies) to classes it has; classes are never created here
+        await sync_to_syllabus(school_id, "library-sync", dry_run=False, create_missing=True, only_missing=True)
     except Exception:  # noqa: BLE001 - reading must never fail because the library sync did
         logging.getLogger("curriculum.sync").exception("Library sync failed for %s", school_id)

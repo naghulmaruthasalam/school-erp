@@ -31,6 +31,22 @@ function useChapterHomework(subjectId: string | undefined, chapter: string | und
   });
 }
 
+/** A YouTube / Vimeo link is embedded; any other link is a video file (uploaded to the school's storage) and plays natively. */
+function LessonVideo({ url }: { url: string }) {
+  const { t } = useLanguage();
+  const [failed, setFailed] = useState(false);
+  const yt = /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{6,})/.exec(url);
+  const vimeo = /vimeo\.com\/(?:video\/)?(\d+)/.exec(url);
+  const embed = yt ? `https://www.youtube-nocookie.com/embed/${yt[1]}` : vimeo ? `https://player.vimeo.com/video/${vimeo[1]}` : null;
+  if (embed) {
+    return <iframe src={embed} title={t("lead.browser.video")} allow="fullscreen; picture-in-picture" allowFullScreen className="aspect-video w-full rounded-xl bg-black" />;
+  }
+  if (failed) {
+    return <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-accent-fg hover:underline">{t("lead.browser.openVideo")}</a>;
+  }
+  return <video controls preload="metadata" playsInline src={url} onError={() => setFailed(true)} className="w-full max-h-[26rem] rounded-xl bg-black" />;
+}
+
 /** Class -> Subject -> Chapter, read from the syllabus in the database and scoped to what the user may see. */
 export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
   const { t, te, fmtDate, fmtNumber, language } = useLanguage();
@@ -168,7 +184,7 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
                       </p>
                     )}
                     {/* keyed by link, so switching language swaps the video instead of reusing the player */}
-                    <video key={full.video_url} controls preload="metadata" playsInline src={full.video_url} className="w-full max-h-[26rem] rounded-xl bg-black" />
+                    <LessonVideo key={full.video_url} url={full.video_url} />
                   </div>
                 )}
 
