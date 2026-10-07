@@ -1,4 +1,27 @@
-# Testing the build on Linux
+# Testing the build on Linux (no VPN needed)
+
+The integrations (syllabus content per language, videos, homework rendering and AI feedback, announcements, Arabic UI) do not
+need the company database. `./linux-local.sh` runs everything against a **local MongoDB** that it creates and seeds with the demo
+school (code `DEMO`), the textbooks and the videos. Your `backend/.env` (Atlas URI, Gemini key...) is left untouched: the script only
+overrides `MONGODB_URI` and `MONGODB_DB_NAME` for the commands it starts.
+
+```bash
+cd school-erp-linux                  # the unzipped folder
+cp /path/to/your/old/backend/.env backend/.env      # your env file (GEMINI_API_KEY etc.); never commit it
+chmod +x *.sh
+./linux-setup.sh                     # once: venv, pip, npm
+./linux-local.sh test                # local MongoDB + seed + textbooks + videos + 15 automated checks
+./linux-local.sh run                 # backend :8000 + frontend :5173 on the same local database
+./linux-local.sh reset               # (optional) wipe the local test database and start clean
+./linux-diagnose.sh                  # if something is missing: report of schools/classes/subjects/notes/videos
+```
+Local MongoDB comes from Docker (`docker run mongo:7`, done for you) or an installed `mongod`. Logins after the test seed:
+school code `DEMO`; student `DEMO-STU-001` / `Student@123`; teacher `DEMO-TCH-001` / `Teacher@123`; principal `principal@demo` /
+`Principal@123`; admin `admin@demo` / `Admin@123`; parent `9876543210` / `Parent@123`.
+
+Reading the real database later (needs the VPN) only changes `MONGODB_URI`; use `./linux-test-flow.sh` / `./linux-run.sh` without `linux-local.sh`.
+
+---
 
 Needs: python3 (3.11-3.13) with venv, Node 22 (or 20.19+), npm, and either Docker (local MongoDB) or an Atlas URI.
 Run everything from the project folder (the one with `backend/` and `frontend/`).
