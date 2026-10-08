@@ -4,6 +4,7 @@
 #
 #   ./linux-local.sh test     # start local MongoDB, seed demo school, load textbooks + videos, run the checks
 #   ./linux-local.sh run      # start backend :8000 + frontend :5173 on that same local database
+#   ./linux-local.sh videos   # (re)attach the chapter videos from ./media (do this after moving to a new folder)
 #   ./linux-local.sh reset    # throw the local test database away (start clean)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -29,6 +30,7 @@ start_mongo() {
 case "${1:-test}" in
   test)  start_mongo; ./linux-test-flow.sh ;;
   run)   start_mongo; ./linux-run.sh ;;
+  videos) start_mongo; ./linux-load-videos.sh ;;   # (re)attach the chapter videos; files are saved in THIS folder's backend/uploads
   reset)
     start_mongo
     ( cd backend && . .venv/bin/activate && python - <<'PY'
@@ -37,5 +39,5 @@ from pymongo import MongoClient
 MongoClient(os.environ["MONGODB_URI"]).drop_database(os.environ["MONGODB_DB_NAME"]); print("dropped", os.environ["MONGODB_DB_NAME"])
 PY
     ) ;;
-  *) echo "usage: $0 test|run|reset"; exit 1 ;;
+  *) echo "usage: $0 test|run|videos|reset"; exit 1 ;;
 esac
