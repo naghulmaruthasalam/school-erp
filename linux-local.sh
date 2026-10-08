@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Test everything on THIS machine with a local MongoDB: no VPN, your backend/.env (Atlas URI, keys) is not touched.
-# It overrides only MONGODB_URI / MONGODB_DB_NAME for the commands it starts; GEMINI_API_KEY etc. still come from backend/.env.
+# It overrides only MONGODB_URI / MONGODB_DB_NAME and blanks the AWS/S3 keys (uploads stay on disk) for the commands it starts; GEMINI_API_KEY etc. still come from backend/.env.
 #
 #   ./linux-local.sh test     # start local MongoDB, seed demo school, load textbooks + videos, run the checks
 #   ./linux-local.sh run      # start backend :8000 + frontend :5173 on that same local database
@@ -9,6 +9,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 export MONGODB_URI="${LOCAL_MONGODB_URI:-mongodb://localhost:27017}"
 export MONGODB_DB_NAME="${LOCAL_MONGODB_DB:-school_erp_localtest}"
+# Keep uploads (videos, homework files) on this machine too: blank the cloud storage keys that backend/.env may hold.
+export AWS_ACCESS_KEY_ID="" AWS_SECRET_ACCESS_KEY="" S3_BUCKET_NAME=""
 
 start_mongo() {
   if (exec 3<>/dev/tcp/127.0.0.1/27017) 2>/dev/null; then echo "MongoDB already listening on 27017"; return; fi
