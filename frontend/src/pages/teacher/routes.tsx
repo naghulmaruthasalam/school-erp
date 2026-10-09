@@ -19,6 +19,7 @@ import TeacherProfile from "./Profile";
 import TeacherSettings from "./Settings";
 import TeacherAbout from "./About";
 import TeacherCopilot from "./TeacherCopilot";
+import CurriculumLibrary from "../../components/CurriculumLibrary";
 
 export const teacherNavItems: NavItem[] = [
   { label: "navigation.dashboard", to: "/teacher", end: true, icon: DashboardIcon },
@@ -28,6 +29,7 @@ export const teacherNavItems: NavItem[] = [
   { label: "navigation.homework", to: "/teacher/homework", icon: HomeworkIcon },
   { label: "AI Copilot", to: "/teacher/copilot", icon: HomeworkIcon },
   { label: "navigation.syllabus", to: "/teacher/syllabus", icon: SyllabusIcon },
+  { label: "lead.nav.library", to: "/teacher/library", icon: SyllabusIcon },
   { label: "navigation.marks", to: "/teacher/marks", icon: MarksIcon },
   { label: "navigation.leave", to: "/teacher/leave", icon: LeaveIcon },
   { label: "navigation.notifications", to: "/teacher/notifications", icon: NotificationsIcon },
@@ -44,6 +46,7 @@ export const teacherChildRoutes = (
     <Route path="homework" element={<TeacherHomework />} />
     <Route path="homework/:homeworkId" element={<TeacherHomeworkSubmissions />} />
     <Route path="syllabus" element={<TeacherSyllabus />} />
+    <Route path="library" element={<CurriculumLibrary canManage={false} />} />
     <Route path="syllabus/new" element={<TeacherSyllabusForm />} />
     <Route path="syllabus/:id" element={<TeacherSyllabusDetail />} />
     <Route path="syllabus/:id/edit" element={<TeacherSyllabusForm />} />

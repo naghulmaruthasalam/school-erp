@@ -56,6 +56,15 @@ class CurriculumUnit(Document):
 
     metadata: CurriculumMetadata | None = None
 
+    # Set when this unit is a machine translation of the same unit in the other language (an original has none of these).
+    translated_from: str | None = None  # "en" or "ar": the language it was translated from
+    translation_status: str | None = None  # needs_review (a check found something) | ai_checked (checked, nothing found) | reviewed (a person approved it)
+    translation_source_hash: str | None = None  # hash of the source text it was made from; a changed source means it is out of date
+    translation_flags: list[str] = Field(default_factory=list)  # what the automatic checks found
+    translated_at: datetime | None = None
+    reviewed_by: str | None = None
+    reviewed_at: datetime | None = None
+
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 

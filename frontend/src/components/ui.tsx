@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, LabelHTMLAttributes, ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { clsx } from "clsx";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -249,8 +250,8 @@ export function Modal({
 
   const sizeClasses = { sm: "max-w-sm", md: "max-w-md", lg: "max-w-lg", xl: "max-w-xl" };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-4" role="dialog" aria-modal="true">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4" role="dialog" aria-modal="true">
       <div
         className="fixed inset-0 animate-fade-in bg-slate-900/30 backdrop-blur-md dark:bg-black/50"
         onClick={onClose}
@@ -275,6 +276,7 @@ export function Modal({
         </div>
         <div className="max-h-[70vh] overflow-y-auto px-6 pb-6">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

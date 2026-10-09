@@ -19,6 +19,7 @@ import About from "./About";
 import NotificationList from "../admin/NotificationList";
 import VideoViewsReport from "../../components/VideoViewsReport";
 import TicketDesk from "../../components/TicketDesk";
+import CurriculumLibrary from "../../components/CurriculumLibrary";
 
 export const principalNavItems: NavItem[] = [
   { label: "navigation.dashboard", to: "/principal", end: true, icon: DashboardIcon },
@@ -32,6 +33,7 @@ export const principalNavItems: NavItem[] = [
   { label: "lead.nav.announcements", to: "/principal/announcements", icon: NotificationsIcon },
   { label: "lead.nav.videoViews", to: "/principal/video-views", icon: AnalyticsIcon },
   { label: "lead.nav.tickets", to: "/principal/tickets", icon: SupportIcon },
+  { label: "lead.nav.library", to: "/principal/library", icon: SyllabusIcon },
   { label: "principal.nav.calendar", to: "/principal/calendar", icon: CalendarIcon },
   { label: "principal.nav.analytics", to: "/principal/analytics", icon: AnalyticsIcon },
   { label: "navigation.settings", to: "/principal/settings", icon: SettingsIcon },
@@ -51,6 +53,7 @@ export const principalChildRoutes = (
     <Route path="announcements" element={<NotificationList />} />
     <Route path="video-views" element={<VideoViewsReport />} />
     <Route path="tickets" element={<TicketDesk />} />
+    <Route path="library" element={<CurriculumLibrary canManage />} />
     <Route path="calendar" element={<SchoolCalendar />} />
     <Route path="analytics" element={<PrincipalDashboard />} />
     <Route path="settings" element={<Settings />} />

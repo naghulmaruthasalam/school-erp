@@ -1,5 +1,6 @@
 import VideoViewsReport from "../../components/VideoViewsReport";
 import TicketDesk from "../../components/TicketDesk";
+import CurriculumLibrary from "../../components/CurriculumLibrary";
 import { Route } from "react-router-dom";
 import type { NavGroup } from "../../layouts/DashboardLayout";
 import {
@@ -62,6 +63,7 @@ export const adminNavGroups: NavGroup[] = [
       { label: "admin.nav.homework", to: "/admin/homework", icon: HomeworkIcon },
       { label: "admin.nav.syllabus", to: "/admin/syllabus", icon: SyllabusIcon },
       { label: "lead.nav.videoViews", to: "/admin/video-views", icon: ReportIcon },
+      { label: "lead.nav.library", to: "/admin/library", icon: SyllabusIcon },
       { label: "admin.nav.exams", to: "/admin/exams", icon: ExamsIcon },
       { label: "admin.nav.reportCards", to: "/admin/report-cards", icon: ReportIcon },
       { label: "admin.nav.reportsAnalytics", to: "/admin/reports", icon: ReportIcon },
@@ -117,6 +119,7 @@ export const adminChildRoutes = (
     <Route path="leave" element={<LeaveList />} />
     <Route path="notifications" element={<NotificationList />} />
     <Route path="tickets" element={<TicketDesk />} />
+    <Route path="library" element={<CurriculumLibrary canManage />} />
     <Route path="library" element={<LibraryList />} />
     <Route path="transport" element={<TransportList />} />
     <Route path="timetable" element={<TimetableList />} />

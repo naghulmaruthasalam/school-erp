@@ -177,7 +177,8 @@
       "announcements": "Announcements",
       "videoViews": "Video Views",
       "support": "Support",
-      "tickets": "Tickets"
+      "tickets": "Tickets",
+      "library": "Curriculum Library"
     },
     "browser": {
       "onlyArabic": "This chapter's notes are only available in Arabic for now.",
@@ -306,6 +307,44 @@
       "run": "Run progress check now",
       "done": "Progress check finished: {n} new alert(s) sent to parents, teachers and the principal.",
       "failed": "Could not run the progress check."
+    },
+    "library": {
+      "title": "Curriculum Library",
+      "subtitle": "Textbook units for Std 1-12 in English and Arabic. Add units, translate the missing language, then review the translations.",
+      "grade": "Std {n}",
+      "units": "{n} units",
+      "upload": "Add units (NDJSON or JSON)",
+      "uploading": "Loading...",
+      "uploadDone": "Loaded: {inserted} new, {updated} updated, {unchanged} unchanged, {skipped} skipped. Grades: {grades}.",
+      "translateMissing": "Translate missing language",
+      "translating": "Translating...",
+      "jobTitle": "Translation",
+      "jobProgress": "{done} of {total} units",
+      "jobDone": "Done: {translated} translated, {skipped} skipped, {failed} failed.",
+      "subject": "Subject",
+      "unit": "Unit",
+      "unitTitle": "Title",
+      "english": "English",
+      "arabic": "Arabic",
+      "empty": "No units for this grade yet. Add a file to start.",
+      "review": "Review",
+      "reviewTitle": "Review translation",
+      "original": "Original",
+      "missing": "Missing",
+      "needsReview": "Needs review",
+      "aiChecked": "Translated, checks passed",
+      "reviewed": "Reviewed",
+      "flags": "What the automatic checks found",
+      "save": "Save changes",
+      "approve": "Approve translation",
+      "saved": "Saved. The syllabus chapter is updated.",
+      "translateUnit": "Translate this unit again",
+      "note": "Translations are made by AI and checked automatically (numbers, script, a second AI pass). A teacher or admin should review them before students rely on them.",
+      "loadFailed": "Could not load the library.",
+      "titleLabel": "Title",
+      "textLabel": "Text",
+      "readOnly": "Original text (read only)",
+      "chars": "{n} characters"
     }
   }
 }
