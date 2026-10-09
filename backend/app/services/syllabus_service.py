@@ -403,6 +403,9 @@ async def get_tree(current: CurrentUser, lang: str = "en") -> dict:
         syllabi = [s for s in syllabi if s.status == SyllabusStatus.PUBLISHED]
     subjects = {str(s.id): s for s in await Subject.find(Subject.school_id == current.school_id).to_list()}
 
+    from app.services.video_stats_service import watched_by_student
+
+    watched = await watched_by_student(current, [str(s.id) for s in syllabi])  # students only: which chapter videos they finished
     out = []
     for c in classes:
         scope = set(await equivalent_class_ids(current.school_id, str(c.id))) if current.role in (Role.STUDENT, Role.PARENT) else {str(c.id)}
@@ -420,7 +423,8 @@ async def get_tree(current: CurrentUser, lang: str = "en") -> dict:
                     {"id": f"{syl.id}-{i}", "key": ch.name, "name": loc.name, "description": loc.description, "order": ch.order,
                      "topics": loc.topics, "has_content": bool(loc.content), "content_language": loc.content_language,
                      "languages": loc.languages, "has_video": bool(loc.video_s3_key or loc.video_url),
-                     "video_language": loc.video_language}
+                     "video_language": loc.video_language,
+                     "watched": bool(loc.video_language and loc.video_language in watched.get((str(syl.id), ch.name), ()))}
                     for i, ch, loc in sorted(((i, ch, ch.localized(lang)) for i, ch in enumerate(syl.chapters)), key=lambda t: t[1].order)
                 ],
             })

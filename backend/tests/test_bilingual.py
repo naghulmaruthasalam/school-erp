@@ -395,3 +395,102 @@ async def test_teacher_assigned_to_a_grade_can_assign_homework_to_its_duplicate_
     other = Section(school_id=SCHOOL, class_id="ffffffffffffffffffffffff", name="B")
     await other.insert()
     assert (await client.post("/api/v1/homework", json={**body, "section_id": str(other.id)})).status_code in (403, 404)
+
+
+# ------------------------------------------------------------------ video views (counted when a student finishes a video)
+
+@pytest.mark.asyncio
+async def test_video_views_counted_per_language_with_unique_students_and_roles(client, library, tmp_path, monkeypatch):
+    from app.core import s3
+
+    import app.api.v1.uploads as uploads_api
+    from app.models.teacher import Teacher
+    from tests.test_copilot import TEACHER_ID
+
+    monkeypatch.setattr(s3, "LOCAL_UPLOADS_DIR", tmp_path)
+    monkeypatch.setattr(uploads_api, "LOCAL_UPLOADS_DIR", tmp_path)
+    monkeypatch.setattr(s3, "_use_local_storage", True)
+    await run_import(client)  # admin
+    syl = next(s for s in await Syllabus.find(Syllabus.school_id == SCHOOL).to_list() if s.subject_id == library["ss"])
+    for lang in ("en", "ar"):  # a video in both languages on chapter 0
+        r = await client.post(f"/api/v1/syllabus/{syl.id}/chapters/0/video", data={"language": lang}, files={"file": (f"{lang}.mp4", b"V" * 3000, "video/mp4")})
+        assert r.status_code == 200, r.text
+    url = f"/api/v1/syllabus/{syl.id}/chapters/0"
+
+    ids = ["000000000000000000000d81", "000000000000000000000d82", "000000000000000000000d83"]
+    for n, sid in enumerate(ids):  # three students in Class 6
+        await Student(id=PydanticObjectId(sid), school_id=SCHOOL, admission_no=f"V{n}", first_name=f"Stu{n}", last_name="X",
+                      academic_year_id=library["year"], class_id=library["c6"], section_id="s1").insert()
+
+    def as_stu(sid):
+        override_current_user(make_current_user(Role.STUDENT, SCHOOL, user_id="000000000000000000000d9" + sid[-1], student_id=sid))
+
+    # Arabic video: student 1 finishes it twice, student 2 once. English video: student 1 once. Student 3 watches nothing.
+    as_stu(ids[0])
+    assert (await client.post(f"{url}/video-view", json={"language": "ar"})).json() == {"recorded": True, "views": 1}
+    dup = (await client.post(f"{url}/video-view", json={"language": "ar"})).json()  # an immediate second report is a duplicate
+    assert dup["recorded"] is False and dup["views"] == 1
+    from app.models.video_watch import VideoWatch
+    d = await VideoWatch.find_one(VideoWatch.student_id == ids[0], VideoWatch.language == "ar")
+    d.last_at = d.last_at - dt.timedelta(minutes=5)
+    await d.save()
+    assert (await client.post(f"{url}/video-view", json={"language": "ar"})).json()["views"] == 2  # a real second watch
+    assert (await client.post(f"{url}/video-view", json={"language": "en"})).json()["recorded"] is True
+    as_stu(ids[1])
+    assert (await client.post(f"{url}/video-view", json={"language": "ar"})).json()["recorded"] is True
+
+    # the student sees a Watched flag on the chapter (for the language of the video shown)
+    as_stu(ids[0])
+    ch = next(c for cl in (await client.get("/api/v1/syllabus/tree", params={"lang": "ar"})).json()["classes"] for s in cl["subjects"]
+              if s["syllabus_id"] == str(syl.id) for c in s["chapters"] if c["id"].endswith("-0"))
+    assert ch["watched"] is True
+    as_stu(ids[2])
+    ch = next(c for cl in (await client.get("/api/v1/syllabus/tree")).json()["classes"] for s in cl["subjects"]
+              if s["syllabus_id"] == str(syl.id) for c in s["chapters"] if c["id"].endswith("-0"))
+    assert ch["watched"] is False
+    assert (await client.get(f"{url}/video-stats")).status_code == 403  # a student cannot read the counts
+
+    # the teacher of the class sees counts per language and who has / hasn't watched
+    teacher = await Teacher.get(PydanticObjectId(TEACHER_ID))
+    teacher.assigned_class_ids = [library["c6"]]
+    await teacher.save()
+    as_teacher()
+    stats = (await client.get(f"{url}/video-stats")).json()
+    assert stats["languages"]["ar"] == {"has_video": True, "views": 3, "students": 2}
+    assert stats["languages"]["en"] == {"has_video": True, "views": 1, "students": 1}
+    assert [r["name"] for r in stats["watched"]] == ["Stu0 X", "Stu1 X"] and [r["name"] for r in stats["not_watched"]] == ["Stu2 X"]
+    assert stats["class_size"] == 3
+    # a teacher cannot read another class's counts, and teachers' own views are never counted
+    teacher.assigned_class_ids = ["ffffffffffffffffffffffff"]
+    await teacher.save()
+    assert (await client.get(f"{url}/video-stats")).status_code == 403
+    assert (await client.post(f"{url}/video-view", json={"language": "ar"})).json()["recorded"] is False
+
+    # the principal gets the school-wide report; a teacher does not
+    assert (await client.get("/api/v1/syllabus/video-report")).status_code == 403
+    override_current_user(make_current_user(Role.PRINCIPAL, SCHOOL, user_id="000000000000000000000a14"))
+    report = (await client.get("/api/v1/syllabus/video-report")).json()
+    rows = {r["language"]: r for r in report["rows"] if r["subject"] == "Social Science"}
+    assert rows["ar"]["views"] == 3 and rows["ar"]["students"] == 2 and rows["ar"]["class_size"] == 3 and rows["ar"]["percent"] == 67
+    assert rows["en"]["views"] == 1 and report["total_views"] == 4
+
+    # a video that does not exist in that language cannot be "watched"
+    again = await Syllabus.get(syl.id)
+    again.chapters[0].translations["ar"].video_s3_key = None
+    again.chapters[0].translations["ar"].video_url = None
+    await again.save()
+    as_stu(ids[0])
+    assert (await client.post(f"{url}/video-view", json={"language": "ar"})).status_code == 422
+    assert (await client.post(f"{url}/video-view", json={"language": "fr"})).status_code == 422
+    assert (await client.post(f"/api/v1/syllabus/{syl.id}/chapters/9/video-view", json={"language": "en"})).status_code == 404
+
+
+def test_only_countable_videos_are_tracked():
+    from app.models.syllabus import Chapter, ChapterText
+    from app.services.video_stats_service import _has_video
+
+    uploaded = Chapter(name="a", order=1, video_s3_key="k/en.mp4")
+    youtube = Chapter(name="b", order=2, video_url="https://www.youtube.com/watch?v=abcdefghijk")
+    direct = Chapter(name="c", order=3, video_url="https://cdn.example.com/lesson.mp4", translations={"ar": ChapterText(name="ج", video_s3_key="k/ar.mp4")})
+    assert _has_video(uploaded, "en") and not _has_video(youtube, "en") and _has_video(direct, "en") and _has_video(direct, "ar")
+    assert not _has_video(uploaded, "ar")

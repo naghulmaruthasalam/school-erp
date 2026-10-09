@@ -17,6 +17,7 @@ import PrincipalSyllabus from "./Syllabus";
 import Settings from "./Settings";
 import About from "./About";
 import NotificationList from "../admin/NotificationList";
+import VideoViewsReport from "../../components/VideoViewsReport";
 
 export const principalNavItems: NavItem[] = [
   { label: "navigation.dashboard", to: "/principal", end: true, icon: DashboardIcon },
@@ -28,6 +29,7 @@ export const principalNavItems: NavItem[] = [
   { label: "navigation.attendance", to: "/principal/attendance", icon: AttendanceIcon },
   { label: "principal.nav.feeReports", to: "/principal/fees", icon: FeesIcon },
   { label: "lead.nav.announcements", to: "/principal/announcements", icon: NotificationsIcon },
+  { label: "lead.nav.videoViews", to: "/principal/video-views", icon: AnalyticsIcon },
   { label: "principal.nav.calendar", to: "/principal/calendar", icon: CalendarIcon },
   { label: "principal.nav.analytics", to: "/principal/analytics", icon: AnalyticsIcon },
   { label: "navigation.settings", to: "/principal/settings", icon: SettingsIcon },
@@ -45,6 +47,7 @@ export const principalChildRoutes = (
     <Route path="attendance" element={<AttendanceReports />} />
     <Route path="fees" element={<FeeReports />} />
     <Route path="announcements" element={<NotificationList />} />
+    <Route path="video-views" element={<VideoViewsReport />} />
     <Route path="calendar" element={<SchoolCalendar />} />
     <Route path="analytics" element={<PrincipalDashboard />} />
     <Route path="settings" element={<Settings />} />

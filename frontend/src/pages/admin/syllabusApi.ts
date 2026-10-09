@@ -121,6 +121,7 @@ export interface TreeChapter {
   has_content: boolean;
   has_video?: boolean;
   video_language?: string | null;
+  watched?: boolean; // students: they have watched this chapter's video to the end
 }
 
 export interface TreeSubject {

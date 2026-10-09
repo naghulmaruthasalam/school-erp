@@ -1,3 +1,4 @@
+import VideoViewsReport from "../../components/VideoViewsReport";
 import { Route } from "react-router-dom";
 import type { NavGroup } from "../../layouts/DashboardLayout";
 import {
@@ -59,6 +60,7 @@ export const adminNavGroups: NavGroup[] = [
       { label: "admin.nav.attendance", to: "/admin/attendance", icon: AttendanceIcon },
       { label: "admin.nav.homework", to: "/admin/homework", icon: HomeworkIcon },
       { label: "admin.nav.syllabus", to: "/admin/syllabus", icon: SyllabusIcon },
+      { label: "lead.nav.videoViews", to: "/admin/video-views", icon: ReportIcon },
       { label: "admin.nav.exams", to: "/admin/exams", icon: ExamsIcon },
       { label: "admin.nav.reportCards", to: "/admin/report-cards", icon: ReportIcon },
       { label: "admin.nav.reportsAnalytics", to: "/admin/reports", icon: ReportIcon },
@@ -121,6 +123,7 @@ export const adminChildRoutes = (
     <Route path="calendar" element={<CalendarList />} />
     <Route path="academic-setup" element={<AcademicSetup />} />
     <Route path="homework" element={<HomeworkList />} />
+    <Route path="video-views" element={<VideoViewsReport />} />
     <Route path="syllabus" element={<SyllabusList />} />
     <Route path="syllabus/new" element={<SyllabusForm />} />
     <Route path="syllabus/:id" element={<SyllabusDetail />} />

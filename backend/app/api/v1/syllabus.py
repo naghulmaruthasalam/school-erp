@@ -18,6 +18,7 @@ from app.schemas.syllabus import (
     SyllabusOut,
     SyllabusUpdateRequest,
 )
+from app.services import video_stats_service
 from app.services import curriculum_service, curriculum_source_service, syllabus_import_service, syllabus_service, upload_service
 
 router = APIRouter(prefix="/syllabus", tags=["syllabus"])
@@ -149,6 +150,28 @@ async def upload_syllabus_document(
     current: CurrentUser = Depends(require_tenant_user),
 ) -> SyllabusDocumentOut:
     return await syllabus_service.attach_document(current, syllabus_id, file)
+
+
+class VideoViewIn(BaseModel):
+    language: str = Field(max_length=5)
+
+
+@router.get("/video-report")
+async def video_report(current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    """Principal and school admins: every chapter video with views, unique students and the share of the class that watched."""
+    return await video_stats_service.school_report(current)
+
+
+@router.post("/{syllabus_id}/chapters/{chapter_index}/video-view")
+async def record_video_view(syllabus_id: str, chapter_index: int, payload: VideoViewIn, current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    """A student's video played to the end (anyone else is ignored)."""
+    return await video_stats_service.record_view(current, syllabus_id, chapter_index, payload.language)
+
+
+@router.get("/{syllabus_id}/chapters/{chapter_index}/video-stats")
+async def video_stats(syllabus_id: str, chapter_index: int, current: CurrentUser = Depends(require_tenant_user)) -> dict:
+    """Teachers (their classes) and school leaders: views, unique students and who has / hasn't watched."""
+    return await video_stats_service.chapter_stats(current, syllabus_id, chapter_index)
 
 
 @router.get("/{syllabus_id}", response_model=SyllabusOut)

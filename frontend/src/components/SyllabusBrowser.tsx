@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
-import { BookOpen, ChevronRight, Download, ExternalLink, PlayCircle, ClipboardCheck, FileText, Lightbulb, ListChecks, MessageSquareText, NotebookPen, PencilLine } from "lucide-react";
+import { BookOpen, CheckCircle2, ChevronRight, Download, ExternalLink, PlayCircle, ClipboardCheck, FileText, Lightbulb, ListChecks, MessageSquareText, NotebookPen, PencilLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { openCopilot } from "../copilot/events";
@@ -32,7 +33,7 @@ function useChapterHomework(subjectId: string | undefined, chapter: string | und
 }
 
 /** A YouTube / Vimeo link is embedded; any other link is a video file (uploaded to the school's storage) and plays natively. */
-function LessonVideo({ url }: { url: string }) {
+function LessonVideo({ url, onEnded }: { url: string; onEnded?: () => void }) {
   const { t } = useLanguage();
   const [failed, setFailed] = useState(false);
   const yt = /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{6,})/.exec(url);
@@ -44,7 +45,66 @@ function LessonVideo({ url }: { url: string }) {
   if (failed) {
     return <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-accent-fg hover:underline">{t("lead.browser.openVideo")}</a>;
   }
-  return <video controls preload="metadata" playsInline src={url} onError={() => setFailed(true)} className="w-full max-h-[26rem] rounded-xl bg-black" />;
+  return <video controls preload="metadata" playsInline src={url} onError={() => setFailed(true)} onEnded={onEnded} className="w-full max-h-[26rem] rounded-xl bg-black" />;
+}
+
+interface VideoStats {
+  class_size: number;
+  languages: Record<"en" | "ar", { has_video: boolean; views: number; students: number }>;
+  watched: { id: string; name: string; views: { en: number; ar: number } }[];
+  not_watched: { id: string; name: string }[];
+}
+
+/** Staff: views and unique students per video language, and who has / hasn't watched (a view = played to the end). */
+function VideoStatsPanel({ syllabusId, index }: { syllabusId: string; index: number }) {
+  const { t, fmtNumber } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const stats = useQuery({
+    queryKey: ["syllabus", "video-stats", syllabusId, index],
+    queryFn: async () => (await api.get<VideoStats>(`/syllabus/${syllabusId}/chapters/${index}/video-stats`)).data,
+    enabled: !import.meta.env.VITE_STANDALONE_DEMO,
+    retry: false,
+  });
+  if (import.meta.env.VITE_STANDALONE_DEMO) return null;
+  if (stats.isLoading) return <Spinner size="sm" />;
+  if (!stats.data) return <p className="text-xs text-ink-3">{t("lead.browser.statsFailed")}</p>;
+  const d = stats.data;
+  const langs = (["en", "ar"] as const).filter((l) => d.languages[l].has_video);
+  if (langs.length === 0) return <p className="text-xs text-ink-3" data-testid="video-stats">{t("lead.browser.externalNote")}</p>;
+  return (
+    <div className="space-y-2 rounded-xl bg-surface p-3" data-testid="video-stats">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">{t("lead.browser.videoViews")}</p>
+      <div className="flex flex-wrap gap-2">
+        {langs.map((l) => (
+          <span key={l} className="lg-chip !cursor-default" data-testid={`stats-${l}`}>
+            <b>{t(l === "ar" ? "lead.browser.arabic" : "lead.browser.english")}</b>
+            <span>{t("lead.browser.viewsLabel", { n: fmtNumber(d.languages[l].views) })}</span>
+            <span>·</span>
+            <span>{t("lead.browser.studentsLabel", { n: fmtNumber(d.languages[l].students) })}</span>
+          </span>
+        ))}
+      </div>
+      <p className="text-xs text-ink-3">{t("lead.browser.viewCountNote")}</p>
+      <button type="button" className="text-xs font-medium text-accent-fg hover:underline" onClick={() => setOpen(!open)}>
+        {open ? t("lead.browser.hideWho") : t("lead.browser.whoWatched")}
+      </button>
+      {open && (
+        <div className="grid gap-3 sm:grid-cols-2" data-testid="who-watched">
+          <div>
+            <p className="mb-1 text-xs font-semibold text-emerald-600">{t("lead.browser.watched")} ({fmtNumber(d.watched.length)})</p>
+            <ul className="space-y-0.5 text-sm text-ink-2">
+              {d.watched.length === 0 && <li className="text-ink-3">{t("lead.browser.noViewsYet")}</li>}
+              {d.watched.map((s) => <li key={s.id} dir="auto">{s.name} <span className="text-xs text-ink-3" dir="ltr">×{fmtNumber(s.views.en + s.views.ar)}</span></li>)}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-semibold text-amber-600">{t("lead.browser.notWatchedYet")} ({fmtNumber(d.not_watched.length)})</p>
+            <ul className="space-y-0.5 text-sm text-ink-2">{d.not_watched.map((s) => <li key={s.id} dir="auto">{s.name}</li>)}</ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** The chapter's notes from the database as a PDF to read here, open in a tab or save. */
@@ -113,6 +173,14 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
   });
   const full = detail.data?.chapters.find((c) => c.id === chapter?.id);
   const homework = useChapterHomework(subject?.id, chapter?.key ?? chapter?.name);
+  const queryClient = useQueryClient();
+  const chapterIndex = chapter ? Number(chapter.id.split("-").pop()) : 0;
+  // A student's video played to the end counts as one view (the server ignores anyone else, and repeats within seconds).
+  const countView = useMutation({
+    mutationFn: async (lang: string) => (await api.post(`/syllabus/${subject!.syllabus_id}/chapters/${chapterIndex}/video-view`, { language: lang })).data,
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ["syllabus", "tree"] }); },
+  });
+  const isStaffViewer = role === "teacher" || role === "admin" || role === "principal";
 
   if (tree.isLoading) return <Card className="flex justify-center py-10"><Spinner size="lg" /></Card>;
   if (tree.isError) return <Card className="py-8 text-center text-sm text-ink-3">{t("shell.syllabusBrowser.loadFailed")}</Card>;
@@ -175,7 +243,7 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
               <button key={c.id} onClick={() => setChapterId(c.id)} aria-current={c.id === chapter?.id} className={clsx("glass-row !items-start text-start", c.id === chapter?.id && "ring-2 ring-accent/50")}>
                 <span className="lg-icon !h-8 !w-8 shrink-0 !rounded-[10px] text-xs font-semibold">{fmtNumber(i + 1)}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">{c.name}{c.has_video && <PlayCircle size={14} className="shrink-0 text-accent-fg" aria-label={t("lead.browser.video")} />}</span>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">{c.name}{c.has_video && <PlayCircle size={14} className="shrink-0 text-accent-fg" aria-label={t("lead.browser.video")} />}{c.watched && <CheckCircle2 size={14} className="shrink-0 text-emerald-500" aria-label={t("lead.browser.watched")} data-testid="watched-tick" />}</span>
                   <span className="block text-xs text-ink-3">
                     {c.topics.length > 0 ? t("shell.syllabusBrowser.topicCount", { n: fmtNumber(c.topics.length) }) : c.description ?? t("shell.syllabusBrowser.chapter")}
                   </span>
@@ -212,6 +280,7 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
                   <button type="button" role="tab" aria-selected={view === "video"} data-testid="show-video"
                     className={clsx("lg-chip cursor-pointer !px-4 !py-2 text-sm", view === "video" && "!bg-accent !text-white", !full?.video_url && !detail.isLoading && "opacity-60")} onClick={() => setView("video")}>
                     <PlayCircle size={16} /> {t("lead.browser.video")}
+                    {chapter.watched && <CheckCircle2 size={14} className="text-emerald-300" aria-label={t("lead.browser.watched")} />}
                     {full?.duration_minutes ? <span className="font-normal opacity-80">· {t("lead.browser.minutes", { n: fmtNumber(full.duration_minutes) })}</span> : null}
                   </button>
                 </div>
@@ -226,7 +295,12 @@ export default function SyllabusBrowser({ role }: { role: BrowserRole }) {
                         </p>
                       )}
                       {/* keyed by link, so switching language swaps the video instead of reusing the player */}
-                      <LessonVideo key={full.video_url} url={full.video_url} />
+                      <LessonVideo key={full.video_url} url={full.video_url}
+                        onEnded={role === "student" && full.video_language ? () => countView.mutate(full.video_language as string) : undefined} />
+                      {role === "student" && chapter.watched && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-emerald-600" data-testid="watched-note"><CheckCircle2 size={14} /> {t("lead.browser.watchedHint")}</p>
+                      )}
+                      {isStaffViewer && <div className="mt-3"><VideoStatsPanel syllabusId={subject!.syllabus_id} index={chapterIndex} /></div>}
                     </div>
                   ) : !detail.isLoading && <p className="rounded-xl bg-surface p-3 text-sm text-ink-3" data-testid="no-video">{t("lead.browser.noVideo")}</p>
                 )}

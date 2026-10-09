@@ -115,6 +115,18 @@ def main():
                 sizes[lang] = 0
         check("chapter notes download as a PDF (English and Arabic)", all(sizes.values()), f"{sizes}")
 
+    # 2b+: a student finishing a chapter video is counted; the teacher sees it
+    vid = next((s_ for s_ in subjects if "social" in s_["name"].lower()), None)
+    if vid and student and teacher:
+        chap = next((c for c in vid["chapters"] if c.get("has_video")), None)
+        if chap:
+            idx = int(chap["id"].rsplit("-", 1)[1])
+            lang = chap.get("video_language") or "en"
+            code, r = call(b, "POST", f"/syllabus/{vid['syllabus_id']}/chapters/{idx}/video-view", student, {"language": lang})
+            code2, st = call(b, "GET", f"/syllabus/{vid['syllabus_id']}/chapters/{idx}/video-stats", teacher)
+            ok = code == 200 and code2 == 200 and st["languages"][lang]["views"] >= 1
+            check("a finished video is counted and the teacher sees the views", ok, f"{lang}: {st['languages'][lang] if code2 == 200 else code2}")
+
     # 2c: a teacher can pick a section to assign homework to
     code, secs = call(b, "GET", "/academics/sections", teacher)
     check("teacher can list sections for homework", code == 200 and len(secs) > 0, f"HTTP {code}")

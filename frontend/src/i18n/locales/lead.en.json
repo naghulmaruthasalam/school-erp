@@ -174,7 +174,8 @@
   },
   "lead": {
     "nav": {
-      "announcements": "Announcements"
+      "announcements": "Announcements",
+      "videoViews": "Video Views"
     },
     "browser": {
       "onlyArabic": "This chapter's notes are only available in Arabic for now.",
@@ -192,11 +193,44 @@
       "openPdf": "Open in new tab",
       "pdfFailed": "The PDF could not be loaded. Please try again.",
       "noVideo": "No video has been added for this chapter yet.",
-      "readAsText": "Read as text"
+      "readAsText": "Read as text",
+      "watched": "Watched",
+      "watchedHint": "You have watched this video to the end.",
+      "videoViews": "Video views",
+      "viewsLabel": "Views: {n}",
+      "studentsLabel": "Students: {n}",
+      "ofClass": "of {n} in the class",
+      "whoWatched": "Who watched",
+      "hideWho": "Hide list",
+      "notWatchedYet": "Not watched yet",
+      "noViewsYet": "No student has finished this video yet.",
+      "viewCountNote": "A view is counted when a student plays the video to the end.",
+      "externalNote": "Views are not counted for videos hosted on YouTube or Vimeo.",
+      "statsFailed": "Could not load the video views.",
+      "times": "{n} times",
+      "english": "English",
+      "arabic": "Arabic"
     },
     "theme": {
       "toLight": "Switch to light mode",
       "toDark": "Switch to dark mode"
+    },
+    "videoReport": {
+      "title": "Video views",
+      "subtitle": "How many students have watched each chapter video to the end",
+      "totalViews": "Total views",
+      "videos": "Videos",
+      "avgWatched": "Average share of class",
+      "class": "Class",
+      "subject": "Subject",
+      "chapter": "Chapter",
+      "language": "Language",
+      "views": "Views",
+      "students": "Students",
+      "classSize": "Class size",
+      "percent": "Watched by",
+      "empty": "No chapter videos have been added yet.",
+      "note": "A view is counted when a student plays the video to the end. Videos hosted on YouTube or Vimeo are not counted."
     }
   }
 }
