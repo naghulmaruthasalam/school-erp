@@ -237,12 +237,12 @@ async def test_session_from_another_school_is_not_found(client, school, fake):
 async def test_study_chat_is_grounded_in_the_syllabus_and_persona(client, school, fake):
     as_student()
     sid = (await client.post("/api/v1/copilot/sessions", json={"mode": "study", "subject_id": school["science"], "chapter": "Photosynthesis", "language": "Hindi"})).json()["id"]
-    r = await client.post(f"/api/v1/copilot/sessions/{sid}/messages", json={"message": "What is photosynthesis?"})
+    r = await client.post(f"/api/v1/copilot/sessions/{sid}/messages", json={"message": "What is photosynthesis?", "language": "Hindi"})  # an explicit choice wins
     assert r.status_code == 200 and r.json()["reply"] == "CHAT REPLY"
     kind, system, last = [c for c in fake.calls if c[0] == "chat"][0]
     assert "Study Buddy" in system and "Photosynthesis" in system and "How plants make food" in system
     assert "Secret chapter" not in system  # draft syllabus never reaches a student's prompt
-    assert "Reply in Hindi" in system and last == "What is photosynthesis?"
+    assert "Reply in Hindi" in system and last == "What is photosynthesis?" and "Your name is Riyah" in system
     saved = (await client.get(f"/api/v1/copilot/sessions/{sid}")).json()
     assert [m["role"] for m in saved["messages"]] == ["assistant", "user", "assistant"] and saved["title"] == "What is photosynthesis?"
 
@@ -300,8 +300,8 @@ async def test_without_an_ai_key_study_chat_says_so_and_school_mode_still_works(
 async def test_unsafe_and_off_topic_messages_never_reach_the_chat_model(client, school, fake):
     as_student()
     sid = (await client.post("/api/v1/copilot/sessions", json={"mode": "study", "subject_id": school["science"], "language": "Arabic"})).json()["id"]
-    r1 = await client.post(f"/api/v1/copilot/sessions/{sid}/messages", json={"message": "say a badword"})
-    r2 = await client.post(f"/api/v1/copilot/sessions/{sid}/messages", json={"message": "who won the football match"})
+    r1 = await client.post(f"/api/v1/copilot/sessions/{sid}/messages", json={"message": "say a badword", "language": "Arabic"})
+    r2 = await client.post(f"/api/v1/copilot/sessions/{sid}/messages", json={"message": "who won the football match", "language": "Arabic"})
     assert "لا أستطيع" in r1.json()["reply"]  # localised refusal
     assert r2.json()["reply"] and r2.json()["reply"] != "CHAT REPLY"
     assert not [c for c in fake.calls if c[0] in ("chat", "stream")]

@@ -172,7 +172,7 @@
     "close": "إغلاق",
     "replyLanguage": "لغة الرد",
     "tabs": {
-      "chat": "المحادثة",
+      "chat": "رياح",
       "tools": "الأدوات",
       "history": "السجل"
     },
@@ -474,6 +474,21 @@
       "staff_attendance_today": "حضور الموظفين اليوم",
       "outline_of_this_subject_s_syllabus": "مخطط منهج هذه المادة",
       "give_me_a_platform_overview": "أعطني نظرة عامة على المنصة"
+    },
+    "riyah": {
+      "hello": "مرحبًا، أنا رياح.",
+      "auto": "لغة تلقائية",
+      "speak": "تحدّث إلى رياح",
+      "stopRecording": "إيقاف وإرسال",
+      "recording": "أستمع…",
+      "listening": "أستمع…",
+      "heard": "اللغة المسموعة: {language}",
+      "listen": "استمع",
+      "stopSpeaking": "إيقاف",
+      "autoSpeak": "رياح تنطق ردودها",
+      "micDenied": "لا تستطيع رياح استخدام الميكروفون. اسمح به في المتصفح وحاول مجددًا.",
+      "tooShort": "لم أسمعك جيدًا. تحدّث لفترة أطول قليلًا.",
+      "noVoice": "لا يوجد صوت {language} مثبّت على هذا الجهاز، لذلك يظهر الرد نصًا فقط."
     }
   }
 }

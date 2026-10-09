@@ -191,6 +191,87 @@ async def call_chat_stream(messages: list[dict]) -> AsyncIterator[str]:
         raise LLMError(f"The model stream failed: {exc}") from exc
 
 
+# ---------------------------------------------------------------- speech (Riyah)
+
+_TRANSCRIBE_PROMPT = (
+    "Transcribe this audio exactly as spoken, in the language it is spoken in (do not translate). Respond ONLY with JSON: "
+    '{"text": the transcript, "language": the ISO 639-1 code of the language actually spoken, e.g. "en" or "ar"}. '
+    'If there is no speech, answer {"text": "", "language": "en"}.'
+)
+
+
+async def transcribe(audio: bytes, mime: str = "audio/wav") -> dict:
+    """Speech -> {"text": ..., "language": ISO code}. The language is detected from the audio itself."""
+    _require_configured()
+    try:
+        if provider() == "openai":
+            import io
+
+            ext = {"audio/wav": "wav", "audio/x-wav": "wav", "audio/webm": "webm", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/mp4": "m4a"}.get(mime.split(";")[0], "wav")
+            buf = io.BytesIO(audio)
+            buf.name = f"speech.{ext}"
+            result = await asyncio.wait_for(_openai().audio.transcriptions.create(model="whisper-1", file=buf, response_format="verbose_json"), LLM_TIMEOUT_SECONDS * 2)
+            return {"text": (getattr(result, "text", "") or "").strip(), "language": (getattr(result, "language", "") or "en")}
+        model = _gemini_model(None)
+        response = await asyncio.wait_for(
+            model.generate_content_async(
+                [{"mime_type": mime.split(";")[0], "data": audio}, _TRANSCRIBE_PROMPT],
+                generation_config={"temperature": 0.0, "response_mime_type": "application/json"},
+            ),
+            LLM_TIMEOUT_SECONDS * 2,
+        )
+        data = json.loads(response.text or "{}")
+        return {"text": str(data.get("text") or "").strip(), "language": str(data.get("language") or "en")}
+    except LLMError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Transcription failed: %s", exc)
+        raise LLMError(f"Could not transcribe the audio: {exc}") from exc
+
+
+def wav_from_pcm(pcm: bytes, rate: int = 24000) -> bytes:
+    import io
+    import wave
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(pcm)
+    return buf.getvalue()
+
+
+async def synthesize(text: str, language: str = "English") -> bytes:
+    """Text -> WAV audio spoken in the text's language."""
+    _require_configured()
+    s = get_settings()
+    try:
+        if provider() == "openai":
+            response = await asyncio.wait_for(_openai().audio.speech.create(model="tts-1", voice="alloy", input=text, response_format="wav"), LLM_TIMEOUT_SECONDS)
+            return response.content
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=s.gemini_api_key)
+        response = await asyncio.wait_for(
+            client.aio.models.generate_content(
+                model=s.gemini_tts_model, contents=text,
+                config=types.GenerateContentConfig(
+                    response_modalities=["AUDIO"],
+                    speech_config=types.SpeechConfig(voice_config=types.VoiceConfig(prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=s.gemini_tts_voice))),
+                ),
+            ),
+            LLM_TIMEOUT_SECONDS * 2,
+        )
+        return wav_from_pcm(response.candidates[0].content.parts[0].inline_data.data)
+    except LLMError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Speech synthesis failed: %s", exc)
+        raise LLMError(f"Could not create the audio: {exc}") from exc
+
+
 async def call_vision_json(system: str, user: str, images: list[bytes], retries: int = 2, temperature: float = 0.2) -> dict:
     """Read page images (JPEG bytes) with the model and return a JSON object. Used for answer-sheet transcription."""
     _require_configured()

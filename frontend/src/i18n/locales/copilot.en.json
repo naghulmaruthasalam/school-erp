@@ -172,7 +172,7 @@
     "close": "Close",
     "replyLanguage": "Reply language",
     "tabs": {
-      "chat": "Chat",
+      "chat": "Riyah",
       "tools": "Tools",
       "history": "History"
     },
@@ -474,6 +474,21 @@
       "staff_attendance_today": "Staff attendance today",
       "outline_of_this_subject_s_syllabus": "Outline of this subject's syllabus",
       "give_me_a_platform_overview": "Give me a platform overview"
+    },
+    "riyah": {
+      "hello": "Hi, I'm Riyah.",
+      "auto": "Auto language",
+      "speak": "Speak to Riyah",
+      "stopRecording": "Stop and send",
+      "recording": "Listening…",
+      "listening": "Listening…",
+      "heard": "Heard: {language}",
+      "listen": "Listen",
+      "stopSpeaking": "Stop",
+      "autoSpeak": "Riyah speaks her replies",
+      "micDenied": "Riyah can't use the microphone. Allow it in the browser and try again.",
+      "tooShort": "I didn't catch that. Hold on a little longer and speak.",
+      "noVoice": "This device has no {language} voice installed, so the reply is shown as text only."
     }
   }
 }

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen, CalendarCheck, CalendarRange, ClipboardCheck, FileQuestion, FileText, HeartHandshake, History, Lightbulb, ListChecks, Megaphone,
-  NotebookPen, Download, MessageSquareText, Send, Sparkles, Trash2, Wrench, X, type LucideIcon,
+  NotebookPen, Download, MessageSquareText, Mic, Send, Sparkles, Square, Trash2, Volume2, VolumeX, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
@@ -9,7 +9,7 @@ import { useAuthStore } from "../auth/store";
 import { Button, ErrorText, Select } from "../components/ui";
 import {
   deleteSession, fetchContext, fetchProfile, getSession, listSessions, sendMessage, startSession,
-  streamMessage, type CopilotMessage, type CopilotProfile, type CopilotSession, type Mode, type StudyContextSel, type ToolSpec,
+  streamMessage, streamVoice, type CopilotMessage, type CopilotProfile, type CopilotSession, type Mode, type StudyContextSel, type ToolSpec,
 } from "./api";
 import ContextPicker from "./ContextPicker";
 import { useCopilotText } from "./i18n";
@@ -17,6 +17,14 @@ import Markdown from "./Markdown";
 import { downloadCopilotFile, type CopilotFileInfo } from "./download";
 import ToolRunner from "./ToolRunner";
 import { OPEN_COPILOT_EVENT, type OpenCopilotDetail } from "./events";
+import { guessLanguage, speak, startRecording, stopSpeaking, voiceSupported, type Recorder } from "./voice";
+
+/** A chat message plus what Riyah knows about it: the language it was spoken/written in, and whether it came by voice. */
+type Msg = CopilotMessage & { lang?: string; voice?: boolean };
+const SPEAK_KEY = "riyah.speak";
+const readSpeakPref = () => {
+  try { return localStorage.getItem(SPEAK_KEY) !== "off"; } catch { return true; }
+};
 
 type Tab = "chat" | "tools" | "history";
 
@@ -74,16 +82,28 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("chat");
   const [mode, setMode] = useState<Mode>(profile.default_mode);
-  const [language, setLanguage] = useState(uiLanguage === "ar" ? "Arabic" : "English");
+  // "auto" = Riyah answers in the language of each message (spoken or typed); a named language pins the reply language.
+  const [langChoice, setLangChoice] = useState("auto");
+  const uiLanguageName = uiLanguage === "ar" ? "Arabic" : "English";
+  const language = langChoice === "auto" ? uiLanguageName : langChoice;
+  const pinned = langChoice === "auto" ? undefined : langChoice;
   const [ctx, setCtx] = useState<StudyContextSel>({});
   const [session, setSession] = useState<CopilotSession | null>(null);
-  const [messages, setMessages] = useState<CopilotMessage[]>([]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tool, setTool] = useState<ToolSpec | null>(null);
   const [historyView, setHistoryView] = useState<"chats" | "files">("chats");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const recorderRef = useRef<Recorder | null>(null);
+  const finishRef = useRef<() => Promise<void>>(async () => {});
+  const [recording, setRecording] = useState(false);
+  const [level, setLevel] = useState(0);
+  const [speakOn, setSpeakOn] = useState(readSpeakPref);
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+  const [voiceNote, setVoiceNote] = useState<string | null>(null);
+  const voiceReady = !!profile.voice?.stt && !profile.platform && voiceSupported();
 
   const contextQuery = useQuery({ queryKey: ["copilot", "context"], queryFn: fetchContext, enabled: open && !profile.platform, staleTime: 5 * 60 * 1000 });
   const historyQuery = useQuery({ queryKey: ["copilot", "sessions"], queryFn: listSessions, enabled: open && tab === "history" });
@@ -124,13 +144,22 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
   }, [profile.tools]);
 
   useEffect(() => {
+    if (open) return;
+    recorderRef.current?.cancel();
+    recorderRef.current = null;
+    setRecording(false);
+    stopSpeaking();
+    setSpeakingIdx(null);
+  }, [open]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, open, tab]);
 
   const title = profileTitle(profile);
   const tagline = profileTagline(profile);
   const modeLabel = (m: Mode) => t(`copilot.modes.${m}`);
-  const welcome = mode === "school" ? t("copilot.welcome.school", { title }) : t("copilot.welcome.study", { title, tagline });
+  const welcome = t("copilot.riyah.hello") + " " + (mode === "school" ? t("copilot.welcome.school", { title }) : t("copilot.welcome.study", { title, tagline }));
 
   function reset(next?: Partial<{ mode: Mode; ctx: StudyContextSel; language: string }>) {
     setSession(null);
@@ -138,10 +167,38 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
     setError(null);
     if (next?.mode) setMode(next.mode);
     if (next?.ctx) setCtx(next.ctx);
-    if (next?.language) setLanguage(next.language);
+    if (next?.language) setLangChoice(next.language);
+    stopSpeaking();
+    setSpeakingIdx(null);
+    setVoiceNote(null);
   }
 
   const canChat = mode === "school" || !!ctx.classId;
+
+  async function ensureSession(): Promise<CopilotSession | null> {
+    if (session) return session;
+    try {
+      const started = await startSession(mode, language, ctx);
+      setSession(started);
+      qc.invalidateQueries({ queryKey: ["copilot", "sessions"] });
+      return started;
+    } catch (e) {
+      setError(err(e));
+      return null;
+    }
+  }
+
+  const setLast = (patch: (m: Msg) => Msg, fromEnd = 1) =>
+    setMessages((m) => m.map((x, i) => (i === m.length - fromEnd ? patch(x) : x)));
+
+  /** Reads a reply aloud (the server voice when available, else the device's), in the language it was written in. */
+  async function say(index: number, text: string, lang: string) {
+    setVoiceNote(null);
+    setSpeakingIdx(index);
+    const r = await speak(text, lang, { server: !!profile.voice?.tts, onEnd: () => setSpeakingIdx((cur) => (cur === index ? null : cur)) });
+    if (r === "no-voice") setVoiceNote(t("copilot.riyah.noVoice", { language: languageName(lang) }));
+    if (r === "no-voice" || r === "unsupported") setSpeakingIdx(null);
+  }
 
   async function send(raw: string) {
     const text = raw.trim();
@@ -149,15 +206,8 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
     setError(null);
     setInput("");
     setBusy(true);
-    let active = session;
-    try {
-      if (!active) {
-        active = await startSession(mode, language, ctx);
-        setSession(active);
-        qc.invalidateQueries({ queryKey: ["copilot", "sessions"] });
-      }
-    } catch (e) {
-      setError(err(e));
+    const active = await ensureSession();
+    if (!active) {
       setBusy(false);
       setInput(text);
       return;
@@ -166,17 +216,18 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
     let received = false;
     const append = (chunk: string) => {
       received = true;
-      setMessages((m) => m.map((x, i) => (i === m.length - 1 ? { ...x, content: x.content + chunk } : x)));
+      setLast((x) => ({ ...x, content: x.content + chunk }));
     };
     try {
-      await streamMessage(active.id, text, append);
+      await streamMessage(active.id, text, append, undefined, pinned);
+      setLast((x) => ({ ...x, lang: pinned ?? guessLanguage(text, uiLanguageName) }));
     } catch (e) {
       if (received) {
         setError(err(e));
       } else {
         try {
           // The stream couldn't start (e.g. an expired token being refreshed): use the plain endpoint.
-          const res = await sendMessage(active.id, text);
+          const res = await sendMessage(active.id, text, pinned);
           append(res.reply);
         } catch (e2) {
           setMessages((m) => m.slice(0, -2));
@@ -190,13 +241,76 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
     }
   }
 
+  async function toggleMic() {
+    if (recording) return void finishRecording();
+    if (busy || !canChat) return;
+    setError(null);
+    setVoiceNote(null);
+    stopSpeaking();
+    setSpeakingIdx(null);
+    try {
+      recorderRef.current = await startRecording(setLevel, 60, () => void finishRef.current());
+      setRecording(true);
+    } catch {
+      setError(t("copilot.riyah.micDenied"));
+    }
+  }
+
+  async function finishRecording() {
+    const rec = recorderRef.current;
+    recorderRef.current = null;
+    setRecording(false);
+    setLevel(0);
+    if (!rec) return;
+    const wav = await rec.stop();
+    if (wav.size < 6000) { // under ~0.2 s of audio: nothing was said
+      setError(t("copilot.riyah.tooShort"));
+      return;
+    }
+    setBusy(true);
+    const active = await ensureSession();
+    if (!active) return void setBusy(false);
+    const replyIndex = messages.length + 1;
+    setMessages((m) => [...m, { role: "user", content: "", voice: true }, { role: "assistant", content: "" }]);
+    let reply = "";
+    let replyLang = pinned ?? uiLanguageName;
+    try {
+      await streamVoice(active.id, wav, pinned, {
+        onTranscript: (tr) => {
+          replyLang = tr.reply_language || tr.language || replyLang;
+          setLast((x) => ({ ...x, content: tr.text, lang: tr.language }), 2);
+        },
+        onChunk: (c) => {
+          reply += c;
+          setLast((x) => ({ ...x, content: x.content + c, lang: replyLang }));
+        },
+      });
+      if (speakOn && reply) void say(replyIndex, reply, replyLang);
+    } catch (e) {
+      if (!reply) setMessages((m) => m.slice(0, -2));
+      setError(err(e));
+    } finally {
+      setBusy(false);
+      qc.invalidateQueries({ queryKey: ["copilot", "sessions"] });
+    }
+  }
+
+  finishRef.current = finishRecording;
+
+  function toggleSpeak() {
+    const next = !speakOn;
+    setSpeakOn(next);
+    try { localStorage.setItem(SPEAK_KEY, next ? "on" : "off"); } catch { /* preference only */ }
+    if (!next) { stopSpeaking(); setSpeakingIdx(null); }
+  }
+
   const loadSession = useMutation({
     mutationFn: getSession,
     onSuccess: (s) => {
       setSession(s);
       setMessages(s.messages);
       setMode(s.mode);
-      setLanguage(s.language);
+      setLangChoice("auto");
       setCtx({ classId: s.context.class_id ?? undefined, subjectId: s.context.subject_id ?? undefined, chapter: s.context.chapter ?? undefined, studentId: s.context.student_id ?? undefined });
       setTab("chat");
     },
@@ -242,9 +356,10 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
             <Select
               aria-label={t("copilot.replyLanguage")}
               className="!min-h-8 !w-auto !px-2 !py-0 !text-xs"
-              value={language}
+              value={langChoice}
               onChange={(e) => reset({ language: e.target.value })}
             >
+              <option value="auto">{t("copilot.riyah.auto")}</option>
               {profile.languages.map((l) => (
                 <option key={l} value={l}>{languageName(l)}</option>
               ))}
@@ -258,7 +373,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
         {/* Tabs */}
         <div className="px-4 pb-2">
           <div className="lg-seg w-full [&>button]:flex-1">
-            <button aria-pressed={tab === "chat"} onClick={() => setTab("chat")}><MessageSquareText size={14} className="me-1 inline" />{t("copilot.tabs.chat")}</button>
+            <button aria-pressed={tab === "chat"} onClick={() => setTab("chat")}><Mic size={14} className="me-1 inline" />{t("copilot.tabs.chat")}</button>
             {profile.tools.length > 0 && (
               <button aria-pressed={tab === "tools"} onClick={() => { setTab("tools"); setTool(null); }}><Wrench size={14} className="me-1 inline" />{t("copilot.tabs.tools")}</button>
             )}
@@ -295,12 +410,27 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
               {messages.map((m, i) =>
                 m.role === "user" ? (
                   <div key={i} className="ms-auto max-w-[85%] rounded-[20px] rounded-ee-md rtl:ms-0 rtl:me-auto rtl:rounded-ee-[20px] rtl:rounded-es-md bg-gradient-to-br from-accent to-accent-2 px-3.5 py-2 text-sm leading-snug text-white shadow-md shadow-accent/25">
-                    {m.content}
+                    {m.voice && <Mic size={12} className="me-1 inline opacity-80" />}
+                    {m.content || (m.voice ? <span className="opacity-80">{t("copilot.riyah.listening")}</span> : null)}
+                    {m.voice && m.lang && <span className="mt-0.5 block text-[10px] uppercase tracking-wide opacity-80">{t("copilot.riyah.heard", { language: languageName(m.lang) })}</span>}
                   </div>
                 ) : (
                   <div key={i} className="max-w-[92%] rtl:ms-auto rounded-[20px] rounded-es-md rtl:rounded-es-[20px] rtl:rounded-ee-md bg-surface-3 px-3.5 py-2.5 text-ink">
                     {m.content ? (
-                      <Markdown>{m.content}</Markdown>
+                      <>
+                        <Markdown>{m.content}</Markdown>
+                        {!busy && (
+                          <button
+                            type="button"
+                            className="mt-1 inline-flex items-center gap-1 text-[11px] text-ink-3 hover:text-accent"
+                            aria-label={speakingIdx === i ? t("copilot.riyah.stopSpeaking") : t("copilot.riyah.listen")}
+                            onClick={() => (speakingIdx === i ? (stopSpeaking(), setSpeakingIdx(null)) : void say(i, m.content, m.lang ?? guessLanguage(m.content, language)))}
+                          >
+                            {speakingIdx === i ? <Square size={11} /> : <Volume2 size={12} />}
+                            {speakingIdx === i ? t("copilot.riyah.stopSpeaking") : t("copilot.riyah.listen")}
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <div className="flex w-fit gap-1 py-1" aria-label={t("copilot.thinking")}>
                         {[0, 150, 300].map((d) => (
@@ -321,16 +451,42 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
               {error && <ErrorText>{error}</ErrorText>}
               <div ref={bottomRef} />
             </div>
+            {voiceNote && <p className="px-4 pb-1 text-[11px] text-amber-600 dark:text-amber-400">{voiceNote}</p>}
+            {recording && (
+              <div className="flex items-center gap-2 px-4 pb-1 text-xs text-ink-2" role="status">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                {t("copilot.riyah.recording")}
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3"><span className="block h-full rounded-full bg-accent transition-[width] duration-100" style={{ width: `${Math.round(level * 100)}%` }} /></span>
+              </div>
+            )}
             <div className="flex gap-2 border-t border-line p-3">
+              {voiceReady && (
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  disabled={busy || !canChat}
+                  aria-pressed={recording}
+                  aria-label={recording ? t("copilot.riyah.stopRecording") : t("copilot.riyah.speak")}
+                  title={recording ? t("copilot.riyah.stopRecording") : t("copilot.riyah.speak")}
+                  className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition disabled:opacity-40 ${recording ? "bg-red-500 text-white animate-pulse" : "bg-surface-3 text-ink-2 hover:text-accent"}`}
+                >
+                  {recording ? <Square size={16} /> : <Mic size={18} />}
+                </button>
+              )}
               <input
                 className="lg-field"
                 value={input}
-                disabled={!canChat}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send(input)}
                 placeholder={canChat ? t("copilot.input.placeholder") : t("copilot.input.chooseClass")}
                 maxLength={2000}
+                disabled={!canChat || recording}
               />
+              {voiceReady && (
+                <button type="button" onClick={toggleSpeak} aria-pressed={speakOn} aria-label={t("copilot.riyah.autoSpeak")} title={t("copilot.riyah.autoSpeak")} className="grid h-11 w-9 shrink-0 place-items-center text-ink-3 hover:text-accent">
+                  {speakOn ? <Volume2 size={17} /> : <VolumeX size={17} />}
+                </button>
+              )}
               <Button onClick={() => send(input)} disabled={busy || !canChat || !input.trim()} className="!px-3.5" aria-label={t("copilot.send")}>
                 <Send size={16} className="rtl:-scale-x-100" />
               </Button>

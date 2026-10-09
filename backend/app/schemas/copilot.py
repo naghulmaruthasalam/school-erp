@@ -15,6 +15,7 @@ class StartSessionRequest(BaseModel):
 
 class MessageRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
+    language: str | None = Field(default=None, max_length=30)  # "auto"/None: answer in the language of the message
 
 
 class ToolContext(BaseModel):
@@ -55,3 +56,8 @@ class SessionSummary(BaseModel):
     label: str | None = None
     message_count: int
     updated_at: datetime
+
+
+class SpeakRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=1500)
+    language: str = Field(default="English", max_length=30)

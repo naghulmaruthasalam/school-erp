@@ -40,6 +40,8 @@ export interface CopilotProfile {
   tools: ToolSpec[];
   languages: string[];
   ai_configured: boolean;
+  /** Riyah can listen (stt) and speak (tts) when the AI is configured. */
+  voice?: { stt: boolean; tts: boolean };
 }
 
 export interface CopilotContextOptions {
@@ -99,37 +101,28 @@ async function real_startSession(mode: Mode, language: string, ctx: StudyContext
   return data;
 }
 
-async function real_sendMessage(sessionId: string, message: string): Promise<{ reply: string; title: string | null }> {
-  const { data } = await api.post(`/copilot/sessions/${sessionId}/messages`, { message });
+async function real_sendMessage(sessionId: string, message: string, language?: string): Promise<{ reply: string; title: string | null; language?: string }> {
+  const { data } = await api.post(`/copilot/sessions/${sessionId}/messages`, { message, language: language ?? null });
   return data;
 }
 
-/** Streams the reply (Server-Sent Events). Calls onChunk for each piece; resolves with the final title.
- * Throws an Error whose message is the server's explanation if the request itself is rejected (e.g. 429). */
-async function real_streamMessage(
-  sessionId: string,
-  message: string,
-  onChunk: (text: string) => void,
-  signal?: AbortSignal,
-): Promise<string | null> {
-  const token = authStore.getState().accessToken;
-  const res = await fetch(`${apiBaseUrl}/copilot/sessions/${sessionId}/messages/stream`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ message }),
-    signal,
-  });
-  if (!res.ok || !res.body) {
-    let detail = `Request failed (${res.status})`;
-    try {
-      const body = await res.json();
-      if (typeof body.detail === "string") detail = body.detail;
-    } catch {
-      /* keep the generic message */
-    }
-    throw new Error(detail);
+async function failFromResponse(res: Response): Promise<never> {
+  let detail = `Request failed (${res.status})`;
+  try {
+    const body = await res.json();
+    if (typeof body.detail === "string") detail = body.detail;
+  } catch {
+    /* keep the generic message */
   }
-  const reader = res.body.getReader();
+  throw new Error(detail);
+}
+
+interface SseHandlers { onChunk: (text: string) => void; onTranscript?: (t: Transcript) => void }
+export interface Transcript { text: string; language: string; code: string; reply_language: string }
+
+/** Reads Server-Sent Events: chunk / done / transcript / error. Resolves with the final title. */
+async function readEvents(res: Response, h: SseHandlers): Promise<string | null> {
+  const reader = res.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let title: string | null = null;
@@ -142,12 +135,44 @@ async function real_streamMessage(
     for (const raw of events) {
       if (!raw.startsWith("data: ")) continue;
       const evt = JSON.parse(raw.slice(6));
-      if (evt.type === "chunk") onChunk(evt.text);
+      if (evt.type === "chunk") h.onChunk(evt.text);
+      else if (evt.type === "transcript") h.onTranscript?.(evt as Transcript);
       else if (evt.type === "done") title = evt.title ?? null;
       else if (evt.type === "error") throw new Error(evt.detail);
     }
   }
   return title;
+}
+
+/** Riyah, by voice: sends the recording; the server transcribes it (detecting the language) and answers in that language. */
+async function real_streamVoice(sessionId: string, audio: Blob, language: string | undefined, h: SseHandlers, signal?: AbortSignal): Promise<string | null> {
+  const token = authStore.getState().accessToken;
+  const form = new FormData();
+  form.append("audio", audio, "speech.wav");
+  if (language) form.append("language", language);
+  const res = await fetch(`${apiBaseUrl}/copilot/sessions/${sessionId}/voice`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: form, signal });
+  if (!res.ok || !res.body) return failFromResponse(res);
+  return readEvents(res, h);
+}
+
+/** Streams the reply (Server-Sent Events). Calls onChunk for each piece; resolves with the final title.
+ * Throws an Error whose message is the server's explanation if the request itself is rejected (e.g. 429). */
+async function real_streamMessage(
+  sessionId: string,
+  message: string,
+  onChunk: (text: string) => void,
+  signal?: AbortSignal,
+  language?: string,
+): Promise<string | null> {
+  const token = authStore.getState().accessToken;
+  const res = await fetch(`${apiBaseUrl}/copilot/sessions/${sessionId}/messages/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ message, language: language ?? null }),
+    signal,
+  });
+  if (!res.ok || !res.body) return failFromResponse(res);
+  return readEvents(res, { onChunk });
 }
 
 async function real_runTool<T = Record<string, unknown>>(
@@ -200,19 +225,25 @@ export async function startSession(mode: Mode, language: string, ctx: StudyConte
   return real_startSession(mode, language, ctx);
 }
 
-export async function sendMessage(sessionId: string, message: string): Promise<{ reply: string; title: string | null }> {
+export async function sendMessage(sessionId: string, message: string, language?: string): Promise<{ reply: string; title: string | null }> {
   if (isDemo()) return (await demo()).sendMessage(sessionId, message);
   if (sessionId === PLATFORM_ID) return { reply: await platformReply(message), title: message.slice(0, 60) };
-  return real_sendMessage(sessionId, message);
+  return real_sendMessage(sessionId, message, language);
 }
 
-export async function streamMessage(sessionId: string, message: string, onChunk: (text: string) => void, signal?: AbortSignal): Promise<string | null> {
+export async function streamMessage(sessionId: string, message: string, onChunk: (text: string) => void, signal?: AbortSignal, language?: string): Promise<string | null> {
   if (isDemo()) return (await demo()).streamMessage(sessionId, message, onChunk);
   if (sessionId === PLATFORM_ID) {
     onChunk(await platformReply(message));
     return message.slice(0, 60);
   }
-  return real_streamMessage(sessionId, message, onChunk, signal);
+  return real_streamMessage(sessionId, message, onChunk, signal, language);
+}
+
+/** Riyah by voice (not available in the demo or in the platform chat). */
+export async function streamVoice(sessionId: string, audio: Blob, language: string | undefined, handlers: SseHandlers, signal?: AbortSignal): Promise<string | null> {
+  if (isDemo() || sessionId === PLATFORM_ID) throw new Error("Voice isn't available here.");
+  return real_streamVoice(sessionId, audio, language, handlers, signal);
 }
 
 export async function runTool<T = Record<string, unknown>>(key: string, ctx: StudyContextSel, params: Record<string, unknown>, language: string): Promise<T> {

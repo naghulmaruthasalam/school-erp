@@ -2,7 +2,7 @@
 import json
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import Response, StreamingResponse
 
 from app.copilot import files, grounding, llm, service, sessions
@@ -19,6 +19,7 @@ from app.schemas.copilot import (
     MessageRequest,
     SessionOut,
     SessionSummary,
+    SpeakRequest,
     StartSessionRequest,
     ToolRequest,
 )
@@ -63,7 +64,7 @@ async def my_profile(current: CurrentUser = Depends(get_current_user)) -> dict:
         return {
             "enabled": True, "platform": True, "role": current.role.value, "title": profile.title, "tagline": profile.tagline,
             "modes": ["school"], "default_mode": "school", "quick_actions": profile.quick_actions, "tools": [],
-            "languages": LANGUAGES, "ai_configured": llm.is_configured(),
+            "languages": LANGUAGES, "ai_configured": llm.is_configured(), "voice": {"stt": llm.is_configured(), "tts": llm.is_configured()},
         }
     modes = ["school"] + (["study"] if profile.study_enabled else [])
     return {
@@ -77,6 +78,7 @@ async def my_profile(current: CurrentUser = Depends(get_current_user)) -> dict:
         "tools": [FEATURES[k].spec() for k in profile.tools if k in FEATURES],
         "languages": LANGUAGES,
         "ai_configured": llm.is_configured(),
+        "voice": {"stt": llm.is_configured(), "tts": llm.is_configured()},  # Riyah can listen and speak when the AI is configured
     }
 
 
@@ -143,7 +145,7 @@ async def delete_session(session_id: str, current: CurrentUser = Depends(copilot
 @router.post("/sessions/{session_id}/messages")
 async def send_message(session_id: str, payload: MessageRequest, current: CurrentUser = Depends(copilot_user)) -> dict:
     session = await sessions.get_owned(current, session_id)
-    return await service.send_message(current, _profile(current), session, payload.message)
+    return await service.send_message(current, _profile(current), session, payload.message, payload.language)
 
 
 @router.post("/sessions/{session_id}/messages/stream")
@@ -153,16 +155,73 @@ async def stream_message(session_id: str, payload: MessageRequest, current: Curr
     session = await sessions.get_owned(current, session_id)
     profile = _profile(current)
     message = payload.message
+    requested = payload.language
 
     async def events():
         try:
-            async for kind, value in service.stream_message(current, profile, session, message):
+            async for kind, value in service.stream_message(current, profile, session, message, requested):
                 body = {"type": "chunk", "text": value} if kind == "chunk" else {"type": "done", "title": value}
                 yield f"data: {json.dumps(body)}\n\n"
         except AppError as exc:
             yield f"data: {json.dumps({'type': 'error', 'detail': exc.detail})}\n\n"
 
     return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+# ------------------------------------------------------------------ Riyah voice
+
+@router.post("/sessions/{session_id}/voice")
+async def voice_message(session_id: str, audio: UploadFile = File(...), language: str | None = Form(None), current: CurrentUser = Depends(copilot_user)):
+    """The user spoke: transcribe the audio (detecting the language), then answer in that language. Server-Sent Events:
+    {"type":"transcript","text":"...","language":"Arabic","code":"ar"}, then the same chunk / done events as /messages/stream."""
+    from app.copilot import language as lang_mod
+
+    session = await sessions.get_owned(current, session_id)
+    profile = _profile(current)
+    max_bytes = get_settings().riyah_max_audio_mb * 1024 * 1024
+    data = await audio.read(max_bytes + 1)
+    if len(data) > max_bytes:
+        raise ValidationAppError(f"That recording is too long (limit {get_settings().riyah_max_audio_mb} MB)")
+    if len(data) < 200:
+        raise ValidationAppError("I could not hear anything. Please try again.")
+    await sessions.enforce_rate_limit(current, get_settings().copilot_messages_per_minute)
+    mime = audio.content_type or "audio/wav"
+
+    async def events():
+        try:
+            try:
+                heard = await llm.transcribe(data, mime)
+            except llm.LLMNotConfigured as exc:
+                raise AppError(503, str(exc)) from exc
+            except llm.LLMError as exc:
+                logger.warning("Riyah transcription failed: %s", exc)
+                raise AppError(502, "I could not understand the recording. Please try again or type your message.") from exc
+            text = (heard.get("text") or "").strip()
+            if not text:
+                raise AppError(422, "I could not hear anything. Please try again.")
+            spoken = lang_mod.name_from_code(heard.get("language")) or lang_mod.detect_script_language(text) or session.language
+            chosen = language if language and language.strip().lower() not in ("", "auto") else spoken
+            yield f"data: {json.dumps({'type': 'transcript', 'text': text, 'language': spoken, 'code': lang_mod.code_of(spoken), 'reply_language': chosen}, ensure_ascii=False)}\n\n"
+            async for kind, value in service.stream_message(current, profile, session, text, chosen, skip_rate_limit=True):
+                body = {"type": "chunk", "text": value} if kind == "chunk" else {"type": "done", "title": value}
+                yield f"data: {json.dumps(body, ensure_ascii=False)}\n\n"
+        except AppError as exc:
+            yield f"data: {json.dumps({'type': 'error', 'detail': exc.detail})}\n\n"
+
+    return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@router.post("/speak")
+async def speak(payload: SpeakRequest, current: CurrentUser = Depends(copilot_user)) -> Response:
+    """Riyah's voice: the text spoken aloud (WAV). The app falls back to the browser's own voices if this is unavailable."""
+    await sessions.enforce_rate_limit(current, get_settings().copilot_messages_per_minute * 2)
+    try:
+        audio = await llm.synthesize(payload.text, payload.language)
+    except llm.LLMNotConfigured as exc:
+        raise AppError(503, str(exc)) from exc
+    except llm.LLMError as exc:
+        raise AppError(503, "Voice playback is not available on the server.") from exc
+    return Response(audio, media_type="audio/wav", headers={"Cache-Control": "no-store"})
 
 
 # ------------------------------------------------------------------ tools

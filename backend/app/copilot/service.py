@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator
 
 from app.copilot import llm, safety, sessions
 from app.copilot.grounding import StudyContext, build_study_context
+from app.copilot.language import resolve_reply_language
 from app.core.lang import normalize_lang
 from app.copilot.off_topic import inappropriate_reply, off_topic_reply
 from app.copilot.profiles import EXPLAIN_RULES, FORMAT_RULES, SAFETY_RULES, Profile
@@ -29,9 +30,9 @@ _NOT_CONFIGURED = (
 
 def welcome_message(profile: Profile, mode: str, ctx: StudyContext | None) -> str:
     if mode == "school":
-        return f"Hi! I'm your {profile.title}. Ask me about your own school information, for example attendance, homework, timetable or results."
+        return f"Hi! I'm Riyah, your {profile.title}. Ask me about your own school information, for example attendance, homework, timetable or results. You can type or speak."
     where = f" {ctx.label}" if ctx else ""
-    return f"Hi! I'm your {profile.title}. I've loaded{where}. {profile.tagline}. What would you like to do?"
+    return f"Hi! I'm Riyah, your {profile.title}. I've loaded{where}. {profile.tagline}. What would you like to do? You can type or speak."
 
 
 async def context_for_session(current: CurrentUser, session: CopilotSession) -> StudyContext | None:
@@ -53,14 +54,14 @@ def _system_prompt(profile: Profile, ctx: StudyContext, language: str) -> str:
     subject = f"Subject: {ctx.subject_name}\n" if ctx.subject_name else ""
     chapter = f"Chapter: {ctx.chapter}\n" if ctx.chapter else ""
     return (
-        f"{profile.persona}\n\n{EXPLAIN_RULES}\n\n{SAFETY_RULES}\n\n{FORMAT_RULES}\n\n"
+        f"Your name is Riyah. {profile.persona}\n\n{EXPLAIN_RULES}\n\n{SAFETY_RULES}\n\n{FORMAT_RULES}\n\n"
         f"Class: {ctx.class_name}\n{subject}{chapter}"
-        f"Default reply language: {language}. Reply in {language} even if the user writes in another language, "
-        "unless they explicitly ask you to translate something.\n\n" + material
+        f"Reply language: {language}. Reply in {language}, the language the user is using for this message, "
+        "unless they explicitly ask you to translate something or to answer in another language.\n\n" + material
     )
 
 
-async def _school_reply(current: CurrentUser, session: CopilotSession, message: str) -> str:
+async def _school_reply(current: CurrentUser, session: CopilotSession, message: str, language: str = "English") -> str:
     settings = get_settings()
     if settings.gemini_api_key:
         try:
@@ -68,7 +69,8 @@ async def _school_reply(current: CurrentUser, session: CopilotSession, message: 
             from app.ai.tools import get_tools_for_role
 
             tools, dispatch = get_tools_for_role(current.role)
-            text, conversation_id = await run_assistant(current, message, tools, dispatch, session.ai_conversation_id)
+            ask = message if language == "English" else f"{message}\n\n(Answer in {language}.)"
+            text, conversation_id = await run_assistant(current, ask, tools, dispatch, session.ai_conversation_id)
             session.ai_conversation_id = conversation_id
             return text
         except Exception:  # noqa: BLE001
@@ -82,16 +84,16 @@ async def _school_reply(current: CurrentUser, session: CopilotSession, message: 
         return _UNAVAILABLE
 
 
-async def _gate_reply(profile: Profile, session: CopilotSession, ctx: StudyContext | None, message: str) -> str | None:
+async def _gate_reply(profile: Profile, session: CopilotSession, ctx: StudyContext | None, message: str, language: str | None = None) -> str | None:
     """A fixed reply if the message is unsafe or off-topic, else None."""
     scope = (f"{ctx.label} and closely related study topics" if ctx else None) or profile.scope
     if session.mode == "school":
         scope = f"{profile.scope}; the user's own school information"
     verdict = await safety.check(message, scope)
     if verdict.flagged:
-        return inappropriate_reply(session.language)
+        return inappropriate_reply(language or session.language)
     if not verdict.on_topic:
-        return off_topic_reply(session.language)
+        return off_topic_reply(language or session.language)
     return None
 
 
@@ -117,42 +119,45 @@ async def _finish(session: CopilotSession, message: str, reply: str) -> None:
     await sessions.append(session, "assistant", reply)
 
 
-async def send_message(current: CurrentUser, profile: Profile, session: CopilotSession, message: str) -> dict:
+async def send_message(current: CurrentUser, profile: Profile, session: CopilotSession, message: str, reply_language: str | None = None) -> dict:
     message = _validate(message)
     await sessions.enforce_rate_limit(current, get_settings().copilot_messages_per_minute)
+    lang = resolve_reply_language(message, reply_language, session.language)  # Riyah answers in the language it was spoken to in
     ctx = await context_for_session(current, session)
-    fixed = await _gate_reply(profile, session, ctx, message)
+    fixed = await _gate_reply(profile, session, ctx, message, lang)
     if fixed is not None:
         reply = fixed
     elif session.mode == "school":
-        reply = await _school_reply(current, session, message)
+        reply = await _school_reply(current, session, message, lang)
     elif not llm.is_configured():
         reply = _NOT_CONFIGURED
     else:
         try:
-            reply = await llm.call_chat(_history(session, _system_prompt(profile, ctx, session.language), message))
+            reply = await llm.call_chat(_history(session, _system_prompt(profile, ctx, lang), message))
         except llm.LLMError:
             logger.exception("Copilot chat failed")
             reply = _UNAVAILABLE
     await _finish(session, message, reply)
-    return {"reply": reply, "title": session.title}
+    return {"reply": reply, "title": session.title, "language": lang}
 
 
 async def stream_message(
-    current: CurrentUser, profile: Profile, session: CopilotSession, message: str
+    current: CurrentUser, profile: Profile, session: CopilotSession, message: str, reply_language: str | None = None, *, skip_rate_limit: bool = False,
 ) -> AsyncIterator[tuple[str, str | None]]:
     """Yields ("chunk", text) pieces then one ("done", title). Study replies stream from the model; fixed
     replies and school-data answers arrive as a single chunk."""
     message = _validate(message)
-    await sessions.enforce_rate_limit(current, get_settings().copilot_messages_per_minute)
+    if not skip_rate_limit:
+        await sessions.enforce_rate_limit(current, get_settings().copilot_messages_per_minute)
+    lang = resolve_reply_language(message, reply_language, session.language)
     ctx = await context_for_session(current, session)
-    fixed = await _gate_reply(profile, session, ctx, message)
+    fixed = await _gate_reply(profile, session, ctx, message, lang)
     parts: list[str] = []
     if fixed is not None:
         parts.append(fixed)
         yield ("chunk", fixed)
     elif session.mode == "school":
-        reply = await _school_reply(current, session, message)
+        reply = await _school_reply(current, session, message, lang)
         parts.append(reply)
         yield ("chunk", reply)
     elif not llm.is_configured():
@@ -160,7 +165,7 @@ async def stream_message(
         yield ("chunk", _NOT_CONFIGURED)
     else:
         try:
-            async for chunk in llm.call_chat_stream(_history(session, _system_prompt(profile, ctx, session.language), message)):
+            async for chunk in llm.call_chat_stream(_history(session, _system_prompt(profile, ctx, lang), message)):
                 parts.append(chunk)
                 yield ("chunk", chunk)
         except llm.LLMError:
@@ -170,3 +175,4 @@ async def stream_message(
             yield ("chunk", fallback)
     await _finish(session, message, "".join(parts))
     yield ("done", session.title)
+    # (the reply language is announced by the caller, which resolves it the same way)
