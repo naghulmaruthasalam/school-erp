@@ -43,7 +43,12 @@ function LessonVideo({ url, onEnded }: { url: string; onEnded?: () => void }) {
     return <iframe src={embed} title={t("lead.browser.video")} allow="fullscreen; picture-in-picture" allowFullScreen className="aspect-video w-full rounded-xl bg-black" />;
   }
   if (failed) {
-    return <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-accent-fg hover:underline">{t("lead.browser.openVideo")}</a>;
+    return (
+      <div className="space-y-1.5 rounded-xl bg-surface p-3" data-testid="video-failed">
+        <p className="text-sm text-ink-2">{t("lead.browser.videoFailed")}</p>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-accent-fg hover:underline">{t("lead.browser.openVideo")}</a>
+      </div>
+    );
   }
   return <video controls preload="metadata" playsInline src={url} onError={() => setFailed(true)} onEnded={onEnded} className="w-full max-h-[26rem] rounded-xl bg-black" />;
 }

@@ -54,6 +54,9 @@ class Settings(BaseSettings):
 
     # How long a locally-served file link (used when S3 isn't configured) stays valid.
     local_file_url_expire_seconds: int = 3600
+    # Where uploads are kept when S3 isn't configured. Default: backend/uploads (inside the code folder).
+    # Point it outside the code folder so files survive replacing the folder with a newer build.
+    local_uploads_dir: str | None = None
 
     # Outbound email (password-reset OTPs). Leave smtp_host empty to only log messages.
     smtp_host: str | None = None

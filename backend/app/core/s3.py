@@ -13,7 +13,7 @@ settings = get_settings()
 _s3_client = None
 _use_local_storage = not settings.aws_access_key_id or not settings.s3_bucket_name
 
-LOCAL_UPLOADS_DIR = Path(__file__).parent.parent.parent / "uploads"
+LOCAL_UPLOADS_DIR = Path(settings.local_uploads_dir).expanduser() if settings.local_uploads_dir else Path(__file__).parent.parent.parent / "uploads"
 
 
 def _ensure_local_dir():

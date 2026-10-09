@@ -209,7 +209,8 @@
       "statsFailed": "Could not load the video views.",
       "times": "{n} times",
       "english": "English",
-      "arabic": "Arabic"
+      "arabic": "Arabic",
+      "videoFailed": "The video could not be played here. If the link below says the file was not found, ask your school to re-attach the video; if it downloads, your browser may not support this video format."
     },
     "theme": {
       "toLight": "Switch to light mode",

@@ -12,6 +12,8 @@ export MONGODB_URI="${LOCAL_MONGODB_URI:-mongodb://localhost:27017}"
 export MONGODB_DB_NAME="${LOCAL_MONGODB_DB:-school_erp_localtest}"
 # Keep uploads (videos, homework files) on this machine too: blank the cloud storage keys that backend/.env may hold.
 export AWS_ACCESS_KEY_ID="" AWS_SECRET_ACCESS_KEY="" S3_BUCKET_NAME=""
+# Keep uploaded files (videos, homework) outside the code folder, so unzipping a newer build does not lose them.
+export LOCAL_UPLOADS_DIR="${LOCAL_UPLOADS_DIR:-$HOME/.school-erp-local/uploads}"
 
 start_mongo() {
   if (exec 3<>/dev/tcp/127.0.0.1/27017) 2>/dev/null; then echo "MongoDB already listening on 27017"; return; fi
@@ -29,7 +31,12 @@ start_mongo() {
 
 case "${1:-test}" in
   test)  start_mongo; ./linux-test-flow.sh ;;
-  run)   start_mongo; ./linux-run.sh ;;
+  run)   start_mongo
+         # first run on this machine (or the files were lost): attach the chapter videos from ./media so they play
+         if [ -d media ] && ! ls "$LOCAL_UPLOADS_DIR"/*syllabus_document* >/dev/null 2>&1; then
+           echo "No chapter videos found in $LOCAL_UPLOADS_DIR - attaching the ones in ./media ..."; ./linux-load-videos.sh || true
+         fi
+         ./linux-run.sh ;;
   videos) start_mongo; ./linux-load-videos.sh ;;   # (re)attach the chapter videos; files are saved in THIS folder's backend/uploads
   reset)
     start_mongo
