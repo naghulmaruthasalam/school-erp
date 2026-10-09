@@ -1,11 +1,12 @@
 import VideoViewsReport from "../../components/VideoViewsReport";
+import TicketDesk from "../../components/TicketDesk";
 import { Route } from "react-router-dom";
 import type { NavGroup } from "../../layouts/DashboardLayout";
 import {
   DashboardIcon, ProfileIcon, StudentsIcon, TeachersIcon, AdmissionsIcon,
   LeaveIcon, NotificationsIcon, LibraryIcon, TransportIcon, TimetableIcon,
   AttendanceIcon, ExamsIcon, FeesIcon, CalendarIcon, AcademicIcon,
-  HomeworkIcon, ReportIcon, DocumentsIcon, SettingsIcon, AboutIcon, SyllabusIcon
+  HomeworkIcon, ReportIcon, DocumentsIcon, SettingsIcon, AboutIcon, SyllabusIcon, SupportIcon,
 } from "../../components/Icons";
 import AdminDashboard from "./Dashboard";
 import AdmissionDetail from "./AdmissionDetail";
@@ -86,6 +87,7 @@ export const adminNavGroups: NavGroup[] = [
     items: [
       { label: "admin.nav.leaveRequests", to: "/admin/leave", icon: LeaveIcon },
       { label: "admin.nav.notifications", to: "/admin/notifications", icon: NotificationsIcon },
+      { label: "lead.nav.tickets", to: "/admin/tickets", icon: SupportIcon },
       { label: "admin.nav.calendar", to: "/admin/calendar", icon: CalendarIcon },
     ],
   },
@@ -114,6 +116,7 @@ export const adminChildRoutes = (
     <Route path="admissions/:id" element={<AdmissionDetail />} />
     <Route path="leave" element={<LeaveList />} />
     <Route path="notifications" element={<NotificationList />} />
+    <Route path="tickets" element={<TicketDesk />} />
     <Route path="library" element={<LibraryList />} />
     <Route path="transport" element={<TransportList />} />
     <Route path="timetable" element={<TimetableList />} />

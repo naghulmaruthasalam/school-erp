@@ -175,7 +175,9 @@
   "lead": {
     "nav": {
       "announcements": "Announcements",
-      "videoViews": "Video Views"
+      "videoViews": "Video Views",
+      "support": "Support",
+      "tickets": "Tickets"
     },
     "browser": {
       "onlyArabic": "This chapter's notes are only available in Arabic for now.",
@@ -232,6 +234,73 @@
       "percent": "Watched by",
       "empty": "No chapter videos have been added yet.",
       "note": "A view is counted when a student plays the video to the end. Videos hosted on YouTube or Vimeo are not counted."
+    },
+    "tickets": {
+      "title": "Support",
+      "subtitle": "Not happy with a service? Raise a ticket. The principal, school admin and platform team are told and can reply here.",
+      "raise": "Raise a ticket",
+      "category": "Category",
+      "subject": "Subject",
+      "subjectPh": "Short title, e.g. Lessons are too fast",
+      "details": "What happened?",
+      "detailsPh": "Describe the problem so the school can fix it",
+      "rating": "How satisfied are you with this service? (optional)",
+      "ratingHint": "1 = very unhappy, 5 = very happy",
+      "teacher": "About a teacher (optional)",
+      "noTeacher": "Not about a teacher",
+      "child": "About which child",
+      "submit": "Submit ticket",
+      "sent": "Ticket sent. The school has been told.",
+      "failed": "Could not send the ticket. Please check the form.",
+      "mine": "My tickets",
+      "empty": "No tickets yet.",
+      "reply": "Reply",
+      "replyPh": "Write a reply...",
+      "send": "Send",
+      "closedNote": "This ticket is closed.",
+      "noReplies": "No replies yet.",
+      "back": "Back to tickets",
+      "deskTitle": "Tickets",
+      "deskSubtitle": "Tickets raised by students and parents",
+      "allStatuses": "All statuses",
+      "allCategories": "All categories",
+      "allSchools": "All schools",
+      "ticketNo": "Ticket",
+      "raisedBy": "Raised by",
+      "school": "School",
+      "about": "About",
+      "rated": "Rating",
+      "priority": "Priority",
+      "updated": "Updated",
+      "setStatus": "Set status",
+      "sumTotal": "Total",
+      "sumOpen": "Open",
+      "sumProgress": "In progress",
+      "sumDone": "Resolved or closed",
+      "sumHigh": "High priority open",
+      "student": "Student",
+      "parent": "Parent",
+      "status": {
+        "OPEN": "Open",
+        "IN_PROGRESS": "In progress",
+        "RESOLVED": "Resolved",
+        "CLOSED": "Closed"
+      },
+      "cat": {
+        "ACADEMICS": "Academics",
+        "TEACHING": "Teaching",
+        "FACILITIES": "Facilities",
+        "TRANSPORT": "Transport",
+        "FEES": "Fees",
+        "SAFETY": "Safety",
+        "TECHNICAL": "Technical",
+        "OTHER": "Other"
+      },
+      "prio": {
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      }
     }
   }
 }

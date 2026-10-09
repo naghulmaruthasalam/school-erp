@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -13,6 +14,7 @@ interface Notification {
   created_by_name: string;
   created_at: string;
   is_read: boolean;
+  link?: string | null;
 }
 
 export default function TeacherNotifications() {
@@ -23,6 +25,7 @@ export default function TeacherNotifications() {
     return text === key ? value : text;
   };
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ["teacher-notifications"],
@@ -53,7 +56,7 @@ export default function TeacherNotifications() {
             <div
               key={n.id}
               className={`cursor-pointer transition-all ${!n.is_read ? "border-s-4 border-s-violet-500" : ""}`}
-              onClick={() => !n.is_read && markReadMutation.mutate(n.id)}
+              onClick={() => { if (!n.is_read) markReadMutation.mutate(n.id); if (n.link) navigate(n.link); }}
             >
               <Card className={!n.is_read ? "bg-violet-50/50" : ""}>
                 <div className="flex items-start justify-between">

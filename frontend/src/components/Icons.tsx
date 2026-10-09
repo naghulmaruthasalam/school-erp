@@ -237,3 +237,11 @@ export const SyllabusIcon = ({ size, ...props }: IconProps) => (
     <line x1="8" y1="15" x2="12" y2="15" />
   </svg>
 );
+
+export const SupportIcon = ({ size, ...props }: IconProps) => (
+  <svg {...defaultProps(size)} {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" />
+  </svg>
+);

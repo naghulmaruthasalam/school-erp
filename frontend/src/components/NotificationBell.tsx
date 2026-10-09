@@ -12,6 +12,7 @@ interface Notification {
   content: string;
   notification_type: string;
   priority: string;
+  link?: string | null;
   created_at: string;
   is_read: boolean;
 }
@@ -72,7 +73,7 @@ export default function NotificationBell() {
   const getNotificationPath = () => {
     if (!user) return "/";
     const rolePathMap: Record<string, string> = {
-      SUPER_ADMIN: "/super-admin",
+      SUPER_ADMIN: "/super-admin/notifications",
       SCHOOL_ADMIN: "/admin/notifications",
       PRINCIPAL: "/admin/notifications",
       TEACHER: "/teacher/notifications",
@@ -142,6 +143,7 @@ export default function NotificationBell() {
                   }`}
                   onClick={() => {
                     if (!n.is_read) markReadMutation.mutate(n.id);
+                    if (n.link) { setIsOpen(false); navigate(n.link); }
                   }}
                 >
                   <div className="flex items-start gap-3">

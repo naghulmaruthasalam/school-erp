@@ -42,13 +42,20 @@ class Notification(TenantDocument):
     # Attachments
     document_ids: list[str] = Field(default_factory=list)
 
+    # System-generated notifications (progress alerts, tickets, summaries) go to named users, not to a whole role.
+    # When this is non-empty ONLY these users see the notification (admins included).
+    target_user_ids: list[str] = Field(default_factory=list)
+    category: str | None = None  # e.g. "progress", "teacher_performance", "weekly_summary", "ticket"
+    link: str | None = None  # an in-app path the notification opens, e.g. "/parent/homework"
+    dedupe_key: str | None = None  # the same event for the same user is only sent once
+
     # Author
     created_by: str
     created_by_name: str
 
     class Settings:
         name = "notifications"
-        indexes = ["school_id", "notification_type", "is_published", "publish_at"]
+        indexes = ["school_id", "notification_type", "is_published", "publish_at", "target_user_ids", "dedupe_key"]
 
 
 class UserNotificationRead(TenantDocument):

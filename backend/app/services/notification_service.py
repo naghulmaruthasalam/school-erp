@@ -12,6 +12,35 @@ from app.schemas.common import PageParams, PageResponse
 ADMIN_ROLES = (Role.SUPER_ADMIN, Role.SCHOOL_ADMIN, Role.PRINCIPAL)
 
 
+def _scope(current: CurrentUser, notification_type: str | None = None, include_expired: bool = False) -> dict[str, Any]:
+    """What this user may see: notifications addressed to them by name, plus the school's broadcasts for their role.
+    A notification addressed to named users is invisible to everyone else (the principal's list included)."""
+    uid = str(current.user.id)
+    now = datetime.now(timezone.utc)
+    named = {"target_user_ids": uid}
+    if current.school_id is None:  # platform super admin: only what was sent to them (e.g. new tickets)
+        conds: list[dict[str, Any]] = [named]
+    else:
+        unaddressed = {"$or": [{"target_user_ids": {"$exists": False}}, {"target_user_ids": {"$size": 0}}]}
+        broadcast: dict[str, Any] = {"school_id": current.school_id, **unaddressed}
+        if current.role not in ADMIN_ROLES:
+            broadcast["is_published"] = True
+            broadcast = {"$and": [broadcast, {"$or": [{"target_roles": {"$size": 0}}, {"target_roles": current.role}]}]}
+        conds = [named, broadcast]
+    query: dict[str, Any] = {"$and": [{"$or": conds}]}
+    if notification_type:
+        query["$and"].append({"notification_type": notification_type})
+    if not include_expired:
+        query["$and"].append({"$or": [{"expires_at": None}, {"expires_at": {"$gt": now}}]})
+    return query
+
+
+def _may_open(current: CurrentUser, n: Notification) -> bool:
+    if str(current.user.id) in (n.target_user_ids or []):
+        return True
+    return current.school_id is not None and n.school_id == current.school_id and not n.target_user_ids
+
+
 def to_out(notification: Notification, is_read: bool = False) -> dict[str, Any]:
     return {
         "id": str(notification.id),
@@ -26,6 +55,8 @@ def to_out(notification: Notification, is_read: bool = False) -> dict[str, Any]:
         "expires_at": notification.expires_at.isoformat() if notification.expires_at else None,
         "is_published": notification.is_published,
         "document_ids": notification.document_ids,
+        "category": notification.category,
+        "link": notification.link,
         "created_by": notification.created_by,
         "created_by_name": notification.created_by_name,
         "created_at": notification.created_at.isoformat() if notification.created_at else None,
@@ -85,31 +116,8 @@ async def list_notifications(
 ) -> PageResponse[dict[str, Any]]:
     """List notifications visible to the current user."""
     params = params or PageParams()
-    now = datetime.now(timezone.utc)
 
-    query = Notification.find(Notification.school_id == current.school_id)
-
-    # Only show published notifications (or all for admins)
-    if current.role not in ADMIN_ROLES:
-        query = query.find(Notification.is_published == True)
-        # Filter by target roles
-        query = query.find({
-            "$or": [
-                {"target_roles": {"$size": 0}},
-                {"target_roles": current.role},
-            ]
-        })
-
-    if notification_type:
-        query = query.find(Notification.notification_type == notification_type)
-
-    if not include_expired:
-        query = query.find({
-            "$or": [
-                {"expires_at": None},
-                {"expires_at": {"$gt": now}},
-            ]
-        })
+    query = Notification.find(_scope(current, notification_type, include_expired))
 
     total = await query.count()
     notifications = await query.sort(-Notification.created_at).skip(params.skip).limit(params.page_size).to_list()
@@ -135,7 +143,7 @@ async def list_notifications(
 async def get_notification(current: CurrentUser, notification_id: str) -> dict[str, Any]:
     """Get a single notification."""
     notification = await Notification.get(notification_id)
-    if not notification or notification.school_id != current.school_id:
+    if not notification or not _may_open(current, notification):
         raise NotFoundError("Notification not found")
 
     # Check read status
@@ -150,7 +158,7 @@ async def get_notification(current: CurrentUser, notification_id: str) -> dict[s
 async def mark_as_read(current: CurrentUser, notification_id: str) -> dict[str, str]:
     """Mark a notification as read."""
     notification = await Notification.get(notification_id)
-    if not notification or notification.school_id != current.school_id:
+    if not notification or not _may_open(current, notification):
         raise NotFoundError("Notification not found")
 
     # Check if already read
@@ -161,7 +169,7 @@ async def mark_as_read(current: CurrentUser, notification_id: str) -> dict[str, 
 
     if not existing:
         read = UserNotificationRead(
-            school_id=current.school_id,
+            school_id=notification.school_id,
             user_id=str(current.user.id),
             notification_id=notification_id,
             read_at=datetime.now(timezone.utc),
@@ -187,25 +195,7 @@ async def delete_notification(current: CurrentUser, notification_id: str) -> dic
 
 async def get_unread_count(current: CurrentUser) -> dict[str, int]:
     """Get count of unread notifications for current user."""
-    now = datetime.now(timezone.utc)
-
-    # Get all visible notifications
-    query = Notification.find(
-        Notification.school_id == current.school_id,
-        Notification.is_published == True,
-        {
-            "$or": [
-                {"expires_at": None},
-                {"expires_at": {"$gt": now}},
-            ]
-        },
-        {
-            "$or": [
-                {"target_roles": {"$size": 0}},
-                {"target_roles": current.role},
-            ]
-        },
-    )
+    query = Notification.find(_scope(current))
 
     all_notifications = await query.to_list()
     notification_ids = [str(n.id) for n in all_notifications]

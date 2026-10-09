@@ -2,7 +2,7 @@ import { Route } from "react-router-dom";
 import type { NavItem } from "../../layouts/DashboardLayout";
 import {
   DashboardIcon, ProfileIcon, AttendanceIcon, HomeworkIcon,
-  ExamsIcon, FeesIcon, NotificationsIcon, SettingsIcon, AboutIcon, SyllabusIcon
+  ExamsIcon, FeesIcon, NotificationsIcon, SettingsIcon, AboutIcon, SyllabusIcon, SupportIcon,
 } from "../../components/Icons";
 import AttendancePage from "./AttendancePage";
 import ParentDashboard from "./Dashboard";
@@ -10,6 +10,7 @@ import ExamsPage from "./ExamsPage";
 import FeesPage from "./FeesPage";
 import HomeworkPage from "./HomeworkPage";
 import NotificationsPage from "./NotificationsPage";
+import SupportCenter from "../../components/SupportCenter";
 import ParentShell from "./ParentShell";
 import ParentProfile from "./Profile";
 import ParentSettings from "./Settings";
@@ -25,6 +26,7 @@ export const parentNavItems: NavItem[] = [
   { label: "parent.nav.exams", to: "/parent/exams", icon: ExamsIcon },
   { label: "navigation.fees", to: "/parent/fees", icon: FeesIcon },
   { label: "navigation.notifications", to: "/parent/notifications", icon: NotificationsIcon },
+  { label: "lead.nav.support", to: "/parent/support", icon: SupportIcon },
   { label: "navigation.settings", to: "/parent/settings", icon: SettingsIcon },
   { label: "navigation.about", to: "/parent/about", icon: AboutIcon },
 ];
@@ -46,6 +48,7 @@ export const parentChildRoutes = (
       <Route path="exams" element={<ExamsPage />} />
       <Route path="fees" element={<FeesPage />} />
       <Route path="notifications" element={<NotificationsPage />} />
+      <Route path="support" element={<SupportCenter role="parent" />} />
       <Route path="settings" element={<ParentSettings />} />
       <Route path="about" element={<ParentAbout />} />
     </Route>

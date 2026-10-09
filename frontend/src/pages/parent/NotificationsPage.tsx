@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Card, PageHeader, Spinner, Badge } from "../../components/ui";
 import { api } from "../../api/client";
 import type { PageResponse } from "../../types/common";
@@ -13,11 +14,13 @@ interface Notification {
   created_by_name: string;
   created_at: string;
   is_read: boolean;
+  link?: string | null;
 }
 
 export default function ParentNotifications() {
   const { t, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const label = (prefix: string, v: string) => {
     const k = `${prefix}.${v}`;
     const r = t(k);
@@ -55,7 +58,7 @@ export default function ParentNotifications() {
             <div
               key={n.id}
               className={`cursor-pointer transition-all ${!n.is_read ? "border-s-4 border-s-violet-500" : ""}`}
-              onClick={() => !n.is_read && markReadMutation.mutate(n.id)}
+              onClick={() => { if (!n.is_read) markReadMutation.mutate(n.id); if (n.link) navigate(n.link); }}
             >
               <Card className={!n.is_read ? "bg-violet-50/50" : ""}>
                 <div className="flex items-start justify-between">

@@ -18,6 +18,7 @@ def get_all_models() -> list:
     from app.models.curriculum_source import CurriculumSource
     from app.models.translation import TranslationCache
     from app.models.video_watch import VideoWatch
+    from app.models.ticket import Ticket, TicketReply
     from app.models.copilot_grading import MODELS as COPILOT_GRADING_MODELS
     from app.models.copilot_qpg import MODELS as COPILOT_QPG_MODELS
     from app.models.attendance import StaffAttendance, StudentAttendance
@@ -92,6 +93,8 @@ def get_all_models() -> list:
         CurriculumSource,
         TranslationCache,
         VideoWatch,
+        Ticket,
+        TicketReply,
         CopilotFile,
         *COPILOT_QPG_MODELS,
         *COPILOT_GRADING_MODELS,

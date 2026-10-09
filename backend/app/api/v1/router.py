@@ -21,6 +21,7 @@ from app.api.v1.uploads import router as uploads_router
 from app.api.v1.users import router as users_router
 from app.api.v1.leave import router as leave_router
 from app.api.v1.notifications import router as notifications_router
+from app.api.v1.tickets import router as tickets_router
 from app.api.v1.library import router as library_router
 from app.api.v1.transport import router as transport_router
 from app.api.v1.syllabus import router as syllabus_router
@@ -52,6 +53,7 @@ api_router.include_router(analytics_router)
 api_router.include_router(users_router)
 api_router.include_router(leave_router)
 api_router.include_router(notifications_router)
+api_router.include_router(tickets_router)
 api_router.include_router(library_router)
 api_router.include_router(transport_router)
 api_router.include_router(syllabus_router)
