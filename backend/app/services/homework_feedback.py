@@ -216,6 +216,12 @@ async def feedback_for(submission: HomeworkSubmission, language: str = "en", *, 
             setattr(stored, k, v)
         stored.updated_at = utcnow()
         await stored.save()
+    try:  # a low (or great) AI score is also told to the parents, the homework's teacher and the principal
+        from app.services import progress_service
+
+        await progress_service.on_homework_scored(submission, stored)
+    except Exception:  # noqa: BLE001
+        logger.exception("Progress alert failed for submission %s", submission.id)
     return public(stored)
 
 

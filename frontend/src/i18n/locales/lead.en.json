@@ -301,6 +301,11 @@
         "HIGH": "High",
         "URGENT": "Urgent"
       }
+    },
+    "progress": {
+      "run": "Run progress check now",
+      "done": "Progress check finished: {n} new alert(s) sent to parents, teachers and the principal.",
+      "failed": "Could not run the progress check."
     }
   }
 }

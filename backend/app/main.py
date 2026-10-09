@@ -46,9 +46,13 @@ async def lifespan(app: FastAPI):
     await ensure_super_admin()
     from app.services.curriculum_source_service import auto_sync_loop
 
+    from app.services.progress_service import progress_loop
+
     auto_sync = asyncio.create_task(auto_sync_loop())
+    progress = asyncio.create_task(progress_loop())
     yield
     auto_sync.cancel()
+    progress.cancel()
     await close_db()
 
 

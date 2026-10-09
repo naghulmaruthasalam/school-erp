@@ -1,6 +1,6 @@
 """Who should hear about something: a student's parents and teachers, a school's leaders, the platform's super admins."""
 from app.core.enums import Role
-from app.models.academic import ClassSubjectTeacher, TimetableSlot
+from app.models.academic import ClassSubjectTeacher, Section, TimetableSlot
 from app.models.guardian import Guardian
 from app.models.student import Student
 from app.models.teacher import Teacher
@@ -43,6 +43,9 @@ async def teachers_of(student: Student, subject_id: str | None = None) -> list[s
         q["subject_id"] = subject_id
     found = {c.teacher_id for c in await ClassSubjectTeacher.find(q).to_list()}
     found |= {t.teacher_id for t in await TimetableSlot.find(q).to_list()}
+    section = await Section.get(student.section_id) if len(student.section_id) == 24 else None
+    if section is not None and section.class_teacher_id:
+        found.add(section.class_teacher_id)
     if found:
         return sorted(found)
     classes = await equivalent_class_ids(sid, student.class_id)

@@ -52,6 +52,17 @@ class Settings(BaseSettings):
     # Cap on curriculum text (syllabus outline + attached document text) sent to the model per message.
     copilot_max_context_chars: int = 60000
 
+    # --- Progress alerts (student progress -> parents, teachers, principal; teacher performance -> principal) ---
+    progress_pass_percent: float = 40  # a mark below this is a low-marks alert
+    progress_drop_points: float = 20  # a mark this many points below the student's earlier average is an alert
+    progress_good_percent: float = 85  # at or above this: a good-progress note
+    progress_attendance_percent: float = 75  # month-to-date attendance below this is an alert
+    progress_homework_score_percent: float = 50  # AI homework score below this is an alert
+    progress_class_avg_percent: float = 50  # a class average below this is flagged to the principal
+    progress_class_gap_points: float = 15  # a class this far below the school's average is flagged
+    progress_feedback_days: int = 3  # submissions waiting longer than this for the teacher's feedback are flagged
+    progress_scan_interval_minutes: int = 360  # background scan + weekly summary; 0 switches the background job off
+
     # How long a locally-served file link (used when S3 isn't configured) stays valid.
     local_file_url_expire_seconds: int = 3600
     # Where uploads are kept when S3 isn't configured. Default: backend/uploads (inside the code folder).

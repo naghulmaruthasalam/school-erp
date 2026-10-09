@@ -258,6 +258,15 @@ async def enter_marks(exam_subject_id: str, items: list[MarkEntryItem], current:
             await mark.insert()
             saved.append(mark)
 
+    try:  # tell parents / teachers / principal about low, falling and good results; never block saving marks
+        from app.services import progress_service
+
+        await progress_service.on_marks_entered(exam_subject, saved)
+    except Exception:  # noqa: BLE001
+        import logging
+
+        logging.getLogger("progress").exception("Progress alerts failed after marks entry")
+
     return [to_mark_out(m) for m in saved]
 
 

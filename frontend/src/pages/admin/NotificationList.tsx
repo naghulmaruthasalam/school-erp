@@ -29,6 +29,16 @@ export default function NotificationList() {
   const { t, fmtDate } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [scanNote, setScanNote] = useState<string | null>(null);
+  const scan = useMutation({
+    mutationFn: async () => (await api.post<{ students: Record<string, number>; teachers: Record<string, number> }>("/progress/scan", null, { params: { summary: true } })).data,
+    onSuccess: (r) => {
+      const n = Object.values(r.students).reduce((a, b) => a + b, 0) + Object.values(r.teachers).reduce((a, b) => a + b, 0);
+      setScanNote(t("lead.progress.done", { n }));
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
+    },
+    onError: () => setScanNote(t("lead.progress.failed")),
+  });
   const [form, setForm] = useState<CreatePayload>({
     title: "",
     content: "",
@@ -71,8 +81,12 @@ export default function NotificationList() {
   return (
     <div className="animate-fade-in-up">
       <PageHeader title={t("admin.notifications.title")} subtitle={t("admin.notifications.subtitle")}>
-        <Button onClick={() => setShowForm(!showForm)}>{showForm ? t("admin.common.cancel") : t("admin.notifications.new")}</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={() => { setScanNote(null); scan.mutate(); }} disabled={scan.isPending} data-testid="run-progress">{t("lead.progress.run")}</Button>
+          <Button onClick={() => setShowForm(!showForm)}>{showForm ? t("admin.common.cancel") : t("admin.notifications.new")}</Button>
+        </div>
       </PageHeader>
+      {scanNote && <p className="mb-3 text-sm text-ink-2" data-testid="progress-note">{scanNote}</p>}
 
       {showForm && (
         <Card className="mb-6">
