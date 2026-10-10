@@ -511,3 +511,27 @@ def test_only_countable_videos_are_tracked():
     direct = Chapter(name="c", order=3, video_url="https://cdn.example.com/lesson.mp4", translations={"ar": ChapterText(name="ج", video_s3_key="k/ar.mp4")})
     assert _has_video(uploaded, "en") and not _has_video(youtube, "en") and _has_video(direct, "en") and _has_video(direct, "ar")
     assert not _has_video(uploaded, "ar")
+
+
+@pytest.mark.asyncio
+async def test_question_paper_with_marks_that_do_not_add_up_is_a_clear_400(client, textbook):
+    as_teacher()
+    res = await client.post("/api/v1/teacher-copilot/question-paper/generate", json={
+        "board": "CBSE", "grade": "6", "subject": "Mathematics", "chapters": ["Time"], "total_marks": 100, "duration_minutes": 60,
+        "question_distribution": {"mcq": 10, "short_answer": 5, "long_answer": 3}})  # 10 + 15 + 15 = 40 marks
+    assert res.status_code == 400 and "does not match total marks" in res.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_fee_summary_report_counts_successful_payments_in_range(client):
+    from datetime import datetime, timezone
+    from app.core.enums import PaymentMethod, PaymentStatus
+    from app.models.fee import Payment
+
+    now = datetime.now(timezone.utc)
+    await Payment(school_id=SCHOOL, invoice_id="i1", student_id="s1", amount=250.0, method=list(PaymentMethod)[0], status=PaymentStatus.SUCCESS, paid_at=now).insert()
+    await Payment(school_id=SCHOOL, invoice_id="i2", student_id="s1", amount=999.0, method=list(PaymentMethod)[0], status=PaymentStatus.FAILED, paid_at=now).insert()
+    override_current_user(make_current_user(Role.SCHOOL_ADMIN, SCHOOL, user_id="000000000000000000000a10"))
+    res = await client.get("/api/v1/reports/fee-summary")
+    assert res.status_code == 200 and res.json()["total_collected"] == 250.0 and res.json()["payment_count"] == 1
+    assert (await client.get("/api/v1/reports/student-enrollment")).status_code == 200

@@ -170,7 +170,8 @@
     "download": "Download",
     "placeholder1": "Generated content will appear here",
     "placeholder2": "Select grade, subject, and chapter, then click Generate",
-    "lessonTopics": "Lesson Topics"
+    "lessonTopics": "Lesson Topics",
+    "marksSum": "The questions add up to {sum} marks (MCQ 1, short answer 3, long answer 5 marks each). Total marks is {total}; they should match."
   },
   "lead": {
     "nav": {

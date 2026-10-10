@@ -1,11 +1,11 @@
 """Reports API endpoints."""
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 
 from app.core.deps import CurrentUser, get_current_user
-from app.core.enums import Role
+from app.core.enums import PaymentStatus, Role
 from app.models.attendance import StudentAttendance
 from app.models.fee import Payment
 from app.models.student import Student
@@ -67,10 +67,13 @@ async def get_fee_summary(
     date_from = date_from or (date.today() - timedelta(days=30))
     date_to = date_to or date.today()
 
+    start = datetime.combine(date_from, time.min, tzinfo=timezone.utc)
+    end = datetime.combine(date_to, time.max, tzinfo=timezone.utc)
     payments = await Payment.find(
         Payment.school_id == current.school_id,
-        Payment.payment_date >= date_from,
-        Payment.payment_date <= date_to,
+        Payment.status == PaymentStatus.SUCCESS,  # money actually collected
+        Payment.paid_at >= start,
+        Payment.paid_at <= end,
     ).to_list()
 
     total_collected = sum(p.amount for p in payments)

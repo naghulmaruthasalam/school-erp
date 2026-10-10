@@ -33,9 +33,9 @@ export default function TeacherCopilot() {
   // Question Paper specific
   const [qpMarks, setQpMarks] = useState("100");
   const [qpDuration, setQpDuration] = useState("180");
-  const [qpMcq, setQpMcq] = useState("10");
-  const [qpShort, setQpShort] = useState("5");
-  const [qpLong, setQpLong] = useState("3");
+  const [qpMcq, setQpMcq] = useState("20");
+  const [qpShort, setQpShort] = useState("10");
+  const [qpLong, setQpLong] = useState("10");
 
   // Worksheet specific
   const [wsQuestions, setWsQuestions] = useState("10");
@@ -358,6 +358,15 @@ export default function TeacherCopilot() {
                       />
                     </div>
                   </div>
+                  {(() => {
+                    const sum = (parseInt(qpMcq) || 0) * 1 + (parseInt(qpShort) || 0) * 3 + (parseInt(qpLong) || 0) * 5;
+                    const ok = sum === (parseInt(qpMarks) || 0);
+                    return (
+                      <p className={`text-xs ${ok ? "text-ink-3" : "text-red-500"}`} data-testid="qp-marks-sum">
+                        {t("teacherCopilot.marksSum", { sum, total: parseInt(qpMarks) || 0 })}
+                      </p>
+                    );
+                  })()}
                 </>
               )}
 

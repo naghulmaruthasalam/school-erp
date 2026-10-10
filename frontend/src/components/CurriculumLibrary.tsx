@@ -24,7 +24,7 @@ function ReviewModal({ row, canManage, onClose, onTranslate }: { row: UnitRow; c
   const { t, fmtNumber } = useLanguage();
   const qc = useQueryClient();
   const detail = useQuery({
-    queryKey: ["library", "unit", row.grade, row.subject, row.unit_number],
+    queryKey: ["curlib", "unit", row.grade, row.subject, row.unit_number],
     queryFn: async () => (await api.get<UnitDetail>("/curriculum-library/unit", { params: { grade: row.grade, subject: row.subject, unit_number: row.unit_number } })).data,
   });
   const [drafts, setDrafts] = useState<Record<string, { title: string; text: string }>>({});
@@ -36,7 +36,7 @@ function ReviewModal({ row, canManage, onClose, onTranslate }: { row: UnitRow; c
   const save = useMutation({
     mutationFn: async (v: { id: string; lang: "en" | "ar"; approve: boolean; edited: boolean }) =>
       (await api.put(`/curriculum-library/units/${v.id}`, { title: drafts[v.lang]?.title ?? null, full_text: v.edited ? drafts[v.lang]?.text : null, approve: v.approve })).data,
-    onSuccess: () => { setSaved(true); void qc.invalidateQueries({ queryKey: ["library"] }); },
+    onSuccess: () => { setSaved(true); void qc.invalidateQueries({ queryKey: ["curlib"] }); },
   });
   const d = detail.data;
   const cols: ("en" | "ar")[] = ["en", "ar"];
@@ -98,23 +98,23 @@ export default function CurriculumLibrary({ canManage }: { canManage: boolean })
   const [jobId, setJobId] = useState<string | null>(null);
   const [upload, setUpload] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const overview = useQuery({ queryKey: ["library", "overview"], queryFn: async () => (await api.get<Overview>("/curriculum-library")).data });
+  const overview = useQuery({ queryKey: ["curlib", "overview"], queryFn: async () => (await api.get<Overview>("/curriculum-library")).data });
   useEffect(() => {
     if (grade === null && overview.data) setGrade(overview.data.grades.find((g) => g.units > 0)?.grade ?? 1);
   }, [overview.data, grade]);
   const job = useQuery({
-    queryKey: ["library", "job", jobId], enabled: !!jobId,
+    queryKey: ["curlib", "job", jobId], enabled: !!jobId,
     queryFn: async () => (await api.get<Job>(`/curriculum-library/jobs/${jobId}`)).data,
     refetchInterval: (q) => (q.state.data && ["done", "failed"].includes(q.state.data.status) ? false : 1500),
   });
-  useEffect(() => { if (job.data && ["done", "failed"].includes(job.data.status)) void qc.invalidateQueries({ queryKey: ["library"] }); }, [job.data?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (job.data && ["done", "failed"].includes(job.data.status)) void qc.invalidateQueries({ queryKey: ["curlib"] }); }, [job.data?.status]); // eslint-disable-line react-hooks/exhaustive-deps
   const translate = useMutation({
     mutationFn: async (v: { grade: number; subject?: string; unit_number?: number; target: string }) => (await api.post<{ job_id: string }>("/curriculum-library/translate", v)).data,
     onSuccess: (r) => setJobId(r.job_id),
   });
   const ingest = useMutation({
     mutationFn: async (file: File) => { const f = new FormData(); f.append("file", file); return (await api.post("/curriculum-library/ingest", f)).data as { inserted: number; updated: number; unchanged: number; skipped: number; grades: number[]; problems: string[] }; },
-    onSuccess: (r) => { setUpload(t("lead.library.uploadDone", { inserted: r.inserted, updated: r.updated, unchanged: r.unchanged, skipped: r.skipped, grades: r.grades.join(", ") || "—" }) + (r.problems.length ? ` ${r.problems[0]}` : "")); void qc.invalidateQueries({ queryKey: ["library"] }); if (r.grades[0]) setGrade(r.grades[0]); },
+    onSuccess: (r) => { setUpload(t("lead.library.uploadDone", { inserted: r.inserted, updated: r.updated, unchanged: r.unchanged, skipped: r.skipped, grades: r.grades.join(", ") || "—" }) + (r.problems.length ? ` ${r.problems[0]}` : "")); void qc.invalidateQueries({ queryKey: ["curlib"] }); if (r.grades[0]) setGrade(r.grades[0]); },
   });
   const rows = (overview.data?.units ?? []).filter((u) => u.grade === grade);
   const j = job.data;

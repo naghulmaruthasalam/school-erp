@@ -159,7 +159,7 @@ function CopilotPanel({ profile }: { profile: CopilotProfile }) {
   const title = profileTitle(profile);
   const tagline = profileTagline(profile);
   const modeLabel = (m: Mode) => t(`copilot.modes.${m}`);
-  const welcome = t("copilot.riyah.hello") + " " + (mode === "school" ? t("copilot.welcome.school", { title }) : t("copilot.welcome.study", { title, tagline }));
+  const welcome = t("copilot.riyah.hello", { title }) + " " + (mode === "school" ? t("copilot.welcome.school") : t("copilot.welcome.study", { tagline }));
 
   function reset(next?: Partial<{ mode: Mode; ctx: StudyContextSel; language: string }>) {
     setSession(null);

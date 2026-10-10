@@ -188,8 +188,8 @@
     },
     "send": "Send",
     "welcome": {
-      "school": "Hi! I'm your {title}. Ask me about your own school information, for example attendance, homework, timetable or results.",
-      "study": "Hi! I'm your {title}. {tagline}. Pick a subject and chapter below, then ask away."
+      "school": "Ask me about your own school information, for example attendance, homework, timetable or results.",
+      "study": "{tagline}. Pick a subject and chapter below, then ask away."
     },
     "history": {
       "chats": "Chats",
@@ -476,7 +476,7 @@
       "give_me_a_platform_overview": "Give me a platform overview"
     },
     "riyah": {
-      "hello": "Hi, I'm Riyah.",
+      "hello": "Hi, I'm Riyah, your {title}.",
       "auto": "Auto language",
       "speak": "Speak to Riyah",
       "stopRecording": "Stop and send",

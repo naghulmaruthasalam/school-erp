@@ -132,6 +132,8 @@ async def api_extract_topics(
         return {"topics": topics}
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except ValueError as e:  # the request itself is unusable (marks don't add up, no dates...): say so instead of a 500
+        raise HTTPException(status_code=400, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -156,6 +158,8 @@ async def api_generate_lesson_plan(
         return result.model_dump(mode="json")
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except ValueError as e:  # the request itself is unusable (marks don't add up, no dates...): say so instead of a 500
+        raise HTTPException(status_code=400, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -205,6 +209,8 @@ async def api_generate_question_paper(
         return result.model_dump(mode="json")
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except ValueError as e:  # the request itself is unusable (marks don't add up, no dates...): say so instead of a 500
+        raise HTTPException(status_code=400, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -227,6 +233,8 @@ async def api_generate_worksheet(
         )
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except ValueError as e:  # the request itself is unusable (marks don't add up, no dates...): say so instead of a 500
+        raise HTTPException(status_code=400, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -268,6 +276,8 @@ async def api_validate_homework(
         return result.model_dump(mode="json")
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except ValueError as e:  # the request itself is unusable (marks don't add up, no dates...): say so instead of a 500
+        raise HTTPException(status_code=400, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -305,6 +315,8 @@ async def api_validate_homework_images(
         return result.model_dump(mode="json")
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except ValueError as e:  # the request itself is unusable (marks don't add up, no dates...): say so instead of a 500
+        raise HTTPException(status_code=400, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -325,6 +337,8 @@ async def api_quick_feedback(
         )
     except GeminiNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except ValueError as e:  # the request itself is unusable (marks don't add up, no dates...): say so instead of a 500
+        raise HTTPException(status_code=400, detail=str(e))
     except GeminiError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
