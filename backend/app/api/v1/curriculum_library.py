@@ -8,7 +8,7 @@ from app.models.curriculum import CurriculumUnit
 from app.models.translation_job import TranslationJob
 from app.services import curriculum_library as lib
 from app.services.academic_keys import detect_language, subject_key
-from app.services.curriculum_service import group_by_unit, load_units
+from app.services.curriculum_service import group_by_unit, load_units, unit_visible_to
 
 router = APIRouter(prefix="/curriculum-library", tags=["curriculum-library"])
 MANAGERS = (Role.SCHOOL_ADMIN, Role.PRINCIPAL, Role.SUPER_ADMIN)
@@ -105,7 +105,7 @@ async def edit_unit(unit_id: str, payload: UnitEdit, current: CurrentUser = Depe
     """Correct a translation (title and/or text) and optionally approve it. Corrections reach the syllabus chapters."""
     _need(current, REVIEWERS)
     u = await CurriculumUnit.get(unit_id) if len(unit_id) == 24 else None
-    if u is None or (u.school_id and u.school_id != current.school_id and current.role != Role.SUPER_ADMIN):
+    if u is None or (current.role != Role.SUPER_ADMIN and not await unit_visible_to(u, current.school_id)):
         raise NotFoundError("Unit not found")
     previous = u.full_text
     lang = detect_language(u.full_text, u.language)

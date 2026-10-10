@@ -170,6 +170,23 @@ async def test_teacher_copilot_options_list_each_chapter_once(client, textbook):
 
 
 @pytest.mark.asyncio
+async def test_units_stamped_with_an_unknown_school_open_in_teacher_copilot(client, textbook):
+    """A textbook loaded with a school id that matches no school (e.g. --school-id demo-school-001) is shared: it is listed AND its text opens."""
+    from app.models.curriculum import CurriculumUnit
+
+    for u in await CurriculumUnit.find_all().to_list():
+        u.school_id = "demo-school-001"
+        await u.save()
+    as_teacher()
+    opts = (await client.get("/api/v1/teacher-copilot/curriculum-options")).json()
+    ss = opts["chapters_by_grade_subject"]["6_Social Studies"]
+    assert ss
+    res = await client.get(f"/api/v1/teacher-copilot/curriculum-content/{ss[0]['id']}", params={"lang": "en"})
+    assert res.status_code == 200 and res.json()["full_text"]
+    assert (await client.get("/api/v1/teacher-copilot/curriculum-content/000000000000000000000fff")).status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_textbook_library_syncs_into_the_syllabus_for_the_right_class_and_subject(client, library, textbook):
     override_current_user(make_current_user(Role.SCHOOL_ADMIN, SCHOOL, user_id="000000000000000000000a10"))
     preview = (await client.post("/api/v1/syllabus/sync-curriculum", params={"dry_run": "true"})).json()

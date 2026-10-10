@@ -38,6 +38,17 @@ async def load_units(school_id: str | None, grade: int | None = None, subject: s
     return units
 
 
+async def unit_visible_to(unit: CurriculumUnit, school_id: str | None) -> bool:
+    """Same rule as load_units for a single unit: shared units, the school's own, and units stamped with an id that matches no school."""
+    from app.models.tenant import Tenant
+
+    if not unit.school_id or unit.school_id == school_id:
+        return True
+    if len(unit.school_id) != 24:
+        return True
+    return await Tenant.get(unit.school_id) is None
+
+
 def group_by_unit(units: list[CurriculumUnit]) -> dict[tuple[int, str, int], Group]:
     groups: dict[tuple[int, str, int], Group] = {}
     for u in units:

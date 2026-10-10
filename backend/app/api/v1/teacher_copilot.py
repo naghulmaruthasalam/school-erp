@@ -72,8 +72,8 @@ async def get_curriculum_content(
     """Full text of a curriculum unit in the caller's language (the other edition when only that one exists)."""
     _check_permission(current)
 
-    unit = await CurriculumUnit.get(unit_id)
-    if not unit or (unit.school_id not in (None, current.school_id)):
+    unit = await CurriculumUnit.get(unit_id) if len(unit_id) == 24 else None
+    if not unit or not await curriculum_service.unit_visible_to(unit, current.school_id):
         raise HTTPException(status_code=404, detail="Curriculum unit not found")
 
     siblings = [
